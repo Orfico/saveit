@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'finance_app.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),  # Locale fallback
+        default=os.path.join('sqlite:///', BASE_DIR, 'db.sqlite3'),  # Locale fallback
         conn_max_age=600,
         conn_health_checks=True,
     )
@@ -170,7 +170,7 @@ if os.getenv('DATABASE_URL'):
     }
 
 # Static files (production)
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = []
 
 # WhiteNoise - per servire file statici in produzione
