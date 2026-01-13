@@ -8,6 +8,7 @@ import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+print(f"BASE_DIR is set to: {BASE_DIR}")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -69,22 +70,6 @@ TEMPLATES = [
         },
     },
 ]
-
-# DEBUG TEMPLATES - Rimuovi dopo fix
-print("=== TEMPLATE DEBUG ===")
-print("BASE_DIR:", BASE_DIR)
-print("TEMPLATES DIRS:", [str(d) for d in TEMPLATES[0]['DIRS']])
-import os
-templates_dir = BASE_DIR / 'templates'
-print("Templates dir exists?", templates_dir.exists())
-if templates_dir.exists():
-    print("Files in templates:", os.listdir(templates_dir))
-    base_path = templates_dir / 'base.html'
-    print("base.html exists?", base_path.exists())
-else:
-    print("NO templates dir!")
-print("====================")
-
 
 WSGI_APPLICATION = 'finance_app.wsgi.application'
 
