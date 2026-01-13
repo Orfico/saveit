@@ -21,6 +21,7 @@ class DashboardView(LoginRequiredMixin, ListView):
     template_name = 'core/dashboard.html'
     context_object_name = 'transactions'
     
+    # Override queryset to filter by user and date range
     def get_queryset(self):
         queryset = Transaction.objects.filter(user=self.request.user).select_related('category')
         
@@ -36,11 +37,12 @@ class DashboardView(LoginRequiredMixin, ListView):
         
         return queryset
     
+    # Override context to add totals and pie chart data
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         qs = self.get_queryset()
         
-        # Calcoli separati per income ed expenses
+        # Dedicated totals for income, expenses, balance
         income = qs.filter(amount__gt=0).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         expenses = qs.filter(amount__lt=0).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
@@ -48,7 +50,7 @@ class DashboardView(LoginRequiredMixin, ListView):
         context['total_expenses'] = abs(expenses)
         context['total_balance'] = income + expenses
         
-        # ✅ Pie chart - Converti tutto in formato serializzabile
+        # Pie chart - Convert QuerySet to JSON
         pie_data_raw = qs.filter(
             amount__lt=0
         ).values(
@@ -61,18 +63,18 @@ class DashboardView(LoginRequiredMixin, ListView):
             total__lt=0
         ).order_by('total')
         
-        # Converti in lista di dizionari con valori serializzabili
+        # Convert list of dictionaries to JSON-serializable format
         pie_list = []
         for item in pie_data_raw:
             pie_list.append({
                 'category__name': item['category__name'],
                 'category__color': item['category__color'] or '#3B82F6',
-                'total': float(item['total']),  # ✅ Decimal → float
+                'total': float(item['total']),  # Decimal → float
                 'count': item['count']
             })
-        
-        context['pie_data_json'] = json.dumps(pie_list)  # ✅ JSON per JavaScript
-        context['pie_data'] = pie_list  # ✅ Lista Python per condizioni template
+
+        context['pie_data_json'] = json.dumps(pie_list)  # JSON for JavaScript
+        context['pie_data'] = pie_list  # List for template rendering
         context['start_date'] = self.start_date
         context['end_date'] = self.end_date
         
@@ -90,7 +92,7 @@ class TransactionListView(LoginRequiredMixin, ListView):
             user=self.request.user
         )
         
-        # ✅ Filtri con validazione
+        # Filters with validations
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
         category_id = self.request.GET.get('category')
@@ -105,7 +107,7 @@ class TransactionListView(LoginRequiredMixin, ListView):
         if search:
             qs = qs.filter(
                 Q(description__icontains=search) |
-                Q(notes__icontains=search) |  # ✅ Cerca anche nelle note
+                Q(notes__icontains=search) |  # Search in notes as well
                 Q(category__name__icontains=search)
             )
         
@@ -114,18 +116,18 @@ class TransactionListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # ✅ Categorie dell'utente + globali
+        # User + global categories for filter dropdown
         context['categories'] = Category.objects.filter(
             Q(user=self.request.user) | Q(scope=Category.GLOBAL)
         ).order_by('type', 'name')
         
-        # ✅ Mantieni filtri nella paginazione
+        # Keep filter values in context
         context['date_from'] = self.request.GET.get('date_from', '')
         context['date_to'] = self.request.GET.get('date_to', '')
         context['category_id'] = self.request.GET.get('category', '')
         context['search'] = self.request.GET.get('search', '')
         
-        # ✅ Statistiche rapide
+        # ✅ Rapid summary
         qs = self.get_queryset()
         context['filtered_count'] = qs.count()
         context['filtered_total'] = qs.aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
@@ -135,22 +137,22 @@ class TransactionListView(LoginRequiredMixin, ListView):
 
 class TransactionCreateView(LoginRequiredMixin, CreateView):
     model = Transaction
-    form_class = TransactionForm  # ⭐ Cambia da 'fields' a 'form_class'
+    form_class = TransactionForm  # ⭐ Changes from 'fields' to 'form_class'
     template_name = 'core/transaction_form.html'
     success_url = reverse_lazy('core:dashboard')
     
     def get_form_kwargs(self):
-        """Passa l'utente al form"""
+        """User context to filter categories"""
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
     
     def form_valid(self, form):
-        """Gestisce il salvataggio con eventuale nuova categoria"""
+        """Save and handle new category creation"""
         new_category_name = form.cleaned_data.get('new_category_name')
         
         if new_category_name:
-            # Crea la nuova categoria
+            # Create new category
             category, created = Category.objects.get_or_create(
                 name=new_category_name,
                 user=self.request.user,
@@ -162,21 +164,21 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
             )
             form.instance.category = category
         
-        # Associa l'utente alla transazione
+        # Associate user to the transaction
         form.instance.user = self.request.user
         
         return super().form_valid(form)
 
 
 class TransactionUpdateView(LoginRequiredMixin, UpdateView):
-    """View per modificare una transazione esistente"""
+    """View to update a transaction"""
     model = Transaction
     form_class = TransactionForm
     template_name = 'core/transaction_form.html'
     success_url = reverse_lazy('core:transaction_list')
     
     def get_queryset(self):
-        # Solo transazioni dell'utente loggato
+        # Only allow editing of user's own transactions
         return Transaction.objects.filter(user=self.request.user)
     
     def get_form_kwargs(self):
@@ -203,7 +205,7 @@ class TransactionUpdateView(LoginRequiredMixin, UpdateView):
 
 
 class TransactionDeleteView(LoginRequiredMixin, DeleteView):
-    """View per eliminare una transazione"""
+    """View to delete a transaction"""
     model = Transaction
     template_name = 'core/transaction_confirm_delete.html'
     success_url = reverse_lazy('core:transaction_list')
@@ -213,7 +215,7 @@ class TransactionDeleteView(LoginRequiredMixin, DeleteView):
         return Transaction.objects.filter(user=self.request.user)
     
 class CustomLoginView(LoginView):
-    """View per il login"""
+    """Login view"""
     form_class = CustomAuthenticationForm
     template_name = 'core/login.html'
     redirect_authenticated_user = True
@@ -222,33 +224,33 @@ class CustomLoginView(LoginView):
         return reverse_lazy('core:dashboard')
     
     def form_invalid(self, form):
-        messages.error(self.request, 'Username o password non corretti.')
+        messages.error(self.request, 'Invalid Username or password.')
         return super().form_invalid(form)
 
 
 class RegisterView(CreateView):
-    """View per la registrazione"""
+    """View for user registration"""
     form_class = CustomUserCreationForm
     template_name = 'core/register.html'
     success_url = reverse_lazy('core:dashboard')
     
     def form_valid(self, form):
         response = super().form_valid(form)
-        # Login automatico dopo la registrazione
+        # Auto-login after registration
         username = form.cleaned_data.get('username')
         password = form.cleaned_data.get('password1')
         user = authenticate(username=username, password=password)
         login(self.request, user)
-        messages.success(self.request, f'Benvenuto {username}! Account creato con successo.')
+        messages.success(self.request, f'Welcome {username}! Your account has been created.')
         return response
     
     def form_invalid(self, form):
-        messages.error(self.request, 'Si è verificato un errore. Controlla i dati inseriti.')
+        messages.error(self.request, 'Registration failed. Please correct the errors below.')
         return super().form_invalid(form)
 
 
 def logout_view(request):
-    """View per il logout"""
+    """View to logout user"""
     logout(request)
-    messages.success(request, 'Logout effettuato con successo.')
+    messages.success(request, 'Logout successful.')
     return redirect('core:login')
