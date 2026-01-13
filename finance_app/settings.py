@@ -7,9 +7,7 @@ import os
 import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent 
-#BASE_DIR = os.path.join(BASE_DIR, "saveit")
-print(f"BASE_DIR is set to: {BASE_DIR}")
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -18,18 +16,9 @@ print(f"BASE_DIR is set to: {BASE_DIR}")
 SECRET_KEY = 'django-insecure-fqbz)z#)$(*$l%%5wlan3tm-*qqmji9ro1zyga=f*-699!g3s6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = []
-
-# Render fornisce automaticamente l'hostname
-render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if render_hostname:
-    ALLOWED_HOSTS.append(render_hostname)
-
-# Fallback per locale e wildcard
-ALLOWED_HOSTS += ['127.0.0.1', 'localhost', '.onrender.com']
-
 
 
 # Application definition
@@ -60,7 +49,7 @@ ROOT_URLCONF = 'finance_app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': os.path.join(BASE_DIR, 'templates'),  # ← Questo deve esserci!
+        'DIRS': [BASE_DIR / 'templates'],  # ✅ CORRETTO - Lista con Path
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -72,7 +61,6 @@ TEMPLATES = [
         },
     },
 ]
-print(f"TEMPLATES DIRS: {TEMPLATES[0]['DIRS']}")
 
 WSGI_APPLICATION = 'finance_app.wsgi.application'
 
@@ -81,11 +69,10 @@ WSGI_APPLICATION = 'finance_app.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.path.join('sqlite:///', BASE_DIR, 'db.sqlite3'),  # Locale fallback
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 
@@ -155,9 +142,17 @@ if os.getenv('SECRET_KEY'):
     SECRET_KEY = os.getenv('SECRET_KEY')
 
 # Allowed Hosts (production)
+# Render fornisce automaticamente l'hostname
+render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if render_hostname:
+    ALLOWED_HOSTS = [render_hostname]
+
+# Aggiungi wildcard per Render
 if os.getenv('ALLOWED_HOSTS'):
     ALLOWED_HOSTS_STR = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
     ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',')]
+else:
+    ALLOWED_HOSTS += ['127.0.0.1', 'localhost', '.onrender.com']
 
 # Database Configuration (production)
 if os.getenv('DATABASE_URL'):
@@ -170,7 +165,7 @@ if os.getenv('DATABASE_URL'):
     }
 
 # Static files (production)
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = []
 
 # WhiteNoise - per servire file statici in produzione
@@ -200,21 +195,3 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-
-# DEBUG: Template loading
-if not DEBUG:
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-            },
-        },
-        'loggers': {
-            'django.template': {
-                'handlers': ['console'],
-                'level': 'DEBUG',
-            },
-        },
-    }
