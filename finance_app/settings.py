@@ -18,7 +18,16 @@ SECRET_KEY = 'django-insecure-fqbz)z#)$(*$l%%5wlan3tm-*qqmji9ro1zyga=f*-699!g3s6
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-ALLOWED_HOSTS = ['saveit-v32r.onrender.com', '127.0.0.1', 'localhost']
+
+ALLOWED_HOSTS = []
+
+# Render fornisce automaticamente l'hostname
+render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if render_hostname:
+    ALLOWED_HOSTS.append(render_hostname)
+
+# Fallback per locale e wildcard
+ALLOWED_HOSTS += ['127.0.0.1', 'localhost', '.onrender.com']
 
 
 
