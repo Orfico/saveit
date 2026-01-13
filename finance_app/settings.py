@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 # finance_app/settings.py
-import environ
 import os
 from pathlib import Path
 
