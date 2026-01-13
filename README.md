@@ -1,18 +1,23 @@
 # 💰 SaveIt - Personal Budget Manager
 
-Una web app moderna per la gestione del budget personale, sviluppata con Django e Tailwind CSS.
+![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
+![Django](https://img.shields.io/badge/django-6.0-green.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Status](https://img.shields.io/badge/status-active-success.svg)
+
+A web app for personal budget management, built with Django
 
 ## ✨ Features
 
-- 📊 Dashboard interattiva con grafici
-- 💸 Gestione transazioni (entrate/uscite)
-- 🏷️ Categorie personalizzabili
-- 📈 Visualizzazione grafica delle spese
-- 🔐 Sistema di autenticazione completo
-- 📱 Design responsive e moderno
-- 🎨 UI con Lucide Icons
+- 📊 Interactive Dashboard
+- 💸 Transactions management
+- 🏷️ Custom Categories
+- 📈 Expenses visualisation
+- 🔐 Complete authentication system
+- 📱 Modern and responsive design
+- 🎨 UI with Lucide Icons
 
-## 🛠️ Tecnologie
+## 🛠️ Tech Stack
 
 - **Backend**: Django 6.0
 - **Frontend**: HTML, JavaScript, Tailwind CSS
@@ -20,41 +25,41 @@ Una web app moderna per la gestione del budget personale, sviluppata con Django 
 - **Icons**: Lucide Icons
 - **Database**: SQLite (dev)
 
-## 📦 Installazione
+## 📦 Installation
 
-1. Clona il repository
+1. Clone the repository
 ```bash
 git clone https://github.com/tuo-username/saveit.git
 cd saveit
 ```
 
-2. Crea virtual environment
+2. Create virtual environment
 ```bash
 python -m venv venv
 venv\Scripts\activate  # Windows
 ```
 
-3. Installa dipendenze
+3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Esegui migrazioni
+4. Execute migrations
 ```bash
 python manage.py migrate
 ```
 
-5. Avvia server
+5. Start server
 ```bash
 python manage.py runserver
 ```
 
-6. Apri http://127.0.0.1:8000
+6. Open http://127.0.0.1:8000
 
-## 👨‍💻 Sviluppatore
+## 👨‍💻 Developer
 
 Luca Brambilla
 
-## 📄 Licenza
+## 📄 License
 
 MIT License
