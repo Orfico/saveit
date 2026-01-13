@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}<i data-lucide="activity" class="w-4 h-4"></i> Transazioni{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Header + Badge -->
+  <div class="flex justify-between items-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg">
+    <div>
+      <h1 class="text-3xl font-bold"><i data-lucide="activity" class="w-4 h-4"></i> Le mie Transazioni</h1>
+      <p class="opacity-90 mt-1">{{ page_obj.paginator.count }} totali - Saldo: €{{ filtered_total|floatformat:2 }}</p>
+    </div>
+    <a href="{% url 'core:transaction_create' %}" 
+       class="bg-white text-emerald-600 px-8 py-3 rounded-xl font-bold hover:bg-gray-100 shadow-lg whitespace-nowrap transition">
+      <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi
+    </a>
+  </div>
+  
+  <!-- Filtri avanzati -->
+  <div class="bg-white p-6 rounded-xl shadow-lg border">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
+      <!-- Date From -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1"><i data-lucide="calendar" class="w-4 h-4"></i> Da</label>
+        <input type="date" name="date_from" value="{{ date_from }}" 
+               class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+      </div>
+      
+      <!-- Date To -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1"><i data-lucide="calendar" class="w-4 h-4"></i> A</label>
+        <input type="date" name="date_to" value="{{ date_to }}" 
+               class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+      </div>
+      
+      <!-- Categoria -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1"><i data-lucide="tag" class="w-4 h-4"></i> Categoria</label>
+        <select name="category" class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 transition">
+          <option value="">Tutte</option>
+          {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if category_id == cat.id|stringformat:"s" %}selected{% endif %}>
+              {{ cat.get_type_display }} - {{ cat.name }} {% if cat.is_global %}<i data-lucide="globe" class="w-4 h-4"></i>{% else %}👤{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <!-- Ricerca -->
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-gray-500 mb-1"><i data-lucide="search" class="w-4 h-4"></i> Cerca</label>
+        <input type="text" name="search" value="{{ search }}" 
+               placeholder="Descrizione, note o categoria..." 
+               class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+      </div>
+      
+      <!-- Pulsanti -->
+      <div class="flex gap-2">
+        <button type="submit" 
+                class="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition">
+          <i data-lucide="search" class="w-4 h-4"></i> Applica
+        </button>
+        <a href="{% url 'core:transaction_list' %}" 
+           class="flex-1 bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 font-semibold text-center shadow-md transition">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
+        </a>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Statistiche Filtrate -->
+  {% if filtered_count > 0 %}
+  <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white p-4 rounded-xl shadow-lg">
+    <div class="flex justify-between items-center">
+      <div>
+        <span class="text-sm opacity-75">Risultati filtrati:</span>
+        <span class="text-2xl font-bold ml-2">{{ filtered_count }}</span>
+      </div>
+      <div>
+        <span class="text-sm opacity-75">Totale:</span>
+        <span class="text-2xl font-bold ml-2">€{{ filtered_total|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- Tabella responsive -->
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden border">
+    <div class="overflow-x-auto">
+      <table class="w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50 sticky top-0">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Data</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Descrizione</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Importo</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Categoria</th>
+            <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Azioni</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for transaction in object_list %}
+          <tr class="{% if forloop.counter|divisibleby:2 %}bg-gray-50{% endif %}
+                     {% if transaction.amount < 0 %}hover:bg-red-50{% else %}hover:bg-green-50{% endif %} transition">
+            
+            <!-- Data -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ transaction.date|date:"d/m/Y" }}</div>
+              <div class="text-xs text-gray-500">{{ transaction.date|date:"l" }}</div>
+            </td>
+            
+            <!-- Descrizione -->
+            <td class="px-6 py-4">
+              <div class="text-sm text-gray-900 font-medium">{{ transaction.description|default:"Nessuna descrizione" }}</div>
+              {% if transaction.notes %}
+              <div class="text-xs text-gray-500 mt-1"><i data-lucide="notebook" class="w-4 h-4"></i> {{ transaction.notes|truncatewords:10 }}</div>
+              {% endif %}
+            </td>
+            
+            <!-- Importo colorato -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="text-lg font-bold px-3 py-1 rounded-full inline-block
+                {% if transaction.amount >= 0 %}text-emerald-700 bg-emerald-100{% else %}text-red-700 bg-red-100{% endif %}">
+                {% if transaction.amount >= 0 %}+{% endif %}€{{ transaction.amount|floatformat:2 }}
+              </span>
+            </td>
+            
+            <!-- Categoria con colore -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-3 py-1 rounded-full text-sm font-semibold text-white shadow-sm inline-block"
+                    style="background-color: {{ transaction.category.color }};">
+                {{ transaction.category.name }}
+              </span>
+              <div class="text-xs text-gray-500 mt-1">
+                {{ transaction.category.get_type_display }}
+                {% if transaction.category.is_global %}<i data-lucide="globe" class="w-4 h-4"></i>{% else %}👤{% endif %}
+              </div>
+            </td>
+            
+            <!-- Azioni -->
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <div class="flex gap-2">
+                <a href="{% url 'core:transaction_update' transaction.pk %}" 
+                   title="Modifica" 
+                   class="text-blue-600 hover:text-blue-900 p-2 rounded hover:bg-blue-100 transition">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </a>
+                <form method="post" action="{% url 'core:transaction_delete' transaction.pk %}" 
+                      onsubmit="return confirm('Sei sicuro di voler eliminare questa transazione?')"
+                      class="inline">
+                  {% csrf_token %}
+                  <button type="submit" 
+                          title="Elimina" 
+                          class="text-red-600 hover:text-red-900 p-2 rounded hover:bg-red-100 transition">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-6 py-16 text-center">
+              <div class="text-gray-500 space-y-3">
+                <div class="text-6xl">🔭</div>
+                <h3 class="text-xl font-semibold">Nessuna transazione trovata</h3>
+                {% if date_from or date_to or category_id or search %}
+                <p class="text-sm">Prova a modificare i filtri o <a href="{% url 'core:transaction_list' %}" class="text-blue-600 hover:text-blue-800 font-semibold">resettali</a></p>
+                {% else %}
+                <p class="text-sm">Inizia aggiungendo la tua prima transazione!</p>
+                <a href="{% url 'core:transaction_create' %}" 
+                   class="inline-block mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold transition">
+                  <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi la prima transazione
+                </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Paginazione -->
+    {% if is_paginated %}
+    <div class="bg-gray-50 px-6 py-4 border-t flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="text-sm text-gray-700">
+        Mostra <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong> 
+        di <strong>{{ page_obj.paginator.count }}</strong>
+      </div>
+      
+      <nav class="flex items-center space-x-2">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+             class="px-4 py-2 bg-white border rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition">
+            ← Prec
+          </a>
+        {% else %}
+          <span class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-400 cursor-not-allowed">
+            ← Prec
+          </span>
+        {% endif %}
+        
+        <!-- Paginazione numerata -->
+        <div class="flex items-center space-x-1">
+          {% if page_obj.number > 3 %}
+            <a href="?page=1{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+               class="px-3 py-2 bg-white border rounded-lg text-gray-700 hover:bg-gray-50 transition">
+              1
+            </a>
+            {% if page_obj.number > 4 %}
+              <span class="px-2 text-gray-500">...</span>
+            {% endif %}
+          {% endif %}
+          
+          {% for num in page_obj.paginator.page_range %}
+            {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+              {% if num == page_obj.number %}
+                <span class="px-3 py-2 bg-blue-600 text-white rounded-lg font-bold">
+                  {{ num }}
+                </span>
+              {% else %}
+                <a href="?page={{ num }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+                   class="px-3 py-2 bg-white border rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                  {{ num }}
+                </a>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          
+          {% if page_obj.number < page_obj.paginator.num_pages|add:"-2" %}
+            {% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}
+              <span class="px-2 text-gray-500">...</span>
+            {% endif %}
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+               class="px-3 py-2 bg-white border rounded-lg text-gray-700 hover:bg-gray-50 transition">
+              {{ page_obj.paginator.num_pages }}
+            </a>
+          {% endif %}
+        </div>
+        
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+             class="px-4 py-2 bg-white border rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition">
+            Succ →
+          </a>
+        {% else %}
+          <span class="px-4 py-2 bg-gray-100 border rounded-lg text-gray-400 cursor-not-allowed">
+            Succ →
+          </span>
+        {% endif %}
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+  
+  <!-- Export e azioni bulk (Opzionale - per il futuro) -->
+  <div class="bg-white p-4 rounded-xl shadow-lg border flex justify-between items-center">
+    <div class="text-sm text-gray-600">
+      <i data-lucide="lightbulb" class="w-4 h-4"></i> <strong>Tip:</strong> Usa i filtri per analizzare le tue spese per periodo o categoria
+    </div>
+    <div class="flex gap-2">
+      <!-- Placeholder per future funzionalità -->
+      <button class="px-4 py-2 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed" disabled>
+        <i data-lucide="file-text" class="w-4 h-4"></i> Esporta CSV
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}

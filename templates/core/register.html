@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrazione - SaveIt{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center py-12 px-4">
+    <div class="max-w-md w-full">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-8">
+            <!-- Logo/Titolo -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <i data-lucide="user-plus" class="w-8 h-8 text-white"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900">Crea il tuo Account</h1>
+                <p class="text-gray-600 mt-2">Inizia a gestire il tuo budget oggi</p>
+            </div>
+            
+            <!-- Messaggi -->
+            {% if messages %}
+            <div class="mb-6 space-y-3">
+                {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% else %}bg-green-50 border-green-200 text-green-700{% endif %} border px-4 py-3 rounded-xl flex items-start gap-3">
+                    <i data-lucide="{% if message.tags == 'error' %}alert-circle{% else %}check-circle{% endif %}" class="w-5 h-5 mt-0.5 flex-shrink-0"></i>
+                    <p class="flex-1">{{ message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Form Registrazione -->
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <!-- Username -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                        Username
+                    </label>
+                    <input type="text" 
+                           name="username" 
+                           id="id_username"
+                           value="{{ form.username.value|default:'' }}"
+                           class="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                           placeholder="Scegli un username"
+                           required>
+                    {% if form.username.errors %}
+                        <p class="text-red-500 text-xs mt-2 flex items-center gap-1">
+                            <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                            {{ form.username.errors|join:", " }}
+                        </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="mail" class="w-4 h-4"></i>
+                        Email
+                    </label>
+                    <input type="email" 
+                           name="email" 
+                           id="id_email"
+                           value="{{ form.email.value|default:'' }}"
+                           class="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                           placeholder="tua@email.com"
+                           required>
+                    {% if form.email.errors %}
+                        <p class="text-red-500 text-xs mt-2 flex items-center gap-1">
+                            <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                            {{ form.email.errors|join:", " }}
+                        </p>
+                    {% endif %}
+                </div>
+                
+                <!-- Password 1 con Toggle -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                        Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" 
+                               name="password1" 
+                               id="id_password1"
+                               class="w-full border border-gray-300 pl-4 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                               placeholder="Crea una password sicura"
+                               required>
+                        
+                        <button type="button" 
+                                id="togglePassword1"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-all"
+                                title="Mostra/Nascondi password">
+                            <i data-lucide="eye-off" id="eyeOff1" class="w-5 h-5"></i>
+                            <i data-lucide="eye" id="eyeOn1" class="w-5 h-5 hidden"></i>
+                        </button>
+                    </div>
+                    {% if form.password1.errors %}
+                        <p class="text-red-500 text-xs mt-2 flex items-center gap-1">
+                            <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                            {{ form.password1.errors|join:", " }}
+                        </p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
+                        <i data-lucide="info" class="w-3 h-3"></i>
+                        Minimo 8 caratteri
+                    </p>
+                </div>
+                
+                <!-- Password 2 con Toggle -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        Conferma Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" 
+                               name="password2" 
+                               id="id_password2"
+                               class="w-full border border-gray-300 pl-4 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                               placeholder="Ripeti la password"
+                               required>
+                        
+                        <button type="button" 
+                                id="togglePassword2"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-all"
+                                title="Mostra/Nascondi password">
+                            <i data-lucide="eye-off" id="eyeOff2" class="w-5 h-5"></i>
+                            <i data-lucide="eye" id="eyeOn2" class="w-5 h-5 hidden"></i>
+                        </button>
+                    </div>
+                    {% if form.password2.errors %}
+                        <p class="text-red-500 text-xs mt-2 flex items-center gap-1">
+                            <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                            {{ form.password2.errors|join:", " }}
+                        </p>
+                    {% endif %}
+                </div>
+                
+                {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600 flex-shrink-0"></i>
+                    <p class="text-red-700 text-sm">{{ form.non_field_errors|join:", " }}</p>
+                </div>
+                {% endif %}
+                
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3.5 px-6 rounded-xl hover:shadow-lg font-semibold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    Crea Account
+                </button>
+            </form>
+            
+            <!-- Divider -->
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-4 bg-white text-gray-500">Hai già un account?</span>
+                </div>
+            </div>
+            
+            <!-- Link Login -->
+            <div class="text-center">
+                <a href="{% url 'core:login' %}" 
+                   class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition-all">
+                    <i data-lucide="log-in" class="w-5 h-5"></i>
+                    Accedi
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+    
+    // Toggle password1
+    const togglePassword1 = document.getElementById('togglePassword1');
+    const password1Input = document.getElementById('id_password1');
+    const eyeOff1 = document.getElementById('eyeOff1');
+    const eyeOn1 = document.getElementById('eyeOn1');
+    
+    if (togglePassword1 && password1Input) {
+        togglePassword1.addEventListener('click', function() {
+            const type = password1Input.getAttribute('type') === 'password' ? 'text' : 'password';
+            password1Input.setAttribute('type', type);
+            eyeOff1.classList.toggle('hidden');
+            eyeOn1.classList.toggle('hidden');
+        });
+    }
+    
+    // Toggle password2
+    const togglePassword2 = document.getElementById('togglePassword2');
+    const password2Input = document.getElementById('id_password2');
+    const eyeOff2 = document.getElementById('eyeOff2');
+    const eyeOn2 = document.getElementById('eyeOn2');
+    
+    if (togglePassword2 && password2Input) {
+        togglePassword2.addEventListener('click', function() {
+            const type = password2Input.getAttribute('type') === 'password' ? 'text' : 'password';
+            password2Input.setAttribute('type', type);
+            eyeOff2.classList.toggle('hidden');
+            eyeOn2.classList.toggle('hidden');
+        });
+    }
+});
+</script>
+{% endblock %}
