@@ -184,6 +184,11 @@ if os.getenv('EMAIL_HOST_USER'):
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f'SaveIt <{EMAIL_HOST_USER}>')
 
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger('django.core.mail')
+    logger.setLevel(logging.DEBUG)
+
 # Security Settings (production)
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
