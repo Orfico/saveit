@@ -178,11 +178,17 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 if os.getenv('RESEND_API_KEY'):
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = 'smtp.resend.com'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
+    EMAIL_PORT = 465          # Cambiato
+    EMAIL_USE_SSL = True      # Cambiato
+    EMAIL_USE_TLS = False     # Aggiunto
     EMAIL_HOST_USER = 'resend'
     EMAIL_HOST_PASSWORD = os.getenv('RESEND_API_KEY')
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SaveIt <noreply@yourdomain.com>')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+if os.getenv('RESEND_API_KEY'):
+    print(f"✅ Email configurata: {EMAIL_HOST}:{EMAIL_PORT}")
+    print(f"✅ FROM: {DEFAULT_FROM_EMAIL}")
+    print(f"✅ API Key presente: {bool(EMAIL_HOST_PASSWORD)}")
 
 # Security Settings (production)
 if not DEBUG:
