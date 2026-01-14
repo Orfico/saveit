@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}SaveIt{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -27,6 +28,39 @@
             }
         }
     </script>
+        <!-- Fix per overflow orizzontale -->
+    <style>
+        /* Previene overflow orizzontale globalmente */
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        
+        /* Forza tutti i container a rispettare la larghezza del viewport */
+        * {
+            max-width: 100%;
+        }
+        
+        /* Eccezione per elementi che devono essere più larghi del parent */
+        .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl {
+            max-width: 100% !important;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        /* Fix per tabelle responsive */
+        table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        /* Fix per grafici Chart.js */
+        canvas {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+    </style>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
