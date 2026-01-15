@@ -144,12 +144,13 @@
               </div>
             </td>
             
-            <!-- Importo colorato -->
-            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap"> 
-              <span class="text-sm sm:text-lg font-bold px-2 sm:px-3 py-1 rounded-full inline-block {% if transaction.type == 'income' %}text-emerald-700 bg-emerald-100{% else %}text-red-700 bg-red-100{% endif %}"> 
-                {% if transaction.type == 'income' %}+{% else %}-{% endif %}€{{ transaction.amount|floatformat:2 }} 
-              </span> 
-            </td>
+          <!-- Importo colorato -->
+          <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+            <span class="text-sm sm:text-lg font-bold px-2 sm:px-3 py-1 rounded-full inline-block
+              {% if transaction.is_income %}text-emerald-700 bg-emerald-100{% else %}text-red-700 bg-red-100{% endif %}">
+              {{ transaction.display_amount }}
+            </span>
+          </td>
             
             <!-- Categoria con colore (nascosta su mobile) -->
             <td class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
