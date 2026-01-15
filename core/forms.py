@@ -66,8 +66,10 @@ class CustomAuthenticationForm(AuthenticationForm):
 
 
 class TransactionForm(forms.ModelForm):
+    """Form per creare/modificare transazioni"""
+    
     # Campo per scegliere se è entrata o spesa
-    transaction_type = forms.ChoiceField(
+    type = forms.ChoiceField(
         choices=[
             ('expense', '💸 Spesa'),
             ('income', '💰 Entrata'),
@@ -92,6 +94,7 @@ class TransactionForm(forms.ModelForm):
         label='Importo (sempre positivo)'
     )
     
+    # Campi per creare nuova categoria al volo
     new_category_name = forms.CharField(
         max_length=100, 
         required=False,
@@ -125,7 +128,7 @@ class TransactionForm(forms.ModelForm):
     
     class Meta:
         model = Transaction
-        fields = ['date', 'description', 'category', 'notes', 'is_recurring']  # ← AGGIUNTO is_recurring
+        fields = ['date', 'description', 'category', 'notes', 'is_recurring']
         widgets = {
             'date': forms.DateInput(attrs={
                 'type': 'date',
@@ -144,25 +147,25 @@ class TransactionForm(forms.ModelForm):
                 'rows': 3,
                 'placeholder': 'Note aggiuntive (opzionale)'
             }),
-            # ✨ WIDGET PER RICORRENZA
             'is_recurring': forms.CheckboxInput(attrs={
                 'class': 'sr-only peer'
             }),
         }
     
     def __init__(self, *args, user=None, **kwargs):
-        # Se stiamo modificando, estrai il tipo dalla transazione esistente
+        """Inizializza il form e popola i campi per la modifica"""
         instance = kwargs.get('instance')
         initial = kwargs.get('initial', {})
         
         if instance and instance.pk:
             # Modifica: imposta il tipo in base al segno dell'importo
-            initial['transaction_type'] = 'income' if instance.amount > 0 else 'expense'
+            initial['type'] = 'income' if instance.amount > 0 else 'expense'
             initial['amount'] = abs(instance.amount)  # Mostra sempre positivo
             kwargs['initial'] = initial
         
         super().__init__(*args, **kwargs)
         
+        # Filtra categorie per l'utente
         if user:
             self.fields['category'].queryset = Category.objects.filter(
                 Q(user=user) | Q(scope=Category.GLOBAL)
@@ -171,7 +174,7 @@ class TransactionForm(forms.ModelForm):
         self.fields['category'].required = False
     
     def clean(self):
-        """Valida il form e converte l'amount"""
+        """Valida il form"""
         cleaned_data = super().clean()
         category = cleaned_data.get('category')
         new_category_name = cleaned_data.get('new_category_name', '').strip()
@@ -190,9 +193,9 @@ class TransactionForm(forms.ModelForm):
         
         # Converti l'importo in base al tipo
         amount = self.cleaned_data.get('amount')
-        transaction_type = self.cleaned_data.get('transaction_type')
+        type = self.cleaned_data.get('type')
         
-        if transaction_type == 'expense':
+        if type == 'expense':
             instance.amount = -abs(amount)  # Spesa = negativo
         else:
             instance.amount = abs(amount)   # Entrata = positivo
