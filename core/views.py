@@ -163,7 +163,7 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
                 }
             )
             form.instance.category = category
-        
+   
         # Associate user to the transaction
         form.instance.user = self.request.user
         

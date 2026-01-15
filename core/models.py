@@ -29,12 +29,12 @@ class Category(models.Model):
         return self.scope == self.GLOBAL
     
     class Meta:
-        unique_together = ('name', 'user', 'type')  # ✅ Aggiungi type per evitare duplicati
+        unique_together = ('name', 'user', 'type')  # Prevents duplicate names per user and type
         verbose_name = "Category"
         verbose_name_plural = "Categories" 
-        ordering = ['type', 'name']  # ✅ Ordina per tipo poi nome
+        ordering = ['type', 'name']  # Order by type then name
         indexes = [
-            models.Index(fields=['user', 'scope']),  # ✅ Performance
+            models.Index(fields=['user', 'scope']),  # Improves query performance
         ]
     
     def __str__(self):
@@ -48,15 +48,19 @@ class Transaction(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2) 
     date = models.DateField(default=timezone.now)
     description = models.TextField(max_length=500, blank=True)
-    recurrent = models.BooleanField(default=False)  # ⚠️ Non utilizzato nelle views
+    is_recurring = models.BooleanField(
+        default=False, 
+        verbose_name="Montlhy Recurring",
+        help_text="If active, this transaction will repeat every month."
+    )
     notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)  # ✅ Tracking
-    updated_at = models.DateTimeField(auto_now=True)      # ✅ Tracking
+    created_at = models.DateTimeField(auto_now_add=True)  #  Tracking
+    updated_at = models.DateTimeField(auto_now=True)      #  Tracking
     
     class Meta:
         ordering = ['-date', '-created_at']
         indexes = [
-            models.Index(fields=['user', '-date']),  # ✅ Query performance
+            models.Index(fields=['user', '-date']),  # Improves query performance
             models.Index(fields=['category', '-date']),
         ]
     

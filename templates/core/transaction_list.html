@@ -110,10 +110,16 @@
             
             <!-- Descrizione -->
             <td class="px-6 py-4">
-              <div class="text-sm text-gray-900 font-medium">{{ transaction.description|default:"Nessuna descrizione" }}</div>
-              {% if transaction.notes %}
-              <div class="text-xs text-gray-500 mt-1"><i data-lucide="notebook" class="w-4 h-4"></i> {{ transaction.notes|truncatewords:10 }}</div>
+              <div class="flex items-center gap-2">
+                <p class="font-semibold text-gray-900">{{ transaction.description }}</p>
+              <!-- ✨ Badge Ricorrenza -->
+              {% if transaction.is_recurring %}
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                      <i data-lucide="repeat" class="w-3 h-3"></i>
+                      <span>Ricorrente</span>
+                  </span>
               {% endif %}
+          </div>
             </td>
             
             <!-- Importo colorato -->
