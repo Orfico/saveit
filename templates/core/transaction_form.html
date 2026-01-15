@@ -14,6 +14,19 @@
   
   <form method="post" class="space-y-6" id="transactionForm">
     {% csrf_token %}
+    {% csrf_token %}
+
+<!-- 🔴 DEBUG: Mostra TUTTI gli errori -->
+{% if form.errors %}
+<div class="bg-red-100 border-2 border-red-500 rounded-lg p-4 mb-6">
+  <h3 class="font-bold text-red-800 mb-2">⚠️ Errori nel Form:</h3>
+  <ul class="list-disc list-inside text-red-700">
+    {% for field, errors in form.errors.items %}
+      <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
     
     <!-- ✅ TIPO TRANSAZIONE (ENTRATA/USCITA) -->
     <div class="bg-gray-50 p-4 rounded-lg border-2 border-gray-200">

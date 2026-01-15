@@ -137,22 +137,22 @@ class TransactionListView(LoginRequiredMixin, ListView):
 
 class TransactionCreateView(LoginRequiredMixin, CreateView):
     model = Transaction
-    form_class = TransactionForm  # ⭐ Changes from 'fields' to 'form_class'
+    form_class = TransactionForm
     template_name = 'core/transaction_form.html'
-    success_url = reverse_lazy('core:dashboard')
+    success_url = reverse_lazy('core:transaction_list')
     
     def get_form_kwargs(self):
-        """User context to filter categories"""
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
     
     def form_valid(self, form):
         """Save and handle new category creation"""
+        print("🟢 FORM VALID - Inizio salvataggio")  # ← DEBUG
+        
         new_category_name = form.cleaned_data.get('new_category_name')
         
         if new_category_name:
-            # Create new category
             category, created = Category.objects.get_or_create(
                 name=new_category_name,
                 user=self.request.user,
@@ -164,10 +164,23 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
             )
             form.instance.category = category
    
-        # Associate user to the transaction
         form.instance.user = self.request.user
         
+        print(f"🟢 Dati transazione:")  # ← DEBUG
+        print(f"   User: {form.instance.user}")
+        print(f"   Amount: {form.instance.amount}")
+        print(f"   Category: {form.instance.category}")
+        print(f"   Description: {form.instance.description}")
+        print(f"   Is Recurring: {form.instance.is_recurring}")
+        
         return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        """Debug form errors"""
+        print("🔴 FORM INVALID - Errori:")  # ← DEBUG
+        print(form.errors)
+        print(form.non_field_errors())
+        return super().form_invalid(form)
 
 
 class TransactionUpdateView(LoginRequiredMixin, UpdateView):

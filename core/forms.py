@@ -166,31 +166,4 @@ class TransactionForm(forms.ModelForm):
         
         self.fields['category'].required = False
     
-    def clean(self):
-        cleaned_data = super().clean()
-        category = cleaned_data.get('category')
-        new_category_name = cleaned_data.get('new_category_name', '').strip()
-        
-        if not category and not new_category_name:
-            raise forms.ValidationError(
-                'Devi selezionare una categoria esistente o crearne una nuova.'
-            )
-        
-        return cleaned_data
     
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        
-        # Converti l'importo in base al tipo
-        amount = self.cleaned_data.get('amount')
-        transaction_type = self.cleaned_data.get('transaction_type')
-        
-        if transaction_type == 'expense':
-            instance.amount = -abs(amount)  # Spesa = negativo
-        else:
-            instance.amount = abs(amount)   # Entrata = positivo
-        
-        if commit:
-            instance.save()
-        
-        return instance
