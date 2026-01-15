@@ -147,8 +147,8 @@
             <!-- Importo colorato -->
             <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
               <span class="text-sm sm:text-lg font-bold px-2 sm:px-3 py-1 rounded-full inline-block
-                {% if transaction.type == 'income' %}text-emerald-700 bg-emerald-100{% else %}text-red-700 bg-red-100{% endif %}">
-                {% if transaction.type == 'income' %}+{% else %}-{% endif %}€{{ transaction.amount|floatformat:2 }}
+                {% if transaction.amount > 0 %}text-emerald-700 bg-emerald-100{% else %}text-red-700 bg-red-100{% endif %}">
+                {% if transaction.amount > 0 %}+{% else %}-{% endif %}€{{ transaction.amount|abs|floatformat:2 }}
               </span>
             </td>
             
