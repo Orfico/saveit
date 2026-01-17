@@ -65,7 +65,6 @@ class Command(BaseCommand):
             if not dry_run:
                 new_transaction = Transaction.objects.create(
                     user=original_transaction.user,
-                    type=original_transaction.type,
                     amount=original_transaction.amount,
                     category=original_transaction.category,
                     description=original_transaction.description,
