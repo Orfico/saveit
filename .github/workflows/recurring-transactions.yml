@@ -1,0 +1,51 @@
+name: Generate Recurring Transactions
+
+on:
+  schedule:
+    # Run at 02:00 UTC every day
+    - cron: '0 2 * * *'
+  
+  # Allow manual triggering of the workflow from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  generate-transactions:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📋 Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: 🔄 Generate recurring transactions
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DEBUG: 'False'
+          ALLOWED_HOSTS: 'github-actions'
+        run: |
+          python manage.py generate_recurring_transactions
+      
+      - name: ✅ Success notification
+        if: success()
+        run: |
+          echo "✅ Recurring transactions generated successfully"
+          echo "⏰ Run date: $(date)"
+          echo "📊 Next execution: tomorrow"
+      
+      - name: ❌ Failure notification
+        if: failure()
+        run: |
+          echo "❌ Error in generating recurring transactions"
+          echo "🔍 Check the logs above for details"
+          exit 1

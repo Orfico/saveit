@@ -69,22 +69,22 @@ class Transaction(models.Model):
     
     @property
     def is_income(self):
-        """Helper per template"""
+        """Helper for template"""
         return self.amount > 0
     
     @property
     def is_expense(self):
-        """Helper per template"""
+        """Helper for template"""
         return self.amount < 0
     
     @property
     def amount_abs(self):
-        """Ritorna il valore assoluto dell'importo"""
+        """Returns the absolute value of the amount."""
         return abs(self.amount)
     
     @property
     def display_amount(self):
-        """Ritorna l'importo formattato con segno"""
+        """Returns the amount formatted with sign for display."""
         if self.amount > 0:
             return f"+€{self.amount:.2f}"
         else:
