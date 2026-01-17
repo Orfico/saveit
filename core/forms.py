@@ -81,7 +81,7 @@ class TransactionForm(forms.ModelForm):
         label='Tipo'
     )
     
-    # Importo sempre positivo
+    # Amount field always positive
     amount = forms.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -94,7 +94,7 @@ class TransactionForm(forms.ModelForm):
         label='Amount (always positive)'
     )
     
-    # Campi per creare nuova categoria al volo
+    # Fields for new category creation
     new_category_name = forms.CharField(
         max_length=100, 
         required=False,
@@ -158,9 +158,9 @@ class TransactionForm(forms.ModelForm):
         initial = kwargs.get('initial', {})
         
         if instance and instance.pk:
-            # Modifica: imposta il tipo in base al segno dell'importo
+            # Modify: set type based on sign of amount
             initial['type'] = 'income' if instance.amount > 0 else 'expense'
-            initial['amount'] = abs(instance.amount)  # Mostra sempre positivo
+            initial['amount'] = abs(instance.amount)  # Show always positive
             kwargs['initial'] = initial
         
         super().__init__(*args, **kwargs)
@@ -179,7 +179,7 @@ class TransactionForm(forms.ModelForm):
         category = cleaned_data.get('category')
         new_category_name = cleaned_data.get('new_category_name', '').strip()
         
-        # Validazione categoria
+        # Validate category
         if not category and not new_category_name:
             raise forms.ValidationError(
                 'You must select an existing category or enter a new category name.'
