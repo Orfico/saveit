@@ -209,6 +209,7 @@
     <i data-lucide="save" class="w-4 h-4"></i> Save
   </button>
 </div>
+</form>
 
 <!-- Hidden form for delete -->
 {% if form.instance.pk %}
@@ -216,7 +217,7 @@
   {% csrf_token %}
 </form>
 {% endif %}
-  </form>
+  
 </div>
 
 <script>
