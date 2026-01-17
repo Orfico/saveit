@@ -100,7 +100,7 @@ class TransactionFormTest(TestCase):
 
         # The form should be invalid
         self.assertFalse(form.is_valid())
-        self.assertIn('Devi selezionare una categoria', str(form.errors))
+        self.assertIn('You must select an existing category or enter a new category name', str(form.errors))
     
     def test_form_creates_new_category(self):
         """Test that the form creates a new category if requested"""
