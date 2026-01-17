@@ -23,7 +23,7 @@ class TransactionAdmin(admin.ModelAdmin):
     date_hierarchy = 'date'
     list_per_page = 25
     
-    # Formattazione OPZIONALE (detail view)
+    # Optional formatting (detail view)
     def get_amount_display(self, obj):
         return f"€{obj.amount:,.2f}"
     get_amount_display.short_description = 'Importo'

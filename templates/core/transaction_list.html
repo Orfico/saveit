@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Transazioni{% endblock %}
+{% block title %}Transactions{% endblock %}
 
 {% block content %}
 <div class="space-y-4 sm:space-y-6 px-4 sm:px-0">
@@ -9,13 +9,13 @@
     <div>
       <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
         <i data-lucide="activity" class="w-5 h-5 sm:w-6 sm:h-6"></i> 
-        Le mie Transazioni
+        My Transactions
       </h1>
-      <p class="opacity-90 mt-1 text-sm sm:text-base">{{ page_obj.paginator.count }} totali - Saldo: €{{ filtered_total|floatformat:2 }}</p>
+      <p class="opacity-90 mt-1 text-sm sm:text-base">{{ page_obj.paginator.count }} total - Balance: €{{ filtered_total|floatformat:2 }}</p>
     </div>
     <a href="{% url 'core:transaction_create' %}" 
        class="w-full sm:w-auto bg-white text-emerald-600 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-bold hover:bg-gray-100 shadow-lg whitespace-nowrap transition text-center flex items-center justify-center gap-2">
-      <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi
+      <i data-lucide="plus" class="w-4 h-4"></i> Add
     </a>
   </div>
 
@@ -25,7 +25,7 @@
       <!-- Date From -->
       <div>
         <label class="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
-          <i data-lucide="calendar" class="w-3 h-3"></i> Da
+          <i data-lucide="calendar" class="w-3 h-3"></i> From
         </label>
         <input type="date" name="date_from" value="{{ date_from }}" 
                class="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
@@ -34,7 +34,7 @@
       <!-- Date To -->
       <div>
         <label class="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
-          <i data-lucide="calendar" class="w-3 h-3"></i> A
+          <i data-lucide="calendar" class="w-3 h-3"></i> To
         </label>
         <input type="date" name="date_to" value="{{ date_to }}" 
                class="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
@@ -43,10 +43,10 @@
       <!-- Category -->
       <div>
         <label class="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
-          <i data-lucide="tag" class="w-3 h-3"></i> Categoria
+          <i data-lucide="tag" class="w-3 h-3"></i> Category
         </label>
         <select name="category" class="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 transition">
-          <option value="">Tutte</option>
+          <option value="">All</option>
           {% for cat in categories %}
             <option value="{{ cat.id }}" {% if category_id == cat.id|stringformat:"s" %}selected{% endif %}>
               {{ cat.get_type_display }} - {{ cat.name }}
@@ -58,10 +58,10 @@
       <!-- Search -->
       <div class="lg:col-span-2">
         <label class="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
-          <i data-lucide="search" class="w-3 h-3"></i> Cerca
+          <i data-lucide="search" class="w-3 h-3"></i> Search
         </label>
         <input type="text" name="search" value="{{ search }}" 
-               placeholder="Descrizione..." 
+               placeholder="Description..." 
                class="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
       </div>
       
@@ -69,7 +69,7 @@
       <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
         <button type="submit" 
                 class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition text-sm flex items-center justify-center gap-1">
-          <i data-lucide="search" class="w-4 h-4"></i> <span class="hidden sm:inline">Applica</span>
+          <i data-lucide="search" class="w-4 h-4"></i> <span class="hidden sm:inline">Apply</span>
         </button>
         <a href="{% url 'core:transaction_list' %}" 
            class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 font-semibold text-center shadow-md transition text-sm flex items-center justify-center gap-1">
@@ -84,11 +84,11 @@
   <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white p-4 rounded-xl shadow-lg">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
       <div>
-        <span class="text-xs sm:text-sm opacity-75">Risultati filtrati:</span>
+        <span class="text-xs sm:text-sm opacity-75">Filtered results:</span>
         <span class="text-xl sm:text-2xl font-bold ml-2">{{ filtered_count }}</span>
       </div>
       <div>
-        <span class="text-xs sm:text-sm opacity-75">Totale:</span>
+        <span class="text-xs sm:text-sm opacity-75">Total:</span>
         <span class="text-xl sm:text-2xl font-bold ml-2">€{{ filtered_total|floatformat:2 }}</span>
       </div>
     </div>
@@ -102,10 +102,10 @@
         <thead class="bg-gray-50">
           <tr>
             <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Data</th>
-            <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Descrizione</th>
-            <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Importo</th>
-            <th class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Categoria</th>
-            <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Azioni</th>
+            <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Description</th>
+            <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Amount</th>
+            <th class="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Category</th>
+            <th class="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -129,7 +129,7 @@
                   {% if transaction.is_recurring %}
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full flex-shrink-0">
                       <i data-lucide="repeat" class="w-3 h-3"></i>
-                      <span>Ricorrente</span>
+                      <span>Recurring</span>
                     </span>
                   {% endif %}
                 </div>
@@ -189,14 +189,14 @@
             <td colspan="5" class="px-6 py-16 text-center">
               <div class="text-gray-500 space-y-3">
                 <div class="text-4xl sm:text-6xl">🔭</div>
-                <h3 class="text-lg sm:text-xl font-semibold">Nessuna transazione trovata</h3>
+                <h3 class="text-lg sm:text-xl font-semibold">No transactions found</h3>
                 {% if date_from or date_to or category_id or search %}
-                <p class="text-xs sm:text-sm">Prova a modificare i filtri o <a href="{% url 'core:transaction_list' %}" class="text-blue-600 hover:text-blue-800 font-semibold">resettali</a></p>
+                <p class="text-xs sm:text-sm">Try modifying the filters or <a href="{% url 'core:transaction_list' %}" class="text-blue-600 hover:text-blue-800 font-semibold">reset them</a></p>
                 {% else %}
-                <p class="text-xs sm:text-sm">Inizia aggiungendo la tua prima transazione!</p>
+                <p class="text-xs sm:text-sm">Start by adding your first transaction!</p>
                 <a href="{% url 'core:transaction_create' %}" 
                    class="inline-block mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold transition flex items-center gap-2 justify-center">
-                  <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi la prima transazione
+                  <i data-lucide="plus" class="w-4 h-4"></i> Add your first transaction
                 </a>
                 {% endif %}
               </div>
@@ -211,19 +211,19 @@
     {% if is_paginated %}
     <div class="bg-gray-50 px-4 sm:px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
       <div class="text-xs sm:text-sm text-gray-700">
-        Mostra <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong> 
-        di <strong>{{ page_obj.paginator.count }}</strong>
+        Show <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong> 
+        of <strong>{{ page_obj.paginator.count }}</strong>
       </div>
       
       <nav class="flex items-center space-x-2">
         {% if page_obj.has_previous %}
           <a href="?page={{ page_obj.previous_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
              class="px-3 sm:px-4 py-2 bg-white border rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition text-sm">
-            ← <span class="hidden sm:inline">Prec</span>
+            ← <span class="hidden sm:inline">Prev</span>
           </a>
         {% else %}
           <span class="px-3 sm:px-4 py-2 bg-gray-100 border rounded-lg text-gray-400 cursor-not-allowed text-sm">
-            ← <span class="hidden sm:inline">Prec</span>
+            ← <span class="hidden sm:inline">Prev</span>
           </span>
         {% endif %}
         
@@ -235,11 +235,11 @@
         {% if page_obj.has_next %}
           <a href="?page={{ page_obj.next_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if category_id %}&category={{ category_id }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
              class="px-3 sm:px-4 py-2 bg-white border rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition text-sm">
-            <span class="hidden sm:inline">Succ</span> →
+            <span class="hidden sm:inline">Next</span> →
           </a>
         {% else %}
           <span class="px-3 sm:px-4 py-2 bg-gray-100 border rounded-lg text-gray-400 cursor-not-allowed text-sm">
-            <span class="hidden sm:inline">Succ</span> →
+            <span class="hidden sm:inline">Next</span> →
           </span>
         {% endif %}
       </nav>
@@ -251,7 +251,7 @@
   <div class="bg-white p-4 rounded-xl shadow-lg border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
     <div class="text-xs sm:text-sm text-gray-600 flex items-start gap-2">
       <i data-lucide="lightbulb" class="w-4 h-4 flex-shrink-0 mt-0.5"></i> 
-      <span><strong>Tip:</strong> Usa i filtri per analizzare le tue spese per periodo o categoria</span>
+      <span><strong>Tip:</strong> Use the filters to analyze your expenses by period or category</span>
     </div>
   </div>
 </div>

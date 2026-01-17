@@ -148,7 +148,7 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
     
     def form_valid(self, form):
         """Save and handle new category creation"""
-        print("🟢 FORM VALID - Inizio salvataggio")  # ← DEBUG
+        print("🟢 FORM VALID - Start saving")  # ← DEBUG
         
         new_category_name = form.cleaned_data.get('new_category_name')
         
@@ -166,7 +166,7 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
    
         form.instance.user = self.request.user
         
-        print(f"🟢 Dati transazione:")  # ← DEBUG
+        print(f"🟢 Transactions data:")  # ← DEBUG
         print(f"   User: {form.instance.user}")
         print(f"   Amount: {form.instance.amount}")
         print(f"   Category: {form.instance.category}")
@@ -177,7 +177,7 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
     
     def form_invalid(self, form):
         """Debug form errors"""
-        print("🔴 FORM INVALID - Errori:")  # ← DEBUG
+        print("🔴 FORM INVALID - Errors:")  # ← DEBUG
         print(form.errors)
         print(form.non_field_errors())
         return super().form_invalid(form)
@@ -224,7 +224,7 @@ class TransactionDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('core:transaction_list')
     
     def get_queryset(self):
-        # Solo transazioni dell'utente loggato
+        # Only allow deleting of user's own transactions
         return Transaction.objects.filter(user=self.request.user)
     
 class CustomLoginView(LoginView):

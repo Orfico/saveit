@@ -7,18 +7,18 @@ from .models import Transaction, Category
 
 
 class CustomUserCreationForm(UserCreationForm):
-    """Form di registrazione personalizzato"""
+    """Customized registration form"""
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={
             'class': 'border border-gray-300 px-4 py-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-            'placeholder': 'tua@email.com'
+            'placeholder': 'your@email.com'
         })
     )
     username = forms.CharField(
         widget=forms.TextInput(attrs={
             'class': 'border border-gray-300 px-4 py-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-            'placeholder': 'nomeutente'
+            'placeholder': 'username'
         })
     )
     password1 = forms.CharField(
@@ -49,7 +49,7 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 class CustomAuthenticationForm(AuthenticationForm):
-    """Form di login personalizzato"""
+    """Customized login form"""
     username = forms.CharField(
         widget=forms.TextInput(attrs={
             'class': 'border border-gray-300 px-4 py-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
@@ -66,13 +66,13 @@ class CustomAuthenticationForm(AuthenticationForm):
 
 
 class TransactionForm(forms.ModelForm):
-    """Form per creare/modificare transazioni"""
+    """Form for creating/editing transactions"""
     
-    # Campo per scegliere se è entrata o spesa
+    # Field to indicate type (expense/income)
     type = forms.ChoiceField(
         choices=[
-            ('expense', '💸 Spesa'),
-            ('income', '💰 Entrata'),
+            ('expense', 'Expense'),
+            ('income', 'Income'),
         ],
         initial='expense',
         widget=forms.RadioSelect(attrs={
@@ -91,7 +91,7 @@ class TransactionForm(forms.ModelForm):
             'step': '0.01',
             'placeholder': '0.00'
         }),
-        label='Importo (sempre positivo)'
+        label='Amount (always positive)'
     )
     
     # Campi per creare nuova categoria al volo
@@ -100,7 +100,7 @@ class TransactionForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'class': 'border border-gray-300 px-3 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500',
-            'placeholder': 'Nome nuova categoria',
+            'placeholder': 'New Category Name',
             'id': 'new_category_input'
         })
     )
@@ -136,7 +136,7 @@ class TransactionForm(forms.ModelForm):
             }),
             'description': forms.TextInput(attrs={
                 'class': 'border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500',
-                'placeholder': 'Es: Spesa al supermercato'
+                'placeholder': 'E.g.: Grociery shopping'
             }),
             'category': forms.Select(attrs={
                 'class': 'border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500',
@@ -145,7 +145,7 @@ class TransactionForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={
                 'class': 'border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500',
                 'rows': 3,
-                'placeholder': 'Note aggiuntive (opzionale)'
+                'placeholder': 'Additional notes (optional)'
             }),
             'is_recurring': forms.CheckboxInput(attrs={
                 'class': 'sr-only peer'
@@ -153,7 +153,7 @@ class TransactionForm(forms.ModelForm):
         }
     
     def __init__(self, *args, user=None, **kwargs):
-        """Inizializza il form e popola i campi per la modifica"""
+        """Initialize form with user-specific category filtering"""
         instance = kwargs.get('instance')
         initial = kwargs.get('initial', {})
         
@@ -165,7 +165,7 @@ class TransactionForm(forms.ModelForm):
         
         super().__init__(*args, **kwargs)
         
-        # Filtra categorie per l'utente
+        # Filter categories by user and global
         if user:
             self.fields['category'].queryset = Category.objects.filter(
                 Q(user=user) | Q(scope=Category.GLOBAL)
@@ -174,7 +174,7 @@ class TransactionForm(forms.ModelForm):
         self.fields['category'].required = False
     
     def clean(self):
-        """Valida il form"""
+        """Validate the form"""
         cleaned_data = super().clean()
         category = cleaned_data.get('category')
         new_category_name = cleaned_data.get('new_category_name', '').strip()
@@ -182,24 +182,24 @@ class TransactionForm(forms.ModelForm):
         # Validazione categoria
         if not category and not new_category_name:
             raise forms.ValidationError(
-                'Devi selezionare una categoria esistente o crearne una nuova.'
+                'You must select an existing category or enter a new category name.'
             )
         
         return cleaned_data
     
     def save(self, commit=True):
-        """Salva la transazione convertendo l'amount in base al tipo"""
+        """Save transaction with correct amount sign"""
         instance = super().save(commit=False)
         
-        # Converti l'importo in base al tipo
+        # Convert amount based on type
         amount = self.cleaned_data.get('amount')
         type = self.cleaned_data.get('type')
         
         if type == 'expense':
-            instance.amount = -abs(amount)  # Spesa = negativo
+            instance.amount = -abs(amount)  # Expense = negative
         else:
-            instance.amount = abs(amount)   # Entrata = positivo
-        
+            instance.amount = abs(amount)   # Income = positive
+
         if commit:
             instance.save()
         

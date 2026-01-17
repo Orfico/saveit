@@ -12,7 +12,7 @@ class ResendEmailBackend(BaseEmailBackend):
         resend.api_key = os.getenv('RESEND_API_KEY')
         
         if not resend.api_key:
-            logger.error("RESEND_API_KEY non configurata!")
+            logger.error("RESEND_API_KEY not configured!")
 
     def send_messages(self, email_messages):
         if not email_messages:
@@ -21,14 +21,14 @@ class ResendEmailBackend(BaseEmailBackend):
         sent_count = 0
         for message in email_messages:
             try:
-                # Prepara i parametri base
+                # Prepare base parameters
                 params: resend.Emails.SendParams = {
                     "from": message.from_email,
                     "to": list(message.to),
                     "subject": message.subject,
                 }
                 
-                # Gestisci CC e BCC se presenti
+                # Handle CC, BCC, Reply-To
                 if message.cc:
                     params["cc"] = list(message.cc)
                 if message.bcc:
@@ -36,7 +36,7 @@ class ResendEmailBackend(BaseEmailBackend):
                 if message.reply_to:
                     params["reply_to"] = list(message.reply_to)
                 
-                # Controlla se c'è contenuto HTML (per EmailMultiAlternatives)
+                # Check if there is HTML content (for EmailMultiAlternatives)
                 html_content = None
                 if hasattr(message, 'alternatives') and message.alternatives:
                     for content, mimetype in message.alternatives:
@@ -44,25 +44,25 @@ class ResendEmailBackend(BaseEmailBackend):
                             html_content = content
                             break
                 
-                # Imposta il contenuto
+                # Set the content
                 if html_content:
                     params["html"] = html_content
-                    params["text"] = message.body  # Fallback testo
+                    params["text"] = message.body  # Fallback text
                 else:
-                    # Solo testo semplice
+                    # Only plain text
                     params["html"] = message.body.replace('\n', '<br>')
                     params["text"] = message.body
                 
-                logger.info(f"Invio email a: {params['to']}")
+                logger.info(f"Sending email to: {params['to']}")
                 
-                # Invia email
+                # Send email
                 response = resend.Emails.send(params)
-                logger.info(f"Email inviata con successo: {response}")
+                logger.info(f"Email sent successfully: {response}")
                 
                 sent_count += 1
                 
             except Exception as e:
-                logger.error(f"Errore invio email: {str(e)}")
+                logger.error(f"Error sending email: {str(e)}")
                 if not self.fail_silently:
                     raise e
         
