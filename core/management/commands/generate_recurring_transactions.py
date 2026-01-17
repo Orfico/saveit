@@ -48,7 +48,6 @@ class Command(BaseCommand):
             # Verifica se esiste già una transazione per questo mese
             already_exists = Transaction.objects.filter(
                 user=original_transaction.user,
-                type=original_transaction.type,
                 amount=original_transaction.amount,
                 category=original_transaction.category,
                 description=original_transaction.description,
