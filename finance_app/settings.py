@@ -1,27 +1,31 @@
-"""
-Django settings for finance_app project.
-"""
-
-from pathlib import Path
+# finance_app/settings.py
 import os
 import dj_database_url
+from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# ============================================
+# SECURITY SETTINGS
+# ============================================
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-fqbz)z#)$(*$l%%5wlan3tm-*qqmji9ro1zyga=f*-699!g3s6'
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-dev-only-key-DO-NOT-USE-IN-PRODUCTION-12345'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# Allowed hosts
+ALLOWED_HOSTS_STR = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',')]
 
-
-# Application definition
+# ============================================
+# APPLICATION DEFINITION
+# ============================================
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -33,9 +37,9 @@ INSTALLED_APPS = [
     'core',
 ]
 
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -46,10 +50,14 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'finance_app.urls'
 
+# ============================================
+# TEMPLATES
+# ============================================
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # ✅ CORRETTO - Lista con Path
+        'DIRS': [BASE_DIR / 'templates'],  # ← IMPORTANTE!
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -64,20 +72,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'finance_app.wsgi.application'
 
+# ============================================
+# DATABASE
+# ============================================
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.getenv('DATABASE_URL'):
+    # Production database (Supabase PostgreSQL)
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.getenv('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # Development database (SQLite)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
+# ============================================
+# PASSWORD VALIDATION
+# ============================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -94,9 +113,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+# ============================================
+# INTERNATIONALIZATION
+# ============================================
 
 LANGUAGE_CODE = 'en-us'
 
@@ -106,87 +125,75 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# ============================================
+# STATIC FILES (CSS, JavaScript, Images)
+# ============================================
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
+# WhiteNoise configuration for serving static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# ============================================
+# AUTHENTICATION
+# ============================================
 
-# Login/Logout URLs
 LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
 LOGOUT_REDIRECT_URL = 'core:login'
 
-# Password Reset
-PASSWORD_RESET_TIMEOUT = 3600  # 1 ora (in secondi)
-
-# Email Configuration (development)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
+# Password reset settings
+PASSWORD_RESET_TIMEOUT = 3600  # 1 hour in seconds
 
 # ============================================
-# DEPLOYMENT SETTINGS (Render + Supabase)
+# EMAIL CONFIGURATION
 # ============================================
 
-# Debug Mode (production)
-if os.getenv('DEBUG') is not None:
-    DEBUG = os.getenv('DEBUG', 'False') == 'True'
-
-# Secret Key (production)
-if os.getenv('SECRET_KEY'):
-    SECRET_KEY = os.getenv('SECRET_KEY')
-
-# Allowed Hosts (production)
-# Render fornisce automaticamente l'hostname
-render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if render_hostname:
-    ALLOWED_HOSTS = [render_hostname]
-
-# Aggiungi wildcard per Render
-if os.getenv('ALLOWED_HOSTS'):
-    ALLOWED_HOSTS_STR = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
-    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',')]
-else:
-    ALLOWED_HOSTS += ['127.0.0.1', 'localhost', '.onrender.com']
-
-# Database Configuration (production)
-if os.getenv('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.getenv('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
-
-# Static files (production)
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = []
-
-# WhiteNoise - per servire file statici in produzione
-if 'whitenoise.middleware.WhiteNoiseMiddleware' not in MIDDLEWARE:
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Email Configuration with Resend (production)
 if os.getenv('RESEND_API_KEY'):
-    EMAIL_BACKEND = 'core.email_backend.ResendEmailBackend'
+    # Production - Resend email service
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.resend.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'resend'
+    EMAIL_HOST_PASSWORD = os.getenv('RESEND_API_KEY')
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SaveIt <onboarding@resend.dev>')
+elif os.getenv('EMAIL_HOST_USER'):
+    # Production - Custom SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f'SaveIt <{EMAIL_HOST_USER}>')
+else:
+    # Development - Console backend (prints emails to console)
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Security Settings (production)
+# ============================================
+# SECURITY SETTINGS (Production Only)
+# ============================================
+
 if not DEBUG:
+    # Force HTTPS
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    
+    # Security headers
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    SECURE_HSTS_SECONDS = 31536000
+    
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# ============================================
+# DEFAULT PRIMARY KEY FIELD TYPE
+# ============================================
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
