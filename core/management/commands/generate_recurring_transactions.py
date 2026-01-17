@@ -5,13 +5,13 @@ from core.models import Transaction
 from datetime import datetime
 
 class Command(BaseCommand):
-    help = 'Genera le transazioni ricorrenti mensili per il mese corrente'
+    help = 'Generate recurring transactions for the current month'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--dry-run',
             action='store_true',
-            help='Mostra cosa verrebbe fatto senza creare transazioni',
+            help='Show what would be done without creating transactions',
         )
 
     def handle(self, *args, **options):
@@ -20,32 +20,32 @@ class Command(BaseCommand):
         current_month = today.month
         current_year = today.year
         
-        self.stdout.write(self.style.SUCCESS(f'\n🔄 Generazione transazioni ricorrenti per {current_month}/{current_year}\n'))
+        self.stdout.write(self.style.SUCCESS(f'\n🔄 Generating recurring transactions for {current_month}/{current_year}\n'))
         
-        # Trova tutte le transazioni ricorrenti attive
+        # Find all active recurring transactions
         recurring_transactions = Transaction.objects.filter(is_recurring=True)
         
         if not recurring_transactions.exists():
-            self.stdout.write(self.style.WARNING('⚠️  Nessuna transazione ricorrente trovata.\n'))
+            self.stdout.write(self.style.WARNING('⚠️  No recurring transactions found.\n'))
             return
-        
-        self.stdout.write(f'📋 Trovate {recurring_transactions.count()} transazioni ricorrenti\n')
-        
+
+        self.stdout.write(f'📋 Found {recurring_transactions.count()} recurring transactions\n')
+
         created_count = 0
         skipped_count = 0
         
         for original_transaction in recurring_transactions:
-            # Calcola la data target (stesso giorno del mese corrente)
+            # Calculate target date for the new transaction
             try:
                 target_date = original_transaction.date.replace(
                     year=current_year,
                     month=current_month
                 )
             except ValueError:
-                # Gestisce casi tipo 31 febbraio -> usa l'ultimo giorno del mese
+                # Handle end-of-month issues (e.g., Feb 30)
                 target_date = (datetime(current_year, current_month, 1) + relativedelta(months=1, days=-1)).date()
             
-            # Verifica se esiste già una transazione per questo mese
+            # Verify if this transaction already exists for the target month
             already_exists = Transaction.objects.filter(
                 user=original_transaction.user,
                 amount=original_transaction.amount,
@@ -56,12 +56,12 @@ class Command(BaseCommand):
             
             if already_exists:
                 self.stdout.write(self.style.WARNING(
-                    f'⏭️  Saltata: {original_transaction.description} - già esiste per {target_date}'
+                    f'⏭️  Skipped: {original_transaction.description} - already exists for {target_date}'
                 ))
                 skipped_count += 1
                 continue
             
-            # Crea la nuova transazione
+            # Create the new transaction
             if not dry_run:
                 new_transaction = Transaction.objects.create(
                     user=original_transaction.user,
@@ -69,23 +69,23 @@ class Command(BaseCommand):
                     category=original_transaction.category,
                     description=original_transaction.description,
                     date=target_date,
-                    is_recurring=False  # La copia NON è ricorrente, solo l'originale
+                    is_recurring=False  # copy is not recurring, only the original is
                 )
                 
                 self.stdout.write(self.style.SUCCESS(
-                    f'✅ Creata: {new_transaction.description} - €{new_transaction.amount} il {target_date}'
+                    f'✅ Created: {new_transaction.description} - €{new_transaction.amount} on {target_date}'
                 ))
                 created_count += 1
             else:
                 self.stdout.write(self.style.SUCCESS(
-                    f'🔍 [DRY-RUN] Creerebbe: {original_transaction.description} - €{original_transaction.amount} il {target_date}'
+                    f'🔍 [DRY-RUN] Would create: {original_transaction.description} - €{original_transaction.amount} on {target_date}'
                 ))
                 created_count += 1
         
         # Summary
         self.stdout.write('\n' + '='*60)
         if dry_run:
-            self.stdout.write(self.style.WARNING('🔍 MODALITÀ DRY-RUN - Nessuna transazione creata'))
-        self.stdout.write(self.style.SUCCESS(f'✅ Transazioni create: {created_count}'))
-        self.stdout.write(self.style.WARNING(f'⏭️  Transazioni saltate: {skipped_count}'))
+            self.stdout.write(self.style.WARNING('🔍 DRY-RUN MODE - No transactions created'))
+        self.stdout.write(self.style.SUCCESS(f'✅ Created transactions: {created_count}'))
+        self.stdout.write(self.style.WARNING(f'⏭️  Skipped transactions: {skipped_count}'))
         self.stdout.write('='*60 + '\n')
