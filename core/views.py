@@ -15,6 +15,8 @@ from django.contrib.auth.views import LoginView
 from django.views.generic import CreateView
 from django.contrib import messages
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
+import logging
+logger = logging.getLogger(__name__)
 
 
 class DashboardView(LoginRequiredMixin, ListView):
@@ -254,12 +256,16 @@ class RegisterView(CreateView):
         password = form.cleaned_data.get('password1')
         user = authenticate(username=username, password=password)
         login(self.request, user)
+        logger.info(f"✅ User registered successfully: {user.username}")
         messages.success(self.request, f'Welcome {username}! Your account has been created.')
         return response
     
     def form_invalid(self, form):
+        logger.warning(f"❌ Registration failed with errors: {form.errors.as_json()}")
         messages.error(self.request, 'Registration failed. Please correct the errors below.')
         return super().form_invalid(form)
+    
+    
 
 
 def logout_view(request):
