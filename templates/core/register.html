@@ -28,7 +28,7 @@
             {% endif %}
             
             <!-- Form Registration -->
-            <form method="post" class="space-y-4">
+            <form method="post" class="space-y-4" id="registration-form">
                 {% csrf_token %}
                 
                 <!-- Username -->
@@ -84,13 +84,13 @@
                                name="password1" 
                                id="id_password1"
                                class="w-full border border-gray-300 pl-4 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                               placeholder="Crea una password sicura"
+                               placeholder="Create a safe password"
                                required>
                         
                         <button type="button" 
                                 id="togglePassword1"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-all"
-                                title="Mostra/Nascondi password">
+                                title="Show/Hide password">
                             <i data-lucide="eye-off" id="eyeOff1" class="w-5 h-5"></i>
                             <i data-lucide="eye" id="eyeOn1" class="w-5 h-5 hidden"></i>
                         </button>
@@ -118,7 +118,7 @@
                                name="password2" 
                                id="id_password2"
                                class="w-full border border-gray-300 pl-4 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                               placeholder="Ripeti la password"
+                               placeholder="Repeat password"
                                required>
                         
                         <button type="button" 
@@ -145,7 +145,7 @@
                 {% endif %}
                 
                 <button type="submit" 
-                        class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3.5 px-6 rounded-xl hover:shadow-lg font-semibold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                        class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3.5 px-6 rounded-xl hover:shadow-lg font-semibold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2" id="submit-btn">
                     <i data-lucide="sparkles" class="w-5 h-5"></i>
                     Create Account
                 </button>
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const password2Input = document.getElementById('id_password2');
     const eyeOff2 = document.getElementById('eyeOff2');
     const eyeOn2 = document.getElementById('eyeOn2');
-    const form = document.getElementById('my-form');
+    const form = document.getElementById('registration-form');
     const submitBtn = document.getElementById('submit-btn');
     
     if (togglePassword2 && password2Input) {
