@@ -1,4 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+{% endblock %}
 
 {% block title %}Dashboard - SaveIt{% endblock %}
 
@@ -157,84 +161,18 @@
             </div>
         </div>
     </div>
+        {% if pie_data %}
+    <script type="application/json" id="chartData">{{ pie_data_json|safe }}</script>
+    {% endif %}
 </div>
+{% endblock %}
 
+{% block extra_js %}
+<!-- Chart.js (solo se ci sono dati) -->
 {% if pie_data %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    lucide.createIcons();
-    
-    const ctx = document.getElementById('pieChart');
-    if (!ctx) return;
-    
-    let pieData;
-    try {
-        pieData = JSON.parse('{{ pie_data_json|escapejs }}');
-    } catch (e) {
-        console.error('Errore parsing dati:', e);
-        return;
-    }
-    
-    if (!pieData || pieData.length === 0) return;
-    
-    const labels = pieData.map(item => item.category__name);
-    const data = pieData.map(item => Math.abs(item.total));
-    const colors = pieData.map(item => item.category__color);
-    
-    // Responsive font size
-    const isMobile = window.innerWidth < 640;
-    
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: colors,
-                borderWidth: 0,
-                hoverBorderWidth: 2,
-                hoverBorderColor: '#ffffff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { 
-                        padding: isMobile ? 12 : 20,
-                        usePointStyle: true,
-                        font: { 
-                            size: isMobile ? 11 : 13, 
-                            family: 'system-ui' 
-                        },
-                        color: '#374151',
-                        boxWidth: isMobile ? 8 : 12
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${label}: €${value.toFixed(2)} (${percentage}%)`;
-                        }
-                    },
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: isMobile ? 8 : 12,
-                    cornerRadius: 8,
-                    titleFont: { size: isMobile ? 12 : 14, weight: 'bold' },
-                    bodyFont: { size: isMobile ? 11 : 13 }
-                }
-            },
-            cutout: '65%'
-        }
-    });
-});
-</script>
 {% endif %}
+
+<!-- Dashboard specific JS -->
+<script src="{% static 'core/js/dashboard.js' %}"></script>
 {% endblock %}

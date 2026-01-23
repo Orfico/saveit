@@ -1,0 +1,29 @@
+/* core/static/core/css/dashboard.css */
+
+/* Responsive font adjustments */
+@media (max-width: 640px) {
+    .chart-container {
+        max-width: 100%;
+        padding: 1rem;
+    }
+}
+
+/* Custom animations for dashboard cards */
+.stat-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    transform: scale(1.02);
+}
+
+/* Quick actions hover effects */
+.quick-action-link:hover .quick-action-icon {
+    transform: scale(1.1);
+}
+
+/* Date filter form improvements */
+#dateFilterForm input[type="date"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
