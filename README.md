@@ -77,7 +77,7 @@ Referrer-Policy: strict-origin-when-cross-origin
 ```
 
 ### **Security Score**
-- 🏆 **Mozilla Observatory: Grade B** (85-90/100)
+- 🏆 **Mozilla Observatory: Grade B** (75/100)
 - 🏆 **SecurityHeaders.com: Grade A**
 - 🏆 **SSL Labs: A+**
 
