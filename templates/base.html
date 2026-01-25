@@ -14,11 +14,16 @@
     integrity="sha384-8nT3SpButyvenpAdKYPJzXdSz3zidMGduMoaMvwjKnAWVv238n6P1mhveiJJQWrV" 
     crossorigin="anonymous"></script>
     
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'core/css/custom.css' %}">
-    
     <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="{% static 'core/manifest.json' %}">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SaveIt">
+    <link rel="apple-touch-icon" href="{% static 'core/icons/icon-192.png' %}">
 </head>
 <body class="bg-gray-50">
     {% if user.is_authenticated %}
@@ -139,7 +144,10 @@
 
     <!-- Common utilities -->
     <script src="{% static 'core/js/utils.js' %}"></script>
-    
+
+    <!-- Service Worker Registration -->
+    <script src="{% static 'core/js/register-sw.js' %}"></script>
+
     <!-- Page-specific JS -->
     {% block extra_js %}{% endblock %}
     
