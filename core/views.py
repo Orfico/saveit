@@ -1,4 +1,5 @@
 # core/views.py
+import calendar
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
@@ -31,9 +32,15 @@ class DashboardView(LoginRequiredMixin, ListView):
         self.end_date = self.request.GET.get('end_date')
         
         if not self.start_date:
-            self.start_date = (timezone.now().date() - timedelta(days=30))
+            # First day of curent month
+            today = timezone.now().date()
+            self.start_date = today.replace(day=1)
+
         if not self.end_date:
-            self.end_date = timezone.now().date()
+            # Last day of current month
+            today = timezone.now().date()
+            last_day = calendar.monthrange(today.year, today.month)[1]
+            self.end_date = today.replace(day=last_day)
         
         queryset = queryset.filter(date__range=[self.start_date, self.end_date])
         
