@@ -5,7 +5,7 @@
 {% block content %}
 <div class="min-h-[80vh] flex items-center justify-center px-4">
     <div class="max-w-md w-full">
-        <!-- Card principale -->
+        <!-- Main Card -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-8">
             <!-- Logo/Titolo -->
             <div class="text-center mb-8">
@@ -16,7 +16,7 @@
                 <p class="text-gray-600 mt-2">Log in to your SaveIt account</p>
             </div>
             
-            <!-- Messaggi -->
+            <!-- Messages -->
             {% if messages %}
             <div class="mb-6 space-y-3">
                 {% for message in messages %}
@@ -29,7 +29,7 @@
             {% endif %}
             
             <!-- Form Login -->
-            <form method="post" class="space-y-5">
+            <form method="post" class="space-y-5" id="login-form">
                 {% csrf_token %}
                 
                 <!-- Username -->
@@ -92,7 +92,7 @@
                 {% endif %}
                 
                 <button type="submit" 
-                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 px-6 rounded-xl hover:shadow-lg font-semibold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3.5 px-6 rounded-xl hover:shadow-lg font-semibold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2" id="submit-btn">
                     <i data-lucide="log-in" class="w-5 h-5"></i>
                     Log In
                 </button>
@@ -137,6 +137,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordInput = document.getElementById('id_password');
     const eyeOff = document.getElementById('eyeOff');
     const eyeOn = document.getElementById('eyeOn');
+    const form = document.getElementById('login-form');
+    const submitBtn = document.getElementById('submit-btn');
     
     if (togglePassword && passwordInput) {
         togglePassword.addEventListener('click', function() {
@@ -146,6 +148,12 @@ document.addEventListener('DOMContentLoaded', function() {
             eyeOn.classList.toggle('hidden');
         });
     }
+    form.addEventListener('submit', function () {
+      // disable button to prevent multiple submits
+      submitBtn.disabled = true;
+      // display loading text
+      submitBtn.innerText = 'Submit in progress...';
+    });
 });
 </script>
 {% endblock %}
