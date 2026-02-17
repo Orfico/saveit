@@ -304,61 +304,6 @@ class LoyaltyCardListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return LoyaltyCard.objects.filter(user=self.request.user)
 
-
-class LoyaltyCardCreateView(LoginRequiredMixin, View):
-    def post(self, request):
-        try:
-            data = json.loads(request.body)
-            store_name = data.get('store_name', '').strip()
-            card_number = data.get('card_number', '').strip()
-            barcode_type = data.get('barcode_type', 'code128')
-            notes = data.get('notes', '')
-
-            if not store_name or not card_number:
-                return JsonResponse({'success': False, 'error': 'Store name and card number are required'}, status=400)
-
-            card = LoyaltyCard.objects.create(
-                user=request.user,
-                store_name=store_name,
-                card_number=card_number,
-                barcode_type=barcode_type,
-                notes=notes
-            )
-
-            # Barcode generation - catch error explicitly
-            try:
-                barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number, barcode_type)
-                card.barcode_image.save(
-                    f'{store_name}_{card_number}.png',
-                    barcode_img,
-                    save=True
-                )
-                barcode_url = card.barcode_image.url
-            except Exception as barcode_error:
-                import traceback
-                card.delete()  # rollback
-                return JsonResponse({
-                    'success': False,
-                    'error': f'Barcode error: {str(barcode_error)}',
-                    'traceback': traceback.format_exc()  # ✅ mostra l'errore completo
-                }, status=500)
-
-            return JsonResponse({
-                'success': True,
-                'card_id': card.id,
-                'barcode_url': barcode_url,
-                'message': 'Card added successfully'
-            })
-
-        except Exception as e:
-            import traceback
-            return JsonResponse({
-                'success': False,
-                'error': str(e),
-                'traceback': traceback.format_exc()
-            }, status=500)
-
-
 class LoyaltyCardDetailView(LoginRequiredMixin, DetailView):
     """Display card barcode"""
     model = LoyaltyCard
