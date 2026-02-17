@@ -4,6 +4,8 @@
 import calendar
 import json
 import logging
+import os
+from django.conf import settings
 from datetime import timedelta
 from decimal import Decimal
 
@@ -428,58 +430,48 @@ def validate_barcode(request):
         }, status=400)
     
 class LoyaltyCardCreateView(LoginRequiredMixin, View):
-    """Create new loyalty card"""
-    
     def post(self, request):
         try:
             data = json.loads(request.body)
-            
-            # Validation
             store_name = data.get('store_name', '').strip()
             card_number = data.get('card_number', '').strip()
+            barcode_type = data.get('barcode_type', 'code128')
             notes = data.get('notes', '')
-            
+
             if not store_name or not card_number:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Store name and card number are required'
-                }, status=400)
-            
-            # Auto-detect barcode type
-            barcode_type = BarcodeGenerator.detect_barcode_type(card_number)
-            
-            # Create card
+                return JsonResponse({'success': False, 'error': 'Store name and card number are required'}, status=400)
+
             card = LoyaltyCard.objects.create(
                 user=request.user,
                 store_name=store_name,
                 card_number=card_number,
-                barcode_type=barcode_type,  # Auto-detected
+                barcode_type=barcode_type,
                 notes=notes
             )
+
+            # Debug storage configuration
+            logger.info(f"USE_S3: {os.environ.get('USE_S3')}")
+            logger.info(f"DEFAULT_FILE_STORAGE: {settings.DEFAULT_FILE_STORAGE}")
+            logger.info(f"MEDIA_URL: {settings.MEDIA_URL}")
+            logger.info(f"Generating barcode for card {card.id}...")
+
+            barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number, barcode_type)
             
-            # Generate barcode
-            barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number)
+            logger.info(f"Barcode generated, saving to storage...")
+            
             card.barcode_image.save(
                 f'{store_name}_{card_number}.png',
                 barcode_img,
                 save=True
             )
             
-            return JsonResponse({
-                'success': True,
-                'card_id': card.id,
-                'barcode_type': detected_type,
-                'message': 'Card added successfully'
-            })
-            
+            logger.info(f"Barcode saved: {card.barcode_image.url}")
+
+            return JsonResponse({'success': True, 'card_id': card.id, 'message': 'Card added successfully'})
+
         except ValueError as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=400)
+            logger.error(f"ValueError: {str(e)}")
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
         except Exception as e:
-            logger.error(f"Error creating card: {str(e)}")
-            return JsonResponse({
-                'success': False,
-                'error': 'Error creating card'
-            }, status=500)
+            logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
