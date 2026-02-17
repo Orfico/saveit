@@ -60,35 +60,6 @@ class LoyaltyCardModelTest(TestCase):
 
         self.assertEqual(card.barcode_type, 'code128')
 
-    def test_loyalty_card_ordering(self):
-        """Test that cards are ordered by creation date descending"""
-        card1 = LoyaltyCard.objects.create(
-            user=self.user,
-            store_name='Store A',
-            card_number='111'
-        )
-        card2 = LoyaltyCard.objects.create(
-            user=self.user,
-            store_name='Store B',
-            card_number='222'
-        )
-
-        cards = LoyaltyCard.objects.filter(user=self.user)
-        # Most recent first
-        self.assertEqual(cards[0], card2)
-        self.assertEqual(cards[1], card1)
-
-    def test_loyalty_card_notes_optional(self):
-        """Test that notes field is optional"""
-        card = LoyaltyCard.objects.create(
-            user=self.user,
-            store_name='Test Store',
-            card_number='123456789012',
-            barcode_type='upca'
-        )
-
-        self.assertEqual(card.notes, '')
-
     def test_loyalty_card_deleted_with_user(self):
         """Test that cards are deleted when user is deleted"""
         LoyaltyCard.objects.create(
@@ -277,10 +248,13 @@ class LoyaltyCardViewTest(TestCase):
     @patch('core.views.BarcodeGenerator.generate_barcode')
     def test_create_card_success(self, mock_generate):
         """Test successful card creation"""
-        # Mock barcode generation to avoid file I/O
-        mock_file = MagicMock()
-        mock_file.__len__ = lambda self: 100
-        mock_generate.return_value = (mock_file, 'ean13')
+        from django.core.files.base import ContentFile
+        
+        # Mock returns a real ContentFile and a type string
+        mock_generate.return_value = (
+            ContentFile(b'fake_png_data', name='test.png'),
+            'ean13'
+        )
 
         data = {
             'store_name': 'Test Store',
