@@ -24,6 +24,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="SaveIt">
     <link rel="apple-touch-icon" href="{% static 'core/icons/icon-192.png' %}">
+    {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-50">
     {% if user.is_authenticated %}
@@ -53,6 +54,12 @@
                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'transaction_list' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                         <i data-lucide="list" class="w-4 h-4"></i>
                         <span>Transactions</span>
+                    </a>
+
+                    <a href="{% url 'core:loyalty_cards_list' %}" 
+                        class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium flex items-center gap-2">
+                        <i data-lucide="credit-card" class="w-4 h-4"></i>
+                        <span>Loyalty Cards</span>
                     </a>
                     
                     <form method="POST" action="{% url 'core:logout' %}" class="inline">
@@ -84,6 +91,12 @@
                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'transaction_list' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                         <i data-lucide="list" class="w-4 h-4"></i>
                         <span>Transactions</span>
+                    </a>
+
+                    <a href="{% url 'core:loyalty_cards_list' %}" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'loyalty_cards_list' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                        <i data-lucide="credit-card" class="w-4 h-4"></i>
+                        <span>Loyalty Cards</span>
                     </a>
                     
                     <form method="POST" action="{% url 'core:logout' %}">

@@ -1,22 +1,34 @@
 # core/views.py
+
+# Python standard library
 import calendar
 import json
+import logging
+from datetime import timedelta
+from decimal import Decimal
+
+# Django core imports
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.views import View  # <-- ADDED THIS
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db.models import Sum, Q, Count
 from django.utils import timezone
-from datetime import timedelta
-from decimal import Decimal
-from .models import Transaction, Category
-from .forms import TransactionForm
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
+# Django auth imports
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.views import LoginView
-from django.views.generic import CreateView
 from django.contrib import messages
-from .forms import CustomUserCreationForm, CustomAuthenticationForm
-import logging
+
+# Local imports
+from .models import Transaction, Category, LoyaltyCard
+from .forms import TransactionForm, CustomUserCreationForm, CustomAuthenticationForm
+from .utils.barcode_generator import BarcodeGenerator
+
+# Logger
 logger = logging.getLogger(__name__)
 
 
@@ -270,9 +282,7 @@ class RegisterView(CreateView):
     def form_invalid(self, form):
         logger.warning(f"❌ Registration failed with errors: {form.errors.as_json()}")
         messages.error(self.request, 'Registration failed. Please correct the errors below.')
-        return super().form_invalid(form)
-    
-    
+        return super().form_invalid(form)   
 
 
 def logout_view(request):
@@ -280,3 +290,196 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'Logout successful.')
     return redirect('core:login')
+
+# ============= LOYALTY CARDS =============
+
+class LoyaltyCardListView(LoginRequiredMixin, ListView):
+    """List user's loyalty cards"""
+    model = LoyaltyCard
+    template_name = 'core/loyalty_cards_list.html'
+    context_object_name = 'cards'
+    
+    def get_queryset(self):
+        return LoyaltyCard.objects.filter(user=self.request.user)
+
+
+class LoyaltyCardCreateView(LoginRequiredMixin, View):
+    """Create new loyalty card"""
+    
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            
+            # Validation
+            store_name = data.get('store_name', '').strip()
+            card_number = data.get('card_number', '').strip()
+            barcode_type = data.get('barcode_type', 'code128')
+            notes = data.get('notes', '')
+            
+            if not store_name or not card_number:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Store name and card number are required'
+                }, status=400)
+            
+            # Validate code
+            if not BarcodeGenerator.validate_code(card_number, barcode_type):
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Invalid code for {barcode_type} format'
+                }, status=400)
+            
+            # Create card
+            card = LoyaltyCard.objects.create(
+                user=request.user,
+                store_name=store_name,
+                card_number=card_number,
+                barcode_type=barcode_type,
+                notes=notes
+            )
+            
+            # Generate barcode
+            barcode_img = BarcodeGenerator.generate_barcode(card_number, barcode_type)
+            card.barcode_image.save(
+                f'{store_name}_{card_number}.png',
+                barcode_img,
+                save=True
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'card_id': card.id,
+                'message': 'Card added successfully'
+            })
+            
+        except ValueError as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+        except Exception as e:
+            logger.error(f"Error creating card: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Error creating card'
+            }, status=500)
+
+
+class LoyaltyCardDetailView(LoginRequiredMixin, DetailView):
+    """Display card barcode"""
+    model = LoyaltyCard
+    template_name = 'core/loyalty_card_detail.html'
+    context_object_name = 'card'
+    
+    def get_queryset(self):
+        return LoyaltyCard.objects.filter(user=self.request.user)
+
+
+class LoyaltyCardDeleteView(LoginRequiredMixin, View):
+    """Delete a loyalty card"""
+    
+    def post(self, request, pk):
+        try:
+            card = LoyaltyCard.objects.get(pk=pk, user=request.user)
+            
+            # Delete image
+            if card.barcode_image:
+                card.barcode_image.delete()
+            
+            card.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Card deleted successfully'
+            })
+            
+        except LoyaltyCard.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Card not found'
+            }, status=404)
+        except Exception as e:
+            logger.error(f"Error deleting card: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Error deleting card'
+            }, status=500)
+
+
+@require_POST
+def validate_barcode(request):
+    """Validate barcode via AJAX"""
+    try:
+        data = json.loads(request.body)
+        code = data.get('code', '')
+        barcode_type = data.get('barcode_type', 'code128')
+        
+        is_valid = BarcodeGenerator.validate_code(code, barcode_type)
+        
+        return JsonResponse({
+            'valid': is_valid,
+            'message': 'Valid code' if is_valid else 'Invalid code for this format'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'valid': False,
+            'message': str(e)
+        }, status=400)
+    
+class LoyaltyCardCreateView(LoginRequiredMixin, View):
+    """Create new loyalty card"""
+    
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            
+            # Validation
+            store_name = data.get('store_name', '').strip()
+            card_number = data.get('card_number', '').strip()
+            notes = data.get('notes', '')
+            
+            if not store_name or not card_number:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Store name and card number are required'
+                }, status=400)
+            
+            # Auto-detect barcode type
+            barcode_type = BarcodeGenerator.detect_barcode_type(card_number)
+            
+            # Create card
+            card = LoyaltyCard.objects.create(
+                user=request.user,
+                store_name=store_name,
+                card_number=card_number,
+                barcode_type=barcode_type,  # Auto-detected
+                notes=notes
+            )
+            
+            # Generate barcode
+            barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number)
+            card.barcode_image.save(
+                f'{store_name}_{card_number}.png',
+                barcode_img,
+                save=True
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'card_id': card.id,
+                'barcode_type': detected_type,
+                'message': 'Card added successfully'
+            })
+            
+        except ValueError as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+        except Exception as e:
+            logger.error(f"Error creating card: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Error creating card'
+            }, status=500)

@@ -89,3 +89,37 @@ class Transaction(models.Model):
             return f"+€{self.amount:.2f}"
         else:
             return f"-€{abs(self.amount):.2f}"
+
+class LoyaltyCard(models.Model):
+    """Model for loyalty cards and membership cards"""
+    
+    BARCODE_TYPES = [
+        ('code128', 'Code 128'),
+        ('ean13', 'EAN-13'),
+        ('ean8', 'EAN-8'),
+        ('upca', 'UPC-A'),
+        ('code39', 'Code 39'),
+        ('itf', 'ITF'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='loyalty_cards')
+    store_name = models.CharField(max_length=100)
+    card_number = models.CharField(max_length=50)
+    barcode_type = models.CharField(
+        max_length=20,
+        choices=BARCODE_TYPES,
+        default='code128',
+        editable=False  # ✅ Not editable by user, set automatically
+    )
+    barcode_image = models.ImageField(upload_to='barcodes/', blank=True, null=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Loyalty Card'
+        verbose_name_plural = 'Loyalty Cards'
+    
+    def __str__(self):
+        return f"{self.store_name} - {self.card_number}"

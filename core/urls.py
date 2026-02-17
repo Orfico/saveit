@@ -46,4 +46,11 @@ urlpatterns = [
     path('transactions/new/', views.TransactionCreateView.as_view(), name='transaction_create'),
     path('transactions/<int:pk>/edit/', views.TransactionUpdateView.as_view(), name='transaction_update'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
+
+     # Loyalty Cards
+    path('loyalty-cards/', views.LoyaltyCardListView.as_view(), name='loyalty_cards_list'),
+    path('loyalty-cards/create/', views.LoyaltyCardCreateView.as_view(), name='loyalty_card_create'),
+    path('loyalty-cards/<int:pk>/', views.LoyaltyCardDetailView.as_view(), name='loyalty_card_detail'),
+    path('loyalty-cards/<int:pk>/delete/', views.LoyaltyCardDeleteView.as_view(), name='loyalty_card_delete'),
+    path('loyalty-cards/validate/', views.validate_barcode, name='validate_barcode'),
 ]

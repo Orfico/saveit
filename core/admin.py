@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Transaction
+from .models import Category, Transaction, LoyaltyCard
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -22,6 +22,30 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = ['description']
     date_hierarchy = 'date'
     list_per_page = 25
+
+@admin.register(LoyaltyCard)
+class LoyaltyCardAdmin(admin.ModelAdmin):
+    list_display = ['store_name', 'user', 'card_number', 'barcode_type', 'created_at']
+    list_filter = ['barcode_type', 'created_at', 'user']
+    search_fields = ['store_name', 'card_number', 'user__username']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Card Information', {
+            'fields': ('user', 'store_name', 'card_number', 'barcode_type')
+        }),
+        ('Barcode', {
+            'fields': ('barcode_image',)
+        }),
+        ('Notes', {
+            'fields': ('notes',),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
     
     # Optional formatting (detail view)
     def get_amount_display(self, obj):
