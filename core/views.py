@@ -386,29 +386,35 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
                 notes=notes
             )
 
-            # Debug storage configuration
-            logger.info(f"USE_S3: {os.environ.get('USE_S3')}")
-            logger.info(f"DEFAULT_FILE_STORAGE: {settings.DEFAULT_FILE_STORAGE}")
-            logger.info(f"MEDIA_URL: {settings.MEDIA_URL}")
-            logger.info(f"Generating barcode for card {card.id}...")
+            # Barcode generation - catch error explicitly
+            try:
+                barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number, barcode_type)
+                card.barcode_image.save(
+                    f'{store_name}_{card_number}.png',
+                    barcode_img,
+                    save=True
+                )
+                barcode_url = card.barcode_image.url
+            except Exception as barcode_error:
+                import traceback
+                card.delete()  # rollback
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Barcode error: {str(barcode_error)}',
+                    'traceback': traceback.format_exc()
+                }, status=500)
 
-            barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number, barcode_type)
-            
-            logger.info(f"Barcode generated, saving to storage...")
-            
-            card.barcode_image.save(
-                f'{store_name}_{card_number}.png',
-                barcode_img,
-                save=True
-            )
-            
-            logger.info(f"Barcode saved: {card.barcode_image.url}")
+            return JsonResponse({
+                'success': True,
+                'card_id': card.id,
+                'barcode_url': barcode_url,
+                'message': 'Card added successfully'
+            })
 
-            return JsonResponse({'success': True, 'card_id': card.id, 'message': 'Card added successfully'})
-
-        except ValueError as e:
-            logger.error(f"ValueError: {str(e)}")
-            return JsonResponse({'success': False, 'error': str(e)}, status=400)
         except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}", exc_info=True)
-            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+            import traceback
+            return JsonResponse({
+                'success': False,
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            }, status=500)
