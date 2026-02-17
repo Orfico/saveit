@@ -306,32 +306,17 @@ class LoyaltyCardListView(LoginRequiredMixin, ListView):
 
 
 class LoyaltyCardCreateView(LoginRequiredMixin, View):
-    """Create new loyalty card"""
-    
     def post(self, request):
         try:
             data = json.loads(request.body)
-            
-            # Validation
             store_name = data.get('store_name', '').strip()
             card_number = data.get('card_number', '').strip()
             barcode_type = data.get('barcode_type', 'code128')
             notes = data.get('notes', '')
-            
+
             if not store_name or not card_number:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Store name and card number are required'
-                }, status=400)
-            
-            # Validate code
-            if not BarcodeGenerator.validate_code(card_number, barcode_type):
-                return JsonResponse({
-                    'success': False,
-                    'error': f'Invalid code for {barcode_type} format'
-                }, status=400)
-            
-            # Create card
+                return JsonResponse({'success': False, 'error': 'Store name and card number are required'}, status=400)
+
             card = LoyaltyCard.objects.create(
                 user=request.user,
                 store_name=store_name,
@@ -339,31 +324,38 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
                 barcode_type=barcode_type,
                 notes=notes
             )
-            
-            # Generate barcode
-            barcode_img = BarcodeGenerator.generate_barcode(card_number, barcode_type)
-            card.barcode_image.save(
-                f'{store_name}_{card_number}.png',
-                barcode_img,
-                save=True
-            )
-            
+
+            # Barcode generation - catch error explicitly
+            try:
+                barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number, barcode_type)
+                card.barcode_image.save(
+                    f'{store_name}_{card_number}.png',
+                    barcode_img,
+                    save=True
+                )
+                barcode_url = card.barcode_image.url
+            except Exception as barcode_error:
+                import traceback
+                card.delete()  # rollback
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Barcode error: {str(barcode_error)}',
+                    'traceback': traceback.format_exc()  # ✅ mostra l'errore completo
+                }, status=500)
+
             return JsonResponse({
                 'success': True,
                 'card_id': card.id,
+                'barcode_url': barcode_url,
                 'message': 'Card added successfully'
             })
-            
-        except ValueError as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=400)
+
         except Exception as e:
-            logger.error(f"Error creating card: {str(e)}")
+            import traceback
             return JsonResponse({
                 'success': False,
-                'error': 'Error creating card'
+                'error': str(e),
+                'traceback': traceback.format_exc()
             }, status=500)
 
 
