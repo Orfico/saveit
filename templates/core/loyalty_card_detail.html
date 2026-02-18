@@ -1,179 +1,204 @@
+<!-- core/templates/core/loyalty_card_detail.html -->
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ card.store_name }} - Barcode{% endblock %}
+{% block title %}{{ card.store_name }} - SaveIt{% endblock %}
 
 {% block extra_head %}
 <meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #barcode-container, #barcode-container * {
+            visibility: visible;
+        }
+        #barcode-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        nav, footer, .action-buttons {
+            display: none !important;
+        }
+    }
+    
+    /* Landscape mode optimization */
+    .barcode-fullscreen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+        padding: 1rem;
+    }
+    
+    .barcode-image-container {
+        width: 100%;
+        max-width: 90vw;
+        display: flex;
+        justify-content: center;
+        margin: 2rem 0;
+    }
+    
+    .barcode-image-container img {
+        width: 100%;
+        height: auto;
+        max-height: 60vh;
+        object-fit: contain;
+    }
+    
+    .card-number-display {
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        color: #1f2937;
+        text-align: center;
+        margin-top: 1rem;
+        word-break: break-all;
+    }
+    
+    /* Mobile landscape optimization */
+    @media screen and (orientation: landscape) and (max-width: 896px) {
+        .barcode-fullscreen {
+            min-height: 85vh;
+        }
+        
+        .barcode-image-container img {
+            max-height: 70vh;
+        }
+        
+        .card-number-display {
+            font-size: 1rem;
+        }
+        
+        .action-buttons button {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    
+<div class="max-w-4xl mx-auto p-4">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-lg p-6 mb-6">
+        <h1 class="text-2xl font-bold mb-2">{{ card.store_name }}</h1>
+        <p class="text-indigo-100 text-sm">Created: {{ card.created_at|date:"M d, Y" }}</p>
+    </div>
+
+    <!-- Barcode Display -->
+    <div id="barcode-container" class="bg-white rounded-lg shadow-lg p-6 mb-6 barcode-fullscreen">
+        <div class="barcode-image-container">
+            {% if card.barcode_image %}
+                <img 
+                    src="https://wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media/{{ card.barcode_image }}" 
+                    alt="Barcode for {{ card.store_name }}"
+                    id="barcode-image"
+                    class="rounded-lg"
+                >
+            {% else %}
+                <div class="text-center text-gray-500">
+                    <p>No barcode available</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="card-number-display">
+            {{ card.card_number }}
+        </div>
+        
+        {% if card.notes %}
+        <div class="mt-4 text-center">
+            <p class="text-sm text-gray-600">{{ card.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <button 
+            onclick="printBarcode()" 
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition duration-200 flex items-center justify-center gap-2"
+        >
+            <i data-lucide="printer" class="w-5 h-5"></i>
+            <span>Print</span>
+        </button>
+        
+        <button 
+            onclick="downloadBarcode()" 
+            class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition duration-200 flex items-center justify-center gap-2"
+        >
+            <i data-lucide="download" class="w-5 h-5"></i>
+            <span>Download</span>
+        </button>
+        
+        <button 
+            onclick="shareBarcode()" 
+            class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition duration-200 flex items-center justify-center gap-2"
+        >
+            <i data-lucide="share-2" class="w-5 h-5"></i>
+            <span>Share</span>
+        </button>
+        
+        <button 
+            onclick="deleteCard()" 
+            class="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg shadow transition duration-200 flex items-center justify-center gap-2"
+        >
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+            <span>Delete</span>
+        </button>
+    </div>
+
     <!-- Back Button -->
-    <div class="mb-6">
-        <a href="{% url 'core:loyalty_cards_list' %}" 
-           class="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+    <div class="text-center">
+        <a 
+            href="{% url 'core:loyalty_cards_list' %}" 
+            class="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold"
+        >
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
             Back to Cards
         </a>
     </div>
-    
-    <!-- Card Display -->
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold flex items-center gap-3">
-                        <i data-lucide="store" class="w-8 h-8"></i>
-                        {{ card.store_name }}
-                    </h1>
-                    <p class="text-blue-100 mt-2 flex items-center gap-2">
-                        <i data-lucide="barcode" class="w-4 h-4"></i>
-                        <span class="font-mono text-lg">{{ card.card_number }}</span>
-                    </p>
-                </div>
-                <span class="bg-white text-blue-600 px-4 py-2 rounded-full font-semibold">
-                    {{ card.get_barcode_type_display }}
-                </span>
-            </div>
-        </div>
-        
-        <!-- Barcode Display -->
-        <div class="p-8 bg-gray-50">
-            <div class="bg-white rounded-lg shadow-md p-8 text-center">
-                {% if card.barcode_image %}
-                    <img id="barcode-image" 
-                         img src="https://wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media/{{ card.barcode_image }}" 
-                         alt="Barcode {{ card.store_name }}"
-                         class="mx-auto max-w-full border-4 border-gray-200 rounded-lg p-6 bg-white"
-                         data-url="{{ card.barcode_image.url }}"
-                         data-store="{{ card.store_name }}"
-                         data-number="{{ card.card_number }}">
-                {% else %}
-                    <div class="py-12">
-                        <i data-lucide="alert-circle" class="w-16 h-16 mx-auto text-gray-300 mb-4"></i>
-                        <p class="text-gray-600">Barcode not available</p>
-                    </div>
-                {% endif %}
-                
-                <!-- Large code display -->
-                <div class="mt-6 p-4 bg-gray-100 rounded-lg">
-                    <p class="text-3xl font-mono font-bold text-gray-900">
-                        {{ card.card_number }}
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Info & Notes -->
-        <div class="px-8 py-6 border-t border-gray-200">
-            {% if card.notes %}
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <i data-lucide="sticky-note" class="w-5 h-5 text-blue-600"></i>
-                    Notes
-                </h3>
-                <p class="text-gray-700 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                    {{ card.notes }}
-                </p>
-            </div>
-            {% endif %}
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="calendar-plus" class="w-4 h-4 text-gray-400"></i>
-                    <span>Created: <strong>{{ card.created_at|date:"m/d/Y H:i" }}</strong></span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <i data-lucide="calendar-clock" class="w-4 h-4 text-gray-400"></i>
-                    <span>Updated: <strong>{{ card.updated_at|date:"m/d/Y H:i" }}</strong></span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="px-8 py-6 bg-gray-50 border-t border-gray-200 flex flex-wrap gap-3">
-            <button onclick="window.print()" 
-                    class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                <i data-lucide="printer" class="w-4 h-4"></i>
-                Print
-            </button>
-            
-            <button onclick="downloadBarcode()" 
-                    class="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                <i data-lucide="download" class="w-4 h-4"></i>
-                Download
-            </button>
-            
-            <button onclick="shareBarcode()" 
-                    class="flex-1 md:flex-none bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                <i data-lucide="share-2" class="w-4 h-4"></i>
-                Share
-            </button>
-            
-            <button id="delete-btn" 
-                    onclick="confirmDelete()" 
-                    data-card-id="{{ card.id }}"
-                    class="flex-1 md:flex-none bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                Delete
-            </button>
-        </div>
-    </div>
-    
-    <!-- Tips -->
-    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 class="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-            <i data-lucide="lightbulb" class="w-5 h-5"></i>
-            Tips
-        </h3>
-        <ul class="text-sm text-blue-800 space-y-2">
-            <li class="flex items-start gap-2">
-                <span class="text-blue-600 mt-0.5">•</span>
-                <span>Use "Print" to get a physical copy of your barcode</span>
-            </li>
-            <li class="flex items-start gap-2">
-                <span class="text-blue-600 mt-0.5">•</span>
-                <span>Show the barcode directly from your smartphone at checkout</span>
-            </li>
-            <li class="flex items-start gap-2">
-                <span class="text-blue-600 mt-0.5">•</span>
-                <span>Increase screen brightness for easier scanning</span>
-            </li>
-        </ul>
-    </div>
-    
 </div>
 
-<!-- Print Styles -->
-<style>
-@media print {
-    body * {
-        visibility: hidden;
-    }
-    
-    .bg-white.rounded-lg.shadow-md,
-    .bg-white.rounded-lg.shadow-md * {
-        visibility: visible;
-    }
-    
-    .bg-white.rounded-lg.shadow-md {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        box-shadow: none !important;
-    }
-    
-    nav, .back-button, .bg-gray-50, .tips {
-        display: none !important;
-    }
-}
-</style>
+<!-- Hidden data for JavaScript -->
+<div 
+    id="card-data" 
+    data-card-id="{{ card.id }}"
+    data-store-name="{{ card.store_name }}"
+    data-card-number="{{ card.card_number }}"
+    data-barcode-url="https://wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media/{{ card.barcode_image }}"
+    style="display: none;"
+></div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'core/js/loyalty_card_detail.js' %}"></script>
+<script>
+    // Force landscape orientation on mobile
+    if (window.screen && window.screen.orientation) {
+        try {
+            screen.orientation.lock('landscape').catch(err => {
+                console.log('Orientation lock not supported or denied:', err);
+            });
+        } catch (e) {
+            console.log('Screen orientation API not supported');
+        }
+    }
+    
+    // Unlock orientation when leaving the page
+    window.addEventListener('beforeunload', () => {
+        if (window.screen && window.screen.orientation && screen.orientation.unlock) {
+            try {
+                screen.orientation.unlock();
+            } catch (e) {
+                console.log('Could not unlock orientation');
+            }
+        }
+    });
+</script>
 {% endblock %}
