@@ -1,243 +1,238 @@
 // core/static/core/js/loyalty_cards.js
 
-let codeReader = null;
-let scannedData = null;
-
-// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    lucide.createIcons();
-    initializeEventListeners();
-});
-
-// Initialize all event listeners
-function initializeEventListeners() {
-    // Add card buttons (desktop + FAB mobile)
-    const addCardBtn = document.getElementById('add-card-btn');
-    const addCardBtnFab = document.getElementById('add-card-btn-fab');
-    const addFirstCardBtn = document.getElementById('add-first-card-btn');
-
-    if (addCardBtn) addCardBtn.addEventListener('click', openAddModal);
-    if (addCardBtnFab) addCardBtnFab.addEventListener('click', openAddModal);
-    if (addFirstCardBtn) addFirstCardBtn.addEventListener('click', openAddModal);
-
-    // Modal close buttons
+    const modal = document.getElementById('add-card-modal');
+    const openModalBtn = document.getElementById('open-modal-btn');
+    const openModalFab = document.getElementById('open-modal-fab');
     const closeModalBtn = document.getElementById('close-modal-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-
-    if (closeModalBtn) closeModalBtn.addEventListener('click', closeAddModal);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeAddModal);
-
-    // Save card button
+    const manualTabBtn = document.getElementById('manual-tab-btn');
+    const scanTabBtn = document.getElementById('scan-tab-btn');
+    const manualForm = document.getElementById('manual-form');
+    const scanForm = document.getElementById('scan-form');
     const saveCardBtn = document.getElementById('save-card-btn');
-    if (saveCardBtn) saveCardBtn.addEventListener('click', saveCard);
+    const cardNumberInput = document.getElementById('card-number');
+    
+    let codeReader = null;
+    let isScanning = false;
 
-    // Tab buttons
-    const tabButtons = document.querySelectorAll('.tab-button');
-    tabButtons.forEach(function(button) {
-        button.addEventListener('click', function() {
-            switchTab(this.dataset.tab);
+    // Open modal
+    if (openModalBtn) {
+        openModalBtn.addEventListener('click', function() {
+            modal.classList.remove('hidden');
         });
-    });
-
-    // Card items - click to view
-    const cardItems = document.querySelectorAll('.card-item');
-    cardItems.forEach(function(item) {
-        item.addEventListener('click', function() {
-            viewBarcode(this.dataset.cardId);
+    }
+    
+    if (openModalFab) {
+        openModalFab.addEventListener('click', function() {
+            modal.classList.remove('hidden');
         });
-    });
-}
+    }
 
-// Modal management
-function openAddModal() {
-    document.getElementById('addCardModal').classList.remove('hidden');
-    lucide.createIcons();
-}
-
-function closeAddModal() {
-    document.getElementById('addCardModal').classList.add('hidden');
-    resetForms();
-    stopScanner();
-}
-
-// Tab switching
-function switchTab(tab) {
-    const manualTab = document.getElementById('tab-manual');
-    const scanTab = document.getElementById('tab-scan');
-    const manualPane = document.getElementById('manual-pane');
-    const scanPane = document.getElementById('scan-pane');
-
-    if (tab === 'manual') {
-        manualTab.classList.add('border-blue-600', 'text-blue-600');
-        manualTab.classList.remove('border-transparent', 'text-gray-600');
-        scanTab.classList.remove('border-blue-600', 'text-blue-600');
-        scanTab.classList.add('border-transparent', 'text-gray-600');
-        manualPane.classList.remove('hidden');
-        scanPane.classList.add('hidden');
+    // Close modal
+    closeModalBtn.addEventListener('click', function() {
+        modal.classList.add('hidden');
         stopScanner();
-    } else {
-        scanTab.classList.add('border-blue-600', 'text-blue-600');
-        scanTab.classList.remove('border-transparent', 'text-gray-600');
-        manualTab.classList.remove('border-blue-600', 'text-blue-600');
-        manualTab.classList.add('border-transparent', 'text-gray-600');
-        scanPane.classList.remove('hidden');
-        manualPane.classList.add('hidden');
-        startScanner();
-    }
+        resetForm();
+    });
 
-    lucide.createIcons();
-}
-
-// Auto-detect barcode type from card number
-function detectBarcodeType(code) {
-    code = code.trim().replace(/\s/g, '');
-    const isNumeric = /^\d+$/.test(code);
-
-    if (isNumeric) {
-        if (code.length === 13) return 'ean13';
-        if (code.length === 8)  return 'ean8';
-        if (code.length === 12) return 'upca';
-        if (code.length % 2 === 0) return 'itf';
-    }
-    return 'code128';
-}
-
-// Scanner functions
-async function startScanner() {
-    if (!codeReader) {
-        codeReader = new ZXing.BrowserMultiFormatReader();
-    }
-
-    try {
-        const videoInputDevices = await codeReader.listVideoInputDevices();
-
-        if (videoInputDevices.length === 0) {
-            alert('No camera available');
-            return;
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+            stopScanner();
+            resetForm();
         }
+    });
 
-        // Use back camera if available
-        const selectedDevice = videoInputDevices.find(function(device) {
-            return device.label.toLowerCase().includes('back');
-        }) || videoInputDevices[0];
+    // Tab switching
+    manualTabBtn.addEventListener('click', function() {
+        manualTabBtn.classList.add('border-indigo-500', 'text-indigo-600');
+        manualTabBtn.classList.remove('border-transparent', 'text-gray-500');
+        scanTabBtn.classList.remove('border-indigo-500', 'text-indigo-600');
+        scanTabBtn.classList.add('border-transparent', 'text-gray-500');
+        
+        manualForm.classList.remove('hidden');
+        scanForm.classList.add('hidden');
+        
+        stopScanner();
+    });
 
-        codeReader.decodeFromVideoDevice(
-            selectedDevice.deviceId,
-            'scanner-video',
-            function(result, err) {
-                if (result) onBarcodeScanned(result);
+    scanTabBtn.addEventListener('click', function() {
+        scanTabBtn.classList.add('border-indigo-500', 'text-indigo-600');
+        scanTabBtn.classList.remove('border-transparent', 'text-gray-500');
+        manualTabBtn.classList.remove('border-indigo-500', 'text-indigo-600');
+        manualTabBtn.classList.add('border-transparent', 'text-gray-500');
+        
+        scanForm.classList.remove('hidden');
+        manualForm.classList.add('hidden');
+        
+        initScanner();
+    });
+
+    // Initialize barcode scanner
+    function initScanner() {
+        if (isScanning) return;
+        
+        const videoElement = document.getElementById('scanner-video');
+        const scanResult = document.getElementById('scan-result');
+        const scanResultText = document.getElementById('scan-result-text');
+        
+        // Hide result initially
+        scanResult.classList.add('hidden');
+        
+        // Use ZXing browser library
+        codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+        
+        codeReader.decodeFromVideoDevice(null, videoElement, function(result, error) {
+            if (result) {
+                // ✅ BARCODE DECODED!
+                console.log('Barcode decoded:', result.text);
+                
+                // Show result
+                scanResultText.textContent = result.text;
+                scanResult.classList.remove('hidden');
+                
+                // Fill the card number field
+                cardNumberInput.value = result.text;
+                
+                // Auto-detect barcode type
+                const detectedType = detectBarcodeType(result.text);
+                document.getElementById('barcode-type').value = detectedType;
+                
+                // Stop scanner and switch to manual tab
+                stopScanner();
+                
+                // Switch to manual tab to show the filled form
+                manualTabBtn.click();
+                
+                // Optional: Show success message
+                showNotification('Barcode scanned successfully!', 'success');
             }
-        );
-
-    } catch (error) {
-        console.error('Scanner error:', error);
-        alert('Error starting scanner');
+            
+            if (error && error.name !== 'NotFoundException') {
+                console.error('Scanner error:', error);
+            }
+        }).then(function() {
+            isScanning = true;
+            console.log('Scanner started');
+        }).catch(function(err) {
+            console.error('Failed to start scanner:', err);
+            showNotification('Failed to access camera. Please check permissions.', 'error');
+        });
     }
-}
 
-function stopScanner() {
-    if (codeReader) codeReader.reset();
-}
-
-function onBarcodeScanned(result) {
-    scannedData = {
-        text: result.text,
-        format: result.format.toLowerCase()
-    };
-
-    stopScanner();
-
-    document.getElementById('scanned-code').textContent = result.text;
-    document.getElementById('scanner-result').classList.remove('hidden');
-    document.getElementById('scanner-info').classList.add('hidden');
-    document.getElementById('scanForm').classList.remove('hidden');
-
-    lucide.createIcons();
-}
-
-// View barcode
-function viewBarcode(cardId) {
-    window.location.href = '/loyalty-cards/' + cardId + '/';
-}
-
-// Reset forms
-function resetForms() {
-    document.getElementById('addCardForm').reset();
-    document.getElementById('scanForm').reset();
-    document.getElementById('scanForm').classList.add('hidden');
-    document.getElementById('scanner-result').classList.add('hidden');
-    document.getElementById('scanner-info').classList.remove('hidden');
-    scannedData = null;
-}
-
-// Get CSRF token from meta tag
-function getCsrfToken() {
-    const meta = document.querySelector('meta[name="csrf-token"]');
-    if (meta) {
-        return meta.getAttribute('content');
+    // Stop scanner
+    function stopScanner() {
+        if (codeReader) {
+            codeReader.reset();
+            codeReader = null;
+        }
+        isScanning = false;
+        
+        const scanResult = document.getElementById('scan-result');
+        if (scanResult) {
+            scanResult.classList.add('hidden');
+        }
     }
-    console.error('CSRF meta tag not found!');
-    return null;
-}
 
-// Save card
-async function saveCard() {
-    const activeTab = document.getElementById('manual-pane').classList.contains('hidden') ? 'scan' : 'manual';
-    let data;
+    // Detect barcode type from number
+    function detectBarcodeType(code) {
+        code = code.trim();
+        
+        if (/^\d{13}$/.test(code)) return 'ean13';
+        if (/^\d{8}$/.test(code)) return 'ean8';
+        if (/^\d{12}$/.test(code)) return 'upca';
+        if (/^\d+$/.test(code) && code.length % 2 === 0) return 'itf';
+        
+        return 'code128';
+    }
 
-    if (activeTab === 'manual') {
-        const cardNumber = document.getElementById('cardNumber').value;
-        data = {
-            store_name: document.getElementById('storeName').value,
-            card_number: cardNumber,
-            barcode_type: detectBarcodeType(cardNumber),
-            notes: document.getElementById('notes').value
-        };
-    } else {
-        if (!scannedData) {
-            alert('Please scan a barcode first');
+    // Save card
+    saveCardBtn.addEventListener('click', function() {
+        saveCard();
+    });
+
+    function saveCard() {
+        const storeName = document.getElementById('store-name').value.trim();
+        const cardNumber = cardNumberInput.value.trim();
+        const notes = document.getElementById('notes').value.trim();
+        
+        if (!storeName || !cardNumber) {
+            showNotification('Please fill in all required fields', 'error');
             return;
         }
-        data = {
-            store_name: document.getElementById('storeNameScan').value,
-            card_number: scannedData.text,
-            barcode_type: detectBarcodeType(scannedData.text),
-            notes: document.getElementById('notesScan').value
+        
+        const barcodeType = detectBarcodeType(cardNumber);
+        
+        const data = {
+            store_name: storeName,
+            card_number: cardNumber,
+            barcode_type: barcodeType,
+            notes: notes
         };
-    }
-
-    if (!data.store_name || !data.card_number) {
-        alert('Please fill in all required fields');
-        return;
-    }
-
-    const csrfToken = getCsrfToken();
-    if (!csrfToken) {
-        alert('Page error. Please refresh and try again.');
-        return;
-    }
-
-    try {
-        const response = await fetch('/loyalty-cards/create/', {
+        
+        fetch('/loyalty-cards/create/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
+                'X-CSRFToken': getCsrfToken()
             },
             body: JSON.stringify(data)
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                showNotification('Card added successfully!', 'success');
+                modal.classList.add('hidden');
+                resetForm();
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showNotification(data.error || 'Failed to add card', 'error');
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            showNotification('An error occurred', 'error');
         });
-
-        const result = await response.json();
-
-        if (result.success) {
-            alert('Card added successfully!');
-            location.reload();
-        } else {
-            alert('Error: ' + result.error);
-        }
-
-    } catch (error) {
-        console.error('Fetch error:', error);
-        alert('Error saving card');
     }
-}
+
+    // Reset form
+    function resetForm() {
+        document.getElementById('store-name').value = '';
+        cardNumberInput.value = '';
+        document.getElementById('notes').value = '';
+        document.getElementById('scan-result').classList.add('hidden');
+    }
+
+    // Get CSRF token
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+
+    // Show notification
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ' + 
+            (type === 'success' ? 'bg-green-500' : 'bg-red-500') + ' text-white';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(function() {
+            notification.remove();
+        }, 3000);
+    }
+
+    // Card click handler
+    const cards = document.querySelectorAll('.loyalty-card');
+    cards.forEach(function(card) {
+        card.addEventListener('click', function() {
+            const cardId = this.dataset.cardId;
+            window.location.href = '/loyalty-cards/' + cardId + '/';
+        });
+    });
+});
