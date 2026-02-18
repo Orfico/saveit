@@ -315,26 +315,34 @@ class LoyaltyCardDetailView(LoginRequiredMixin, DetailView):
     
 
 class LoyaltyCardDeleteView(LoginRequiredMixin, View):
+    """Delete a loyalty card"""
+    
     def post(self, request, pk):
         try:
             card = LoyaltyCard.objects.get(pk=pk, user=request.user)
             
-            # Remove from S3 if exists using boto3
+            # Delete from S3 only if barcode image exists
             if card.barcode_image:
-                import boto3
-                s3_client = boto3.client(
-                    's3',
-                    endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                    region_name=settings.AWS_S3_REGION_NAME,
-                    config=boto3.session.Config(s3={'addressing_style': 'path'})
-                )
-                s3_client.delete_object(
-                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-                    Key=card.barcode_image
-                )
+                try:
+                    import boto3
+                    s3_client = boto3.client(
+                        's3',
+                        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+                        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                        region_name=settings.AWS_S3_REGION_NAME,
+                        config=boto3.session.Config(s3={'addressing_style': 'path'})
+                    )
+                    s3_client.delete_object(
+                        Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                        Key=card.barcode_image
+                    )
+                    logger.info(f"Deleted barcode from S3: {card.barcode_image}")
+                except Exception as s3_error:
+                    # Log error but continue with card deletion
+                    logger.warning(f"Failed to delete barcode from S3: {str(s3_error)}")
             
+            # Delete card from database
             card.delete()
             
             return JsonResponse({
@@ -348,7 +356,7 @@ class LoyaltyCardDeleteView(LoginRequiredMixin, View):
                 'error': 'Card not found'
             }, status=404)
         except Exception as e:
-            logger.error(f"Error deleting card: {str(e)}")
+            logger.error(f"Error deleting card: {str(e)}", exc_info=True)
             return JsonResponse({
                 'success': False,
                 'error': 'Error deleting card'
