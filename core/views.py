@@ -312,18 +312,28 @@ class LoyaltyCardDetailView(LoginRequiredMixin, DetailView):
     
     def get_queryset(self):
         return LoyaltyCard.objects.filter(user=self.request.user)
-
+    
 
 class LoyaltyCardDeleteView(LoginRequiredMixin, View):
-    """Delete a loyalty card"""
-    
     def post(self, request, pk):
         try:
             card = LoyaltyCard.objects.get(pk=pk, user=request.user)
             
-            # Delete image
+            # ✅ Elimina da S3 usando boto3
             if card.barcode_image:
-                card.barcode_image.delete()
+                import boto3
+                s3_client = boto3.client(
+                    's3',
+                    endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                    region_name=settings.AWS_S3_REGION_NAME,
+                    config=boto3.session.Config(s3={'addressing_style': 'path'})
+                )
+                s3_client.delete_object(
+                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                    Key=card.barcode_image
+                )
             
             card.delete()
             
@@ -378,11 +388,20 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
             if not store_name or not card_number:
                 return JsonResponse({'success': False, 'error': 'Store name and card number are required'}, status=400)
 
-            # ✅ TEST DIRETTO BOTO3
+            card = LoyaltyCard.objects.create(
+                user=request.user,
+                store_name=store_name,
+                card_number=card_number,
+                barcode_type=barcode_type,
+                notes=notes
+            )
+
+            # Barcode generation
             try:
-                import boto3
-                from botocore.exceptions import ClientError
+                barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number, barcode_type)
                 
+                # ✅ USA BOTO3 DIRETTAMENTE (funziona!)
+                import boto3
                 s3_client = boto3.client(
                     's3',
                     endpoint_url=settings.AWS_S3_ENDPOINT_URL,
@@ -392,77 +411,31 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
                     config=boto3.session.Config(s3={'addressing_style': 'path'})
                 )
                 
-                # Test: lista bucket
-                logger.info("🧪 Testing S3 connection...")
-                response = s3_client.list_objects_v2(
-                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-                    MaxKeys=1
-                )
-                logger.info(f"✅ S3 connection OK! Bucket exists.")
+                filename = f'{store_name}_{card_number}.png'
+                s3_key = f'barcodes/{filename}'
                 
-                # Test: upload file
-                test_content = b"test file content"
+                # Upload diretto
                 s3_client.put_object(
                     Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-                    Key='barcodes/test.txt',
-                    Body=test_content,
+                    Key=s3_key,
+                    Body=barcode_img.read(),  # Leggi i bytes dal ContentFile
+                    ContentType='image/png',
                     ACL='public-read'
                 )
-                logger.info(f"✅ Test file uploaded successfully!")
                 
-            except ClientError as e:
-                logger.error(f"❌ S3 Error: {e.response['Error']}")
-                return JsonResponse({
-                    'success': False,
-                    'error': f"S3 Error: {e.response['Error']['Code']} - {e.response['Error']['Message']}"
-                }, status=500)
-            except Exception as e:
-                logger.error(f"❌ Boto3 Error: {str(e)}", exc_info=True)
-                return JsonResponse({
-                    'success': False,
-                    'error': f"Boto3 Error: {str(e)}"
-                }, status=500)
-            # ✅ FINE TEST
-
-            card = LoyaltyCard.objects.create(
-                user=request.user,
-                store_name=store_name,
-                card_number=card_number,
-                barcode_type=barcode_type,
-                notes=notes
-            )
-
-            card = LoyaltyCard.objects.create(
-                user=request.user,
-                store_name=store_name,
-                card_number=card_number,
-                barcode_type=barcode_type,
-                notes=notes
-            )
-
-            # Barcode generation - catch error explicitly
-            try:
-                barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number, barcode_type)
+                # Costruisci URL pubblico
+                barcode_url = f'https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}'
                 
-                logger.info(f"📤 Attempting to save to S3...")
-                logger.info(f"   Endpoint: {settings.AWS_S3_ENDPOINT_URL}")
-                logger.info(f"   Bucket: {settings.AWS_STORAGE_BUCKET_NAME}")
-                logger.info(f"   Has Access Key: {bool(settings.AWS_ACCESS_KEY_ID)}")
+                # Salva solo il path nel database (non il file)
+                card.barcode_image = s3_key
+                card.save()
                 
-                card.barcode_image.save(
-                    f'{store_name}_{card_number}.png',
-                    barcode_img,
-                    save=True
-                )
-                
-                logger.info(f"✅ Save completed, URL: {card.barcode_image.url}")
-                barcode_url = card.barcode_image.url
+                logger.info(f"✅ Barcode uploaded via boto3: {barcode_url}")
                 
             except Exception as barcode_error:
                 import traceback
-                logger.error(f"❌ Barcode save failed: {str(barcode_error)}")
-                logger.error(traceback.format_exc())
-                card.delete()  # rollback
+                logger.error(f"❌ Barcode error: {str(barcode_error)}", exc_info=True)
+                card.delete()
                 return JsonResponse({
                     'success': False,
                     'error': f'Barcode error: {str(barcode_error)}',
@@ -478,11 +451,9 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
 
         except Exception as e:
             import traceback
-            logger.error(f"❌ Request failed: {str(e)}")
-            logger.error(traceback.format_exc())
+            logger.error(f"❌ Request failed: {str(e)}", exc_info=True)
             return JsonResponse({
                 'success': False,
                 'error': str(e),
                 'traceback': traceback.format_exc()
             }, status=500)
-        

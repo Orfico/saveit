@@ -111,7 +111,7 @@ class LoyaltyCard(models.Model):
         default='code128',
         editable=False  # ✅ Not editable by user, set automatically
     )
-    barcode_image = models.ImageField(upload_to='barcodes/', blank=True, null=True)
+    barcode_image = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

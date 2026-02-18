@@ -45,7 +45,7 @@
             <div class="bg-white rounded-lg shadow-md p-8 text-center">
                 {% if card.barcode_image %}
                     <img id="barcode-image" 
-                         src="{{ card.barcode_image.url }}" 
+                         img src="https://wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media/{{ card.barcode_image }}" 
                          alt="Barcode {{ card.store_name }}"
                          class="mx-auto max-w-full border-4 border-gray-200 rounded-lg p-6 bg-white"
                          data-url="{{ card.barcode_image.url }}"

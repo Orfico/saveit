@@ -115,7 +115,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
-    'storages',
 ]
 
 MIDDLEWARE = [
@@ -312,32 +311,20 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # ============================================================
 
 if os.environ.get('USE_S3', 'False') == 'True':
+    # Supabase S3 credentials (usate direttamente in views.py con boto3)
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'media')
     AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'eu-west-1')
-    AWS_DEFAULT_ACL = 'public-read'
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_QUERYSTRING_AUTH = False
-    AWS_S3_ADDRESSING_STYLE = 'path'
-
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    
     AWS_S3_CUSTOM_DOMAIN = 'wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media'
+    
+    # Non serve più DEFAULT_FILE_STORAGE - usiamo boto3 direttamente
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-
-    # ✅ LOGGING BOTO3
-    import logging
-    logging.getLogger('boto3').setLevel(logging.DEBUG)
-    logging.getLogger('botocore').setLevel(logging.DEBUG)
-    logging.getLogger('s3transfer').setLevel(logging.DEBUG)
-
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# finance_app/settings.py
 
 LOGGING = {
     'version': 1,
