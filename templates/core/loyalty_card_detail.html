@@ -25,7 +25,7 @@
         }
     }
     
-    /* Fullscreen barcode display */
+    /* Landscape mode optimization */
     .barcode-fullscreen {
         display: flex;
         flex-direction: column;
@@ -50,6 +50,16 @@
         object-fit: contain;
     }
     
+    .card-number-display {
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        color: #1f2937;
+        text-align: center;
+        margin-top: 1rem;
+        word-break: break-all;
+    }
+    
     /* Mobile landscape optimization */
     @media screen and (orientation: landscape) and (max-width: 896px) {
         .barcode-fullscreen {
@@ -58,6 +68,10 @@
         
         .barcode-image-container img {
             max-height: 70vh;
+        }
+        
+        .card-number-display {
+            font-size: 1rem;
         }
         
         .action-buttons button {
@@ -91,6 +105,10 @@
                     <p>No barcode available</p>
                 </div>
             {% endif %}
+        </div>
+        
+        <div class="card-number-display">
+            {{ card.card_number }}
         </div>
         
         {% if card.notes %}
@@ -160,4 +178,27 @@
 
 {% block extra_js %}
 <script src="{% static 'core/js/loyalty_card_detail.js' %}"></script>
+<script>
+    // Force landscape orientation on mobile
+    if (window.screen && window.screen.orientation) {
+        try {
+            screen.orientation.lock('landscape').catch(err => {
+                console.log('Orientation lock not supported or denied:', err);
+            });
+        } catch (e) {
+            console.log('Screen orientation API not supported');
+        }
+    }
+    
+    // Unlock orientation when leaving the page
+    window.addEventListener('beforeunload', () => {
+        if (window.screen && window.screen.orientation && screen.orientation.unlock) {
+            try {
+                screen.orientation.unlock();
+            } catch (e) {
+                console.log('Could not unlock orientation');
+            }
+        }
+    });
+</script>
 {% endblock %}
