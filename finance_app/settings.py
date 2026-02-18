@@ -324,9 +324,14 @@ if os.environ.get('USE_S3', 'False') == 'True':
 
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     
-    # pulbic URL for media files
     AWS_S3_CUSTOM_DOMAIN = 'wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media'
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+
+    # ✅ LOGGING BOTO3
+    import logging
+    logging.getLogger('boto3').setLevel(logging.DEBUG)
+    logging.getLogger('botocore').setLevel(logging.DEBUG)
+    logging.getLogger('s3transfer').setLevel(logging.DEBUG)
 
 else:
     MEDIA_URL = '/media/'

@@ -389,14 +389,25 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
             # Barcode generation - catch error explicitly
             try:
                 barcode_img, detected_type = BarcodeGenerator.generate_barcode(card_number, barcode_type)
+                
+                logger.info(f"📤 Attempting to save to S3...")
+                logger.info(f"   Endpoint: {settings.AWS_S3_ENDPOINT_URL}")
+                logger.info(f"   Bucket: {settings.AWS_STORAGE_BUCKET_NAME}")
+                logger.info(f"   Has Access Key: {bool(settings.AWS_ACCESS_KEY_ID)}")
+                
                 card.barcode_image.save(
                     f'{store_name}_{card_number}.png',
                     barcode_img,
                     save=True
                 )
+                
+                logger.info(f"✅ Save completed, URL: {card.barcode_image.url}")
                 barcode_url = card.barcode_image.url
+                
             except Exception as barcode_error:
                 import traceback
+                logger.error(f"❌ Barcode save failed: {str(barcode_error)}")
+                logger.error(traceback.format_exc())
                 card.delete()  # rollback
                 return JsonResponse({
                     'success': False,
@@ -413,8 +424,11 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
 
         except Exception as e:
             import traceback
+            logger.error(f"❌ Request failed: {str(e)}")
+            logger.error(traceback.format_exc())
             return JsonResponse({
                 'success': False,
                 'error': str(e),
                 'traceback': traceback.format_exc()
             }, status=500)
+        
