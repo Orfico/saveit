@@ -427,8 +427,19 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
                     config=boto3.session.Config(s3={'addressing_style': 'path'})
                 )
                 
+                # ✅ Sanitize filename - remove special characters
+                import re
+                from unicodedata import normalize
+                
+                # Normalize unicode characters (à -> a)
+                safe_store_name = normalize('NFKD', store_name).encode('ASCII', 'ignore').decode('ASCII')
+                # Remove any remaining non-alphanumeric characters (keep spaces, dashes, underscores)
+                safe_store_name = re.sub(r'[^\w\s-]', '', safe_store_name)
+                # Replace spaces with underscores
+                safe_store_name = re.sub(r'\s+', '_', safe_store_name)
+                
                 # Upload to Supabase Storage
-                filename = f'{store_name}_{card_number}.png'
+                filename = f'{safe_store_name}_{card_number}.png'
                 s3_key = f'barcodes/{filename}'
                 
                 s3_client.put_object(
