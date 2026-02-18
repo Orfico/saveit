@@ -378,6 +378,60 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
             if not store_name or not card_number:
                 return JsonResponse({'success': False, 'error': 'Store name and card number are required'}, status=400)
 
+            # ✅ TEST DIRETTO BOTO3
+            try:
+                import boto3
+                from botocore.exceptions import ClientError
+                
+                s3_client = boto3.client(
+                    's3',
+                    endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                    region_name=settings.AWS_S3_REGION_NAME,
+                    config=boto3.session.Config(s3={'addressing_style': 'path'})
+                )
+                
+                # Test: lista bucket
+                logger.info("🧪 Testing S3 connection...")
+                response = s3_client.list_objects_v2(
+                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                    MaxKeys=1
+                )
+                logger.info(f"✅ S3 connection OK! Bucket exists.")
+                
+                # Test: upload file
+                test_content = b"test file content"
+                s3_client.put_object(
+                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                    Key='barcodes/test.txt',
+                    Body=test_content,
+                    ACL='public-read'
+                )
+                logger.info(f"✅ Test file uploaded successfully!")
+                
+            except ClientError as e:
+                logger.error(f"❌ S3 Error: {e.response['Error']}")
+                return JsonResponse({
+                    'success': False,
+                    'error': f"S3 Error: {e.response['Error']['Code']} - {e.response['Error']['Message']}"
+                }, status=500)
+            except Exception as e:
+                logger.error(f"❌ Boto3 Error: {str(e)}", exc_info=True)
+                return JsonResponse({
+                    'success': False,
+                    'error': f"Boto3 Error: {str(e)}"
+                }, status=500)
+            # ✅ FINE TEST
+
+            card = LoyaltyCard.objects.create(
+                user=request.user,
+                store_name=store_name,
+                card_number=card_number,
+                barcode_type=barcode_type,
+                notes=notes
+            )
+
             card = LoyaltyCard.objects.create(
                 user=request.user,
                 store_name=store_name,
