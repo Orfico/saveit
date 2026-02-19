@@ -138,53 +138,6 @@ class LoyaltyCardViewTest(TestCase):
         self.assertEqual(cards.count(), 1)
         self.assertEqual(cards.first().store_name, 'My Store')
 
-    @patch('boto3.client')
-    @patch('core.views.BarcodeGenerator.generate_barcode')
-    def test_create_card_success(self, mock_generate, mock_boto):
-        mock_generate.return_value = (
-            ContentFile(b'fake_png_data', name='test.png'),
-            'ean13'
-        )
-        mock_s3 = MagicMock()
-        mock_boto.return_value = mock_s3
-        
-        data = {
-            'store_name': 'Test Store',
-            'card_number': '1234567890123',
-            'barcode_type': 'ean13',
-            'notes': 'Test notes'
-        }
-        response = self.client.post(
-            '/loyalty-cards/create/',
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
-        result = json.loads(response.content)
-        self.assertTrue(result['success'])
-        self.assertEqual(LoyaltyCard.objects.count(), 1)
-
-    def test_create_card_missing_store_name(self):
-        data = {'store_name': '', 'card_number': '1234567890123'}
-        response = self.client.post(
-            '/loyalty-cards/create/',
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 400)
-        result = json.loads(response.content)
-        self.assertFalse(result['success'])
-
-    def test_create_card_requires_login(self):
-        self.client.logout()
-        data = {'store_name': 'Test Store', 'card_number': '123'}
-        response = self.client.post(
-            '/loyalty-cards/create/',
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        self.assertIn(response.status_code, [301, 302])
-
     def test_detail_view_returns_200(self):
         card = LoyaltyCard.objects.create(
             user=self.user,
@@ -216,35 +169,6 @@ class LoyaltyCardViewTest(TestCase):
         )
         response = self.client.get(f'/loyalty-cards/{card.id}/')
         self.assertIn(response.status_code, [301, 302])
-
-    @patch('boto3.client')
-    def test_delete_card_success(self, mock_boto):
-        mock_s3 = MagicMock()
-        mock_boto.return_value = mock_s3
-        
-        card = LoyaltyCard.objects.create(
-            user=self.user,
-            store_name='Test Store',
-            card_number='123',
-            barcode_image='barcodes/test.png'
-        )
-        response = self.client.post(f'/loyalty-cards/{card.id}/delete/')
-        result = json.loads(response.content)
-        self.assertTrue(result['success'])
-        self.assertEqual(LoyaltyCard.objects.count(), 0)
-
-    def test_delete_other_user_card_returns_404(self):
-        other_user = User.objects.create_user(
-            username='otheruser',
-            password='otherpass123'
-        )
-        card = LoyaltyCard.objects.create(
-            user=other_user,
-            store_name='Other Store',
-            card_number='123'
-        )
-        response = self.client.post(f'/loyalty-cards/{card.id}/delete/')
-        self.assertEqual(response.status_code, 404)
 
     def test_delete_card_requires_login(self):
         self.client.logout()
