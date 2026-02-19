@@ -1,5 +1,3 @@
-# core/tests/test_loyalty_cards.py
-
 import json
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
@@ -11,38 +9,19 @@ from core.utils.barcode_generator import BarcodeGenerator
 
 class LoyaltyCardModelTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
-        )
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
 
     def test_loyalty_card_creation(self):
-        card = LoyaltyCard.objects.create(
-            user=self.user,
-            store_name='Test Store',
-            card_number='1234567890123',
-            barcode_type='ean13',
-            notes='Test notes'
-        )
+        card = LoyaltyCard.objects.create(user=self.user, store_name='Test Store', card_number='1234567890123', barcode_type='ean13', notes='Test notes')
         self.assertEqual(card.store_name, 'Test Store')
         self.assertEqual(card.user, self.user)
 
     def test_loyalty_card_str(self):
-        card = LoyaltyCard.objects.create(
-            user=self.user,
-            store_name='Conad',
-            card_number='1234567890123',
-            barcode_type='ean13'
-        )
+        card = LoyaltyCard.objects.create(user=self.user, store_name='Conad', card_number='1234567890123', barcode_type='ean13')
         self.assertEqual(str(card), 'Conad - 1234567890123')
 
     def test_loyalty_card_default_barcode_type(self):
-        card = LoyaltyCard.objects.create(
-            user=self.user,
-            store_name='Test Store',
-            card_number='ABC123'
-        )
+        card = LoyaltyCard.objects.create(user=self.user, store_name='Test Store', card_number='ABC123')
         self.assertEqual(card.barcode_type, 'code128')
 
     def test_loyalty_card_deleted_with_user(self):
@@ -90,11 +69,7 @@ class BarcodeGeneratorTest(TestCase):
 class LoyaltyCardViewTest(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
-        )
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
         self.client.login(username='testuser', password='testpass123')
 
     def test_list_view_requires_login(self):
@@ -115,7 +90,7 @@ class LoyaltyCardViewTest(TestCase):
         self.assertEqual(cards.count(), 1)
         self.assertEqual(cards.first().store_name, 'My Store')
 
-    @patch('core.views.boto3.client')
+    @patch('boto3.client')
     @patch('core.views.BarcodeGenerator.generate_barcode')
     def test_create_card_success(self, mock_generate, mock_boto):
         mock_generate.return_value = (ContentFile(b'fake_png_data', name='test.png'), 'ean13')
@@ -158,7 +133,7 @@ class LoyaltyCardViewTest(TestCase):
         response = self.client.get(f'/loyalty-cards/{card.id}/')
         self.assertIn(response.status_code, [301, 302])
 
-    @patch('core.views.boto3.client')
+    @patch('boto3.client')
     def test_delete_card_success(self, mock_boto):
         mock_s3 = MagicMock()
         mock_boto.return_value = mock_s3
