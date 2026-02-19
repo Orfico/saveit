@@ -2,7 +2,6 @@
 import os
 import dj_database_url
 from pathlib import Path
-from django.utils.csp import CSP
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,82 +25,17 @@ ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',')]
 
 # Content Security Policy
 
-# CSP configuration
-SECURE_CSP = {
-    # Default: allow only same origin
-    "default-src": ["'self'"],
-    
-    # Scripts: Tailwind, Lucide, Chart.js
-    "script-src": [
-        "'self'",
-        "https://cdn.tailwindcss.com",
-        "https://unpkg.com",
-        "https://cdn.jsdelivr.net",
-        "'unsafe-inline'",  # Required for Tailwind CDN and inline scripts
-    ],
-    
-    # Styles: Tailwind CSS
-    "style-src": [
-        "'self'",
-        "https://cdn.tailwindcss.com",
-        "'unsafe-inline'",  # Required for Tailwind utility classes
-    ],
-    
-    # Images: allow self, data URIs, and HTTPS images
-    "img-src": [
-        "'self'",
-        "data:",
-        "https:",
-    ],
-    
-    # Fonts: allow self and data URIs
-    "font-src": [
-        "'self'",
-        "data:",
-    ],
-    
-    # AJAX/WebSocket connections
-    "connect-src": [
-        "'self'",
-        "https://unpkg.com", 
-        "https://cdn.jsdelivr.net",
-    ],
-    
-    # Frames: prevent clickjacking
-    "frame-ancestors": [
-        "'none'",  # Same as X-Frame-Options: DENY
-    ],
-    
-    # Base URI: restrict base tag
-    "base-uri": [
-        "'self'",
-    ],
-    
-    # Form actions: only allow forms to submit to same origin
-    "form-action": [
-        "'self'",
-    ],
-    
-    # Object/Embed: block plugins
-    "object-src": [
-        "'none'",
-    ],
-    
-    # Media: block audio/video from external sources
-    "media-src": [
-        "'self'",
-    ],
-    
-    # Worker scripts
-    "worker-src": [
-        "'self'",
-    ],
-    
-    # Manifests (PWA)
-    "manifest-src": [
-        "'self'",
-    ],
-}
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "https://cdn.tailwindcss.com", "https://unpkg.com", "https://cdn.jsdelivr.net", "'unsafe-inline'")
+CSP_STYLE_SRC = ("'self'", "https://cdn.tailwindcss.com", "'unsafe-inline'")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_FONT_SRC = ("'self'", "data:")
+CSP_CONNECT_SRC = ("'self'", "https://unpkg.com", "https://cdn.jsdelivr.net")
+CSP_FRAME_ANCESTORS = ("'none'",)
+CSP_BASE_URI = ("'self'",)
+CSP_FORM_ACTION = ("'self'",)
+CSP_OBJECT_SRC = ("'none'",)
+CSP_REPORT_URI = ("/csp-report/",)  # Endpoint per ricevere report violazioni CSP
 
 # ============================================
 # APPLICATION DEFINITION

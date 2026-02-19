@@ -1,6 +1,6 @@
 # SaveIt - Personal Finance Manager
 
-A modern Django web application for managing personal finances with transaction tracking, recurring transactions, and insightful analytics.
+A modern Django web application for managing personal finances with transaction tracking, recurring transactions, loyalty cards, and insightful analytics.
 
 # 💰 SaveIt - Personal Finance Manager
 
@@ -17,12 +17,14 @@ A modern Django web application for managing personal finances with transaction 
 - 📊 **Dashboard** with financial overview and statistics
 - 💸 **Transaction Management** - Track income and expenses
 - 🔄 **Recurring Transactions** - Automatic monthly transaction generation
+- 🎫 **Loyalty Cards** - Store and manage digital loyalty cards with barcodes
 - 📱 **Mobile-First Design** - Optimized UX for mobile devices
 - 🏷️ **Categories** - Organize transactions with custom categories
 - 🔍 **Filters & Search** - Find transactions easily
 - 👤 **User Authentication** - Secure login and registration
 - 🔐 **Password Reset** - Email-based password recovery
 - 📈 **Analytics** - Visualize your financial data
+- ☁️ **Cloud Storage** - Barcode images stored on Supabase S3
 - 🛡️ **Enterprise-Grade Security** - CSP, HSTS, secure cookies, HTTPS enforced
 
 ## 🚀 Live Demo
@@ -33,8 +35,10 @@ Visit the live application: [https://saveit-v32r.onrender.com](https://saveit-v3
 
 - **Backend:** Django 6.0, Python 3.12
 - **Database:** PostgreSQL (Production: Supabase), SQLite (Development)
+- **Storage:** Supabase Storage (S3-compatible) with boto3
 - **Frontend:** Tailwind CSS, Lucide Icons
-- **Deployment:** Render
+- **Barcode Generation:** python-barcode, Pillow
+- **Deployment:** Render (512MB RAM, 1 worker gunicorn)
 - **CI/CD:** GitHub Actions
 - **Email:** Resend API
 - **Security:** 
@@ -43,6 +47,28 @@ Visit the live application: [https://saveit-v32r.onrender.com](https://saveit-v3
   - SRI (Subresource Integrity)
   - Secure cookies (HttpOnly, Secure, SameSite)
   - HTTPS enforced
+
+## 🎫 Loyalty Cards Feature
+
+SaveIt includes a powerful loyalty cards manager that allows you to:
+
+- **Store digital cards** - Keep all your loyalty cards in one place
+- **Auto-generate barcodes** - Automatically creates barcodes from card numbers
+- **Multiple formats** - Supports EAN-13, EAN-8, UPC-A, Code128, and ITF
+- **Mobile-friendly** - Large, full-screen barcode display optimized for scanners
+- **Cloud storage** - Barcode images stored on Supabase Storage (S3-compatible)
+- **Download & Share** - Save or share barcode images
+- **Print ready** - Optimized print view
+
+### Supported Barcode Types
+
+| Type | Example | Auto-detected |
+|------|---------|---------------|
+| EAN-13 | 4006381333931 | ✅ 13 digits |
+| EAN-8 | 96385074 | ✅ 8 digits |
+| UPC-A | 012345678905 | ✅ 12 digits |
+| Code128 | ABC-1234567 | ✅ Default |
+| ITF | 00123456 | ✅ Even-length numbers |
 
 ## 🔐 Security
 
@@ -87,11 +113,13 @@ Referrer-Policy: strict-origin-when-cross-origin
 - ✅ User-scoped queries (users can only access their own data)
 - ✅ Email-based password reset with time-limited tokens
 
-### **Database Security**
+### **Database & Storage Security**
 - ✅ Row-level access control via Django ORM
 - ✅ PostgreSQL with SSL in production (Supabase)
+- ✅ S3-compatible storage with access keys (Supabase Storage)
 - ✅ No direct database access from frontend
 - ✅ Prepared statements prevent SQL injection
+- ✅ Public barcode images (non-sensitive data only)
 
 ### **Development Best Practices**
 - ✅ Separate development and production configurations
@@ -143,6 +171,14 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 # Database (optional - uses SQLite by default)
 # DATABASE_URL=postgresql://user:password@localhost:5432/saveit_db
 
+# Supabase Storage (for loyalty card barcodes in production)
+USE_S3=False  # Set to True in production
+AWS_ACCESS_KEY_ID=your-supabase-s3-access-key
+AWS_SECRET_ACCESS_KEY=your-supabase-s3-secret-key
+AWS_STORAGE_BUCKET_NAME=media
+AWS_S3_ENDPOINT_URL=https://your-project.storage.supabase.co/storage/v1/s3
+AWS_S3_REGION_NAME=eu-west-1
+
 # Email Configuration (optional for development)
 # RESEND_API_KEY=your-resend-api-key
 # DEFAULT_FROM_EMAIL=SaveIt <noreply@yourdomain.com>
@@ -165,38 +201,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-### 7. Load Initial Data (Optional)
-
-Create some default categories:
-```bash
-python manage.py shell
-```
-```python
-from core.models import Category
-from django.contrib.auth.models import User
-
-user = User.objects.first()  # Or your superuser
-
-# Create default categories
-categories = [
-    {'name': 'Salary', 'type': 'income', 'color': '#10B981'},
-    {'name': 'Food', 'type': 'expense', 'color': '#EF4444'},
-    {'name': 'Transport', 'type': 'expense', 'color': '#F59E0B'},
-    {'name': 'Entertainment', 'type': 'expense', 'color': '#8B5CF6'},
-    {'name': 'Rent', 'type': 'expense', 'color': '#EC4899'},
-]
-
-for cat in categories:
-    Category.objects.create(
-        name=cat['name'],
-        type=cat['type'],
-        user=user,
-        scope='personal',
-        color=cat['color']
-    )
-```
-
-### 8. Run Development Server
+### 7. Run Development Server
 ```bash
 python manage.py runserver
 ```
@@ -240,107 +245,48 @@ saveit/
 ├── core/                               # Main Django app
 │   ├── management/
 │   │   └── commands/
-│   │       └── generate_recurring_transactions.py  # Management command
+│   │       └── generate_recurring_transactions.py
 │   ├── migrations/                     # Database migrations
 │   ├── static/
 │   │   └── core/
 │   │       ├── css/
-│   │       │   └── dashboard.css      # Dashboard-specific styles
+│   │       │   └── dashboard.css
 │   │       └── js/
-│   │           ├── utils.js           # Common utilities
-│   │           └── dashboard.js       # Dashboard-specific logic
+│   │           ├── utils.js
+│   │           ├── dashboard.js
+│   │           ├── loyalty_cards.js   # Loyalty cards management
+│   │           └── loyalty_card_detail.js
 │   ├── templates/
-│   │   ├── base.html                  # Base template with navbar/footer
+│   │   ├── base.html
 │   │   └── core/
 │   │       ├── dashboard.html
 │   │       ├── transaction_list.html
 │   │       ├── transaction_form.html
 │   │       ├── category_list.html
+│   │       ├── loyalty_cards_list.html      # NEW
+│   │       ├── loyalty_card_detail.html     # NEW
 │   │       ├── login.html
 │   │       ├── register.html
 │   │       └── password_reset/
-│   │           ├── password_reset_form.html
-│   │           ├── password_reset_done.html
-│   │           ├── password_reset_confirm.html
-│   │           └── password_reset_complete.html
 │   ├── tests/
 │   │   ├── test_models.py
 │   │   ├── test_forms.py
+│   │   ├── test_loyalty_cards.py      # NEW
 │   │   └── test_commands.py
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── forms.py                       # Django forms
-│   ├── models.py                      # Database models
-│   ├── urls.py                        # URL routing
-│   └── views.py                       # View logic
-├── finance_app/                       # Project settings
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py                    # Main settings (security, DB, etc.)
-│   ├── urls.py                        # Root URL configuration
-│   └── wsgi.py                        # WSGI entry point
-├── staticfiles/                       # Collected static files (production)
-│   ├── core/
-│   │   ├── css/
-│   │   │   └── dashboard.css            
-│   │   └── js/
-│   │       ├── dashboard.js
-│   │       └── utils.js
-│   └── admin/                         # Django admin static files
-├── venv312/                           # Virtual environment (not in Git)
-├── .env                               # Environment variables (not in Git)
-├── .gitignore                         # Git ignore rules
-├── db.sqlite3                         # SQLite database (development only, not in Git)
-├── manage.py                          # Django management script
+│   ├── utils/
+│   │   └── barcode_generator.py       # NEW - Barcode generation logic
+│   ├── models.py                      # Includes LoyaltyCard model
+│   ├── views.py                       # Includes loyalty card views
+│   └── urls.py
+├── finance_app/
+│   ├── settings.py                    # S3 storage configuration
+│   ├── urls.py
+│   └── wsgi.py
+├── build.sh                           # Render build script
+├── start.sh                           # Render start script (migrations + gunicorn)
+├── gunicorn_config.py                 # Gunicorn configuration (1 worker)
 ├── requirements.txt                   # Python dependencies
-└── README.md                          # Project documentation
-```
-
-### **Key Directories**
-
-| Directory | Purpose |
-|-----------|---------|
-| `core/static/core/` | **Source** static files (CSS, JS) - development |
-| `staticfiles/` | **Compiled** static files served in production (generated by `collectstatic`) |
-| `core/templates/` | Django HTML templates |
-| `core/tests/` | Unit tests (95% coverage) |
-| `.github/workflows/` | CI/CD pipelines (testing, automation) |
-| `venv312/` | Python virtual environment (excluded from Git) |
-
-### **Static Files Workflow**
-```
-Development:
-core/static/core/css/custom.css  →  Django serves directly
-core/static/core/js/utils.js     →  Django serves directly
-
-Production (after collectstatic):
-core/static/core/css/custom.css  →  Copied to staticfiles/core/css/custom.css
-core/static/core/js/utils.js     →  Copied to staticfiles/core/js/utils.js
-                                 →  Served by WhiteNoise with compression
-```
-
-### **Build Process**
-```bash
-# Development
-python manage.py runserver
-# Django serves files from core/static/ directly
-
-# Production (Render)
-python manage.py collectstatic --noinput
-# Collects all static files into staticfiles/
-# WhiteNoise serves staticfiles/ with compression and caching
-```
-
-### **Security Note**
-
-All sensitive files are excluded from Git:
-- `.env` - Environment variables
-- `db.sqlite3` - Local database
-- `venv312/` - Virtual environment
-- `staticfiles/` - Generated files (recreated on each deploy)
-- `__pycache__/` - Python cache
-- `*.pyc` - Compiled Python files
+└── README.md
 ```
 
 ## 🔐 Environment Variables
@@ -351,6 +297,12 @@ All sensitive files are excluded from Git:
 | `DEBUG` | No | `False` | Debug mode (use `True` for development) |
 | `ALLOWED_HOSTS` | No | `localhost,127.0.0.1` | Comma-separated list of allowed hosts |
 | `DATABASE_URL` | No | SQLite | PostgreSQL connection string |
+| `USE_S3` | No | `False` | Enable Supabase S3 storage |
+| `AWS_ACCESS_KEY_ID` | Yes (prod) | - | Supabase S3 access key |
+| `AWS_SECRET_ACCESS_KEY` | Yes (prod) | - | Supabase S3 secret key |
+| `AWS_STORAGE_BUCKET_NAME` | No | `media` | S3 bucket name |
+| `AWS_S3_ENDPOINT_URL` | Yes (prod) | - | Supabase S3 endpoint |
+| `AWS_S3_REGION_NAME` | No | `eu-west-1` | S3 region |
 | `RESEND_API_KEY` | No | Console | Resend API key for emails |
 | `DEFAULT_FROM_EMAIL` | No | - | From email address |
 
@@ -366,6 +318,12 @@ SECRET_KEY=<generate-with-secrets.token_urlsafe(50)>
 DEBUG=False
 ALLOWED_HOSTS=your-app.onrender.com
 DATABASE_URL=<supabase-postgresql-url>
+USE_S3=True
+AWS_ACCESS_KEY_ID=<supabase-s3-access-key>
+AWS_SECRET_ACCESS_KEY=<supabase-s3-secret-key>
+AWS_STORAGE_BUCKET_NAME=media
+AWS_S3_ENDPOINT_URL=https://your-project.storage.supabase.co/storage/v1/s3
+AWS_S3_REGION_NAME=eu-west-1
 RESEND_API_KEY=<your-resend-key>
 ```
 
@@ -373,35 +331,48 @@ RESEND_API_KEY=<your-resend-key>
 
 **Build Command:**
 ```bash
-pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+./build.sh
 ```
 
 **Start Command:**
 ```bash
-gunicorn finance_app.wsgi:application
+./start.sh
 ```
 
-### Security Checklist for Production
+### Supabase Setup
 
-- ✅ `DEBUG=False` in environment variables
-- ✅ `SECRET_KEY` is strong (50+ characters, random)
-- ✅ `ALLOWED_HOSTS` includes only your domain
-- ✅ Database uses SSL connection (Supabase)
-- ✅ HTTPS enforced (automatic on Render)
-- ✅ Environment variables never committed to Git
+#### 1. **Database (PostgreSQL)**
+1. Create a project on Supabase
+2. Go to **Settings → Database**
+3. Copy the **Connection String** (Transaction pooler mode)
+4. Add to Render as `DATABASE_URL`
 
-### Database (Supabase)
+#### 2. **Storage (S3-compatible)**
+1. Go to **Storage** in Supabase dashboard
+2. Create a bucket named `media` (public)
+3. Go to **Settings → Storage**
+4. Enable **S3 Access**
+5. Generate access keys
+6. Add to Render:
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `AWS_S3_ENDPOINT_URL` (from Supabase Storage settings)
 
-1. Create a PostgreSQL database on Supabase
-2. Copy the connection string
-3. Add to Render environment variables as `DATABASE_URL`
+### Memory Optimization (Render Free Tier)
+
+The app is optimized for Render's free tier (512MB RAM):
+
+- **1 gunicorn worker** (instead of 2+)
+- **Reduced logging** (WARNING level, no boto3 DEBUG)
+- **120s timeout** for slow requests
+- **Migrations run on startup** (not during build)
 
 ## 📊 CI/CD
 
 The project uses GitHub Actions for:
 
 - **Automated Testing** - Runs tests on every push
-- **Code Coverage** - Tracks test coverage
+- **Code Coverage** - Tracks test coverage (95%+)
 - **Recurring Transactions** - Generates transactions monthly
 
 See `.github/workflows/` for workflow configurations.
@@ -413,19 +384,6 @@ See `.github/workflows/` for workflow configurations.
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-## 🧹 Code Quality
-```bash
-# Run tests
-python manage.py test
-
-# Check for migrations
-python manage.py makemigrations --check --dry-run
-
-# Format code (optional)
-black core/
-flake8 core/
-```
 
 ## 📝 License
 
@@ -439,10 +397,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - Django framework
-- Tailwind CSS
-- Lucide Icons
+- Tailwind CSS & Lucide Icons
 - Render for hosting
-- Supabase for database
+- Supabase for database & storage
+- python-barcode for barcode generation
 
 ## 📧 Support
 
