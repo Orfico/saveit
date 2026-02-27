@@ -386,95 +386,109 @@ def validate_barcode(request):
     
 class LoyaltyCardCreateView(LoginRequiredMixin, View):
     """Create a new loyalty card with barcode"""
-    
+
     def post(self, request):
         try:
             data = json.loads(request.body)
             store_name = data.get('store_name', '').strip()
             card_number = data.get('card_number', '').strip()
             barcode_type = data.get('barcode_type', 'code128')
-            notes = data.get('notes', '')
+            notes = data.get('notes', '').strip()
 
             if not store_name or not card_number:
                 return JsonResponse({
-                    'success': False, 
+                    'success': False,
                     'error': 'Store name and card number are required'
                 }, status=400)
 
-            card = LoyaltyCard.objects.create(
+            # Generate barcode
+            barcode_file, detected_type = BarcodeGenerator.generate_barcode(
+                card_number, barcode_type
+            )
+
+            # Create LoyaltyCard instance
+            card = LoyaltyCard(
                 user=request.user,
                 store_name=store_name,
                 card_number=card_number,
-                barcode_type=barcode_type,
+                barcode_type=detected_type,
                 notes=notes
             )
 
-            try:
-                # Generate barcode image
-                barcode_img, detected_type = BarcodeGenerator.generate_barcode(
-                    card_number, 
-                    barcode_type
-                )
-                
-                # Initialize S3 client
-                import boto3
-                s3_client = boto3.client(
-                    's3',
-                    endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                    region_name=settings.AWS_S3_REGION_NAME,
-                    config=boto3.session.Config(s3={'addressing_style': 'path'})
-                )
-                
-                # ✅ Sanitize filename - remove special characters
-                import re
-                from unicodedata import normalize
-                
-                # Normalize unicode characters (à -> a)
-                safe_store_name = normalize('NFKD', store_name).encode('ASCII', 'ignore').decode('ASCII')
-                # Remove any remaining non-alphanumeric characters (keep spaces, dashes, underscores)
-                safe_store_name = re.sub(r'[^\w\s-]', '', safe_store_name)
-                # Replace spaces with underscores
-                safe_store_name = re.sub(r'\s+', '_', safe_store_name)
-                
-                # Upload to Supabase Storage
-                filename = f'{safe_store_name}_{card_number}.png'
-                s3_key = f'barcodes/{filename}'
-                
-                s3_client.put_object(
-                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-                    Key=s3_key,
-                    Body=barcode_img.read(),
-                    ContentType='image/png',
-                    ACL='public-read'
-                )
-                
-                # Save S3 path to database
-                card.barcode_image = s3_key
-                card.save()
-                
-                # Build public URL
-                barcode_url = f'https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}'
-                
-            except Exception as barcode_error:
-                logger.error(f"Barcode upload failed: {str(barcode_error)}", exc_info=True)
-                card.delete()
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Failed to generate barcode'
-                }, status=500)
+            # Check storage backend
+            if os.environ.get('USE_S3', 'False') == 'True':
+                # Upload to Supabase S3
+                try:
+                    import boto3
+                    import re
+                    from unicodedata import normalize
+                    
+                    s3_client = boto3.client(
+                        's3',
+                        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+                        region_name=settings.AWS_S3_REGION_NAME,
+                        config=boto3.session.Config(s3={'addressing_style': 'path'})
+                    )
 
+                    # Sanitize filename - remove special characters
+                    safe_store_name = normalize('NFKD', store_name).encode('ASCII', 'ignore').decode('ASCII')
+                    safe_store_name = re.sub(r'[^\w\s-]', '', safe_store_name)
+                    safe_store_name = safe_store_name.replace(' ', '_')
+                    
+                    filename = f"{safe_store_name}_{card_number}.png"
+                    s3_path = f'barcodes/{filename}'
+
+                    s3_client.put_object(
+                        Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                        Key=s3_path,
+                        Body=barcode_file.read(),
+                        ContentType='image/png'
+                    )
+
+                    card.barcode_image = s3_path
+                    logger.info(f"Barcode uploaded to S3: {s3_path}")
+
+                except Exception as e:
+                    logger.error(f"Barcode upload failed: {e}")
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Failed to upload barcode'
+                    }, status=500)
+            else:
+                # Save to local media folder
+                filename = f"{store_name.replace(' ', '_')}_{card_number}.png"
+                local_path = os.path.join('barcodes', filename)
+                full_path = os.path.join(settings.MEDIA_ROOT, local_path)
+                
+                # Create directory if it doesn't exist
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                
+                # Save the file
+                with open(full_path, 'wb') as f:
+                    f.write(barcode_file.read())
+                
+                # Normalize path for URL (forward slashes)
+                card.barcode_image = local_path.replace('\\', '/')
+                logger.info(f"Barcode saved locally: {local_path}")
+
+            # Save card to database
+            card.save()
+
+            # Return success response
             return JsonResponse({
                 'success': True,
-                'card_id': card.id,
-                'barcode_url': barcode_url,
-                'message': 'Card added successfully'
+                'card': {
+                    'id': card.id,
+                    'store_name': card.store_name,
+                    'barcode_url': card.get_barcode_url()
+                }
             })
 
         except Exception as e:
-            logger.error(f"Card creation failed: {str(e)}", exc_info=True)
+            logger.error(f"Error creating loyalty card: {e}")
             return JsonResponse({
                 'success': False,
-                'error': 'An error occurred while creating the card'
+                'error': str(e)
             }, status=500)

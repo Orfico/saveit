@@ -117,9 +117,20 @@ class LoyaltyCard(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['store_name']
         verbose_name = 'Loyalty Card'
         verbose_name_plural = 'Loyalty Cards'
     
     def __str__(self):
         return f"{self.store_name} - {self.card_number}"
+    
+    def get_barcode_url(self):
+        """Return the correct barcode URL based on storage backend"""
+        import os
+        if not self.barcode_image:
+            return None
+        
+        if os.environ.get('USE_S3', 'False') == 'True':
+            return f"https://wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media/{self.barcode_image}"
+        else:
+            return f"/media/{self.barcode_image}"

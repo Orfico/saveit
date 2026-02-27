@@ -94,8 +94,8 @@
     <div id="barcode-container" class="bg-white rounded-lg shadow-lg p-6 mb-6 barcode-fullscreen">
         <div class="barcode-image-container">
             {% if card.barcode_image %}
-                <img 
-                    src="https://wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media/{{ card.barcode_image }}" 
+                <img
+                    src="{{ card.get_barcode_url }}"
                     alt="Barcode for {{ card.store_name }}"
                     id="barcode-image"
                     class="rounded-lg"
@@ -171,7 +171,7 @@
     data-card-id="{{ card.id }}"
     data-store-name="{{ card.store_name }}"
     data-card-number="{{ card.card_number }}"
-    data-barcode-url="https://wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media/{{ card.barcode_image }}"
+    data-barcode-url="{{ card.get_barcode_url }}"
     style="display: none;"
 ></div>
 {% endblock %}
