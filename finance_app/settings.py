@@ -2,7 +2,6 @@
 import os
 import dj_database_url
 from pathlib import Path
-from django.utils.csp import CSP
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,97 +10,63 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY SETTINGS
 # ============================================
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv(
     'SECRET_KEY',
     'django-insecure-dev-only-key-DO-NOT-USE-IN-PRODUCTION-12345'
 )
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 # Allowed hosts
 ALLOWED_HOSTS_STR = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',')]
 
-# Content Security Policy
+# ============================================
+# CONTENT SECURITY POLICY (django-csp)
+# ============================================
 
-# CSP configuration
-SECURE_CSP = {
-    # Default: allow only same origin
-    "default-src": ["'self'"],
-    
-    # Scripts: Tailwind, Lucide, Chart.js
-    "script-src": [
-        "'self'",
-        "https://cdn.tailwindcss.com",
-        "https://unpkg.com",
-        "https://cdn.jsdelivr.net",
-        "'unsafe-inline'",  # Required for Tailwind CDN and inline scripts
-    ],
-    
-    # Styles: Tailwind CSS
-    "style-src": [
-        "'self'",
-        "https://cdn.tailwindcss.com",
-        "'unsafe-inline'",  # Required for Tailwind utility classes
-    ],
-    
-    # Images: allow self, data URIs, and HTTPS images
-    "img-src": [
-        "'self'",
-        "data:",
-        "https:",
-    ],
-    
-    # Fonts: allow self and data URIs
-    "font-src": [
-        "'self'",
-        "data:",
-    ],
-    
-    # AJAX/WebSocket connections
-    "connect-src": [
-        "'self'",
-        "https://unpkg.com", 
-        "https://cdn.jsdelivr.net",
-    ],
-    
-    # Frames: prevent clickjacking
-    "frame-ancestors": [
-        "'none'",  # Same as X-Frame-Options: DENY
-    ],
-    
-    # Base URI: restrict base tag
-    "base-uri": [
-        "'self'",
-    ],
-    
-    # Form actions: only allow forms to submit to same origin
-    "form-action": [
-        "'self'",
-    ],
-    
-    # Object/Embed: block plugins
-    "object-src": [
-        "'none'",
-    ],
-    
-    # Media: block audio/video from external sources
-    "media-src": [
-        "'self'",
-    ],
-    
-    # Worker scripts
-    "worker-src": [
-        "'self'",
-    ],
-    
-    # Manifests (PWA)
-    "manifest-src": [
-        "'self'",
-    ],
-}
+CSP_DEFAULT_SRC = ("'self'",)
+
+CSP_SCRIPT_SRC = (
+    "'self'",
+    "https://cdn.tailwindcss.com",
+    "https://unpkg.com",
+    "https://cdn.jsdelivr.net",
+    "'unsafe-inline'",
+)
+
+CSP_STYLE_SRC = (
+    "'self'",
+    "https://cdn.tailwindcss.com",
+    "'unsafe-inline'",
+)
+
+CSP_IMG_SRC = (
+    "'self'",
+    "data:",
+    "https:",
+    "https://wfoxqvvkutzbbphbbvvh.supabase.co",
+)
+
+CSP_FONT_SRC = (
+    "'self'",
+    "data:",
+)
+
+CSP_CONNECT_SRC = (
+    "'self'",
+    "https://unpkg.com",
+    "https://cdn.jsdelivr.net",
+    "https://wfoxqvvkutzbbphbbvvh.supabase.co",  # ✅ Supabase for Service Worker
+)
+
+CSP_FRAME_ANCESTORS = ("'none'",)
+CSP_BASE_URI = ("'self'",)
+CSP_FORM_ACTION = ("'self'",)
+CSP_OBJECT_SRC = ("'none'",)
+CSP_MEDIA_SRC = ("'self'",)
+CSP_WORKER_SRC = ("'self'",)
+CSP_MANIFEST_SRC = ("'self'",)
 
 # ============================================
 # APPLICATION DEFINITION
@@ -120,7 +85,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    "django.middleware.csp.ContentSecurityPolicyMiddleware",
+    'csp.middleware.CSPMiddleware',  # ✅ Correct django-csp middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -138,7 +103,7 @@ ROOT_URLCONF = 'finance_app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # ← IMPORTANTE!
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -158,7 +123,6 @@ WSGI_APPLICATION = 'finance_app.wsgi.application'
 # ============================================
 
 if os.getenv('DATABASE_URL'):
-    # Production database (Supabase PostgreSQL)
     DATABASES = {
         'default': dj_database_url.config(
             default=os.getenv('DATABASE_URL'),
@@ -167,7 +131,6 @@ if os.getenv('DATABASE_URL'):
         )
     }
 else:
-    # Development database (SQLite)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -180,18 +143,10 @@ else:
 # ============================================
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # ============================================
@@ -199,21 +154,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # ============================================
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 # ============================================
-# STATIC FILES (CSS, JavaScript, Images)
+# STATIC FILES
 # ============================================
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# WhiteNoise configuration for serving static files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ============================================
@@ -223,16 +173,13 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
 LOGOUT_REDIRECT_URL = 'core:login'
-
-# Password reset settings
-PASSWORD_RESET_TIMEOUT = 3600  # 1 hour in seconds
+PASSWORD_RESET_TIMEOUT = 3600
 
 # ============================================
 # EMAIL CONFIGURATION
 # ============================================
 
 if os.getenv('RESEND_API_KEY'):
-    # Production - Resend email service
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = 'smtp.resend.com'
     EMAIL_PORT = 587
@@ -241,7 +188,6 @@ if os.getenv('RESEND_API_KEY'):
     EMAIL_HOST_PASSWORD = os.getenv('RESEND_API_KEY')
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SaveIt <onboarding@resend.dev>')
 elif os.getenv('EMAIL_HOST_USER'):
-    # Production - Custom SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
     EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
@@ -250,31 +196,23 @@ elif os.getenv('EMAIL_HOST_USER'):
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f'SaveIt <{EMAIL_HOST_USER}>')
 else:
-    # Development - Console backend (prints emails to console)
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# ============================================
-# SECURITY SETTINGS
-# ============================================
 
 # ============================================
 # COOKIE SECURITY
 # ============================================
 
-# Session cookies
-SESSION_COOKIE_HTTPONLY = True  # Non accessibile da JavaScript
-SESSION_COOKIE_SAMESITE = 'Lax'  # Protezione CSRF
-SESSION_COOKIE_AGE = 1209600  # 2 settimane (in secondi)
-SESSION_COOKIE_NAME = 'saveit_sessionid'  # Nome custom (opzionale)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 1209600
+SESSION_COOKIE_NAME = 'saveit_sessionid'
 
-# CSRF cookies
-CSRF_COOKIE_HTTPONLY = True  # ✅ IMPORTANTE: blocca accesso JS
-CSRF_COOKIE_SAMESITE = 'Lax'  # Protezione CSRF
-CSRF_COOKIE_AGE = 31449600  # 1 anno
-CSRF_COOKIE_NAME = 'saveit_csrftoken'  # Nome custom (opzionale)
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_AGE = 31449600
+CSRF_COOKIE_NAME = 'saveit_csrftoken'
 
-# Additional security headers
-X_FRAME_OPTIONS = 'DENY'  # Previene clickjacking
+X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 
@@ -283,48 +221,33 @@ SECURE_BROWSER_XSS_FILTER = True
 # ============================================
 
 if not DEBUG:
-    # Force HTTPS
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    
-    # HSTS (HTTP Strict Transport Security)
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    
-    # Cookies only over HTTPS
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
 # ============================================
-# DEFAULT PRIMARY KEY FIELD TYPE
+# MEDIA FILES
 # ============================================
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Media files (uploads)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# ============================================================
-# MEDIA FILES
-# ============================================================
-
 if os.environ.get('USE_S3', 'False') == 'True':
-    # Supabase S3 credentials (usate direttamente in views.py con boto3)
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'media')
     AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'eu-west-1')
     AWS_S3_CUSTOM_DOMAIN = 'wfoxqvvkutzbbphbbvvh.supabase.co/storage/v1/object/public/media'
-    
-    # Non serve più DEFAULT_FILE_STORAGE - usiamo boto3 direttamente
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# ============================================
+# LOGGING
+# ============================================
 
 LOGGING = {
     'version': 1,
@@ -343,12 +266,12 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',
+        'level': 'WARNING',
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'WARNING',
             'propagate': False,
         },
         'core': {
@@ -358,3 +281,5 @@ LOGGING = {
         },
     },
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
