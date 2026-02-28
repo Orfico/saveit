@@ -8,7 +8,7 @@
 // ============================================================================
 
 // Cache version - increment this to force cache refresh on all clients
-const CACHE_VERSION = 'saveit-v3';
+const CACHE_VERSION = 'saveit-v4';
 
 // Cache names for different content types
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
