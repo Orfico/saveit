@@ -32,6 +32,7 @@ urlpatterns = [
     path('', include('core.urls')),           
     path('transactions/', include('core.urls')),  
     path('sw.js', service_worker, name='sw'),
+    path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
 ]
 
 if settings.DEBUG:

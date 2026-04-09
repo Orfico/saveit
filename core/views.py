@@ -492,3 +492,39 @@ class LoyaltyCardCreateView(LoginRequiredMixin, View):
                 'success': False,
                 'error': str(e)
             }, status=500)
+        
+class CategoryDeleteView(LoginRequiredMixin, View):
+    """Delete a category if it has no transactions"""
+    
+    def post(self, request, pk):
+        try:
+            category = Category.objects.get(pk=pk, user=request.user)
+            
+            # Check if category has transactions
+            transaction_count = category.transactions.count()
+            
+            if transaction_count > 0:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Cannot delete category with {transaction_count} transaction(s). Move or delete them first.'
+                }, status=400)
+            
+            category_name = category.name
+            category.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Category "{category_name}" deleted successfully'
+            })
+            
+        except Category.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Category not found'
+            }, status=404)
+        except Exception as e:
+            logger.error(f"Error deleting category: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': 'Error deleting category'
+            }, status=500)
