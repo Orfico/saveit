@@ -538,6 +538,11 @@ class RecurringTransactionsView(LoginRequiredMixin, ListView):
             is_recurring=True
         ).select_related('category').order_by('-date')
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.filter(user=self.request.user)
+        return context
+    
 class RecurringTransactionDeleteView(LoginRequiredMixin, View):
     """Delete recurring master and optionally all copies"""
     
