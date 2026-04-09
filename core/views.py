@@ -8,6 +8,7 @@ import os
 from django.conf import settings
 from datetime import timedelta
 from decimal import Decimal
+from django.db import models
 
 # Django core imports
 from django.shortcuts import render, redirect, get_object_or_404
@@ -528,3 +529,13 @@ class CategoryDeleteView(LoginRequiredMixin, View):
                 'success': False,
                 'error': 'Error deleting category'
             }, status=500)
+class CategoryListView(LoginRequiredMixin, ListView):
+    """List and manage user categories"""
+    model = Category
+    template_name = 'core/categories_list.html'
+    context_object_name = 'categories'
+    
+    def get_queryset(self):
+        return Category.objects.filter(user=self.request.user).annotate(
+            transaction_count=models.Count('transactions')
+        ).order_by('type', 'name')

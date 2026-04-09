@@ -48,6 +48,7 @@ urlpatterns = [
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
 
     # Categories
+    path('categories/', views.CategoryListView.as_view(), name='categories_list'),
     path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
 
      # Loyalty Cards

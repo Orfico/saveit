@@ -56,6 +56,12 @@
                         <span>Transactions</span>
                     </a>
 
+                    <a href="{% url 'core:categories_list' %}" 
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'categories_list' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                        <i data-lucide="tag" class="w-4 h-4"></i>
+                        <span>Categories</span>
+                    </a>
+
                     <a href="{% url 'core:loyalty_cards_list' %}" 
                         class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium flex items-center gap-2">
                         <i data-lucide="credit-card" class="w-4 h-4"></i>
@@ -91,6 +97,12 @@
                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'transaction_list' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                         <i data-lucide="list" class="w-4 h-4"></i>
                         <span>Transactions</span>
+                    </a>
+
+                    <a href="{% url 'core:categories_list' %}" 
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'categories_list' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                            <i data-lucide="tag" class="w-4 h-4"></i>
+                            <span>Categories</span>
                     </a>
 
                     <a href="{% url 'core:loyalty_cards_list' %}" 

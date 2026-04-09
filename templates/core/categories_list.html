@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Categories - SaveIt{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-4">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg p-6 mb-6">
+        <h1 class="text-2xl font-bold mb-2">Manage Categories</h1>
+        <p class="text-blue-100 text-sm">View and delete your custom categories</p>
+    </div>
+
+    <!-- Income Categories -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i data-lucide="trending-up" class="w-5 h-5 text-green-600"></i>
+            Income Categories
+        </h2>
+        
+        <div class="space-y-3">
+            {% for category in categories %}
+                {% if category.type == 'IN' %}
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 rounded-full" style="background-color: {{ category.color }};"></div>
+                        <div>
+                            <p class="font-semibold text-gray-900">{{ category.name }}</p>
+                            <p class="text-sm text-gray-500">
+                                {{ category.transaction_count }} transaction{{ category.transaction_count|pluralize }}
+                                {% if category.is_global %}
+                                    <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Global</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if not category.is_global %}
+                        {% if category.transaction_count == 0 %}
+                        <button 
+                            onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+                            class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
+                            title="Delete category"
+                        >
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                        {% else %}
+                        <button 
+                            onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
+                            class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
+                            title="Cannot delete - has transactions"
+                            disabled
+                        >
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-xs text-gray-400 px-2">Global</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% empty %}
+                <p class="text-gray-500 text-center py-4">No income categories</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Expense Categories -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i data-lucide="trending-down" class="w-5 h-5 text-red-600"></i>
+            Expense Categories
+        </h2>
+        
+        <div class="space-y-3">
+            {% for category in categories %}
+                {% if category.type == 'EX' %}
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 rounded-full" style="background-color: {{ category.color }};"></div>
+                        <div>
+                            <p class="font-semibold text-gray-900">{{ category.name }}</p>
+                            <p class="text-sm text-gray-500">
+                                {{ category.transaction_count }} transaction{{ category.transaction_count|pluralize }}
+                                {% if category.is_global %}
+                                    <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Global</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if not category.is_global %}
+                        {% if category.transaction_count == 0 %}
+                        <button 
+                            onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+                            class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
+                            title="Delete category"
+                        >
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                        {% else %}
+                        <button 
+                            onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
+                            class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
+                            title="Cannot delete - has transactions"
+                            disabled
+                        >
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-xs text-gray-400 px-2">Global</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% empty %}
+                <p class="text-gray-500 text-center py-4">No expense categories</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="flex gap-3">
+            <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0"></i>
+            <div class="text-sm text-blue-900">
+                <p class="font-semibold mb-1">About Categories</p>
+                <ul class="list-disc list-inside space-y-1 text-blue-800">
+                    <li>Global categories cannot be deleted</li>
+                    <li>Custom categories can only be deleted if they have no transactions</li>
+                    <li>Create new categories when adding transactions</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="text-center">
+        <a 
+            href="{% url 'core:dashboard' %}" 
+            class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
+        >
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<script>
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                  document.querySelector('meta[name="csrf-token"]')?.content;
+
+async function deleteCategory(categoryId, categoryName) {
+    if (!confirm(`Are you sure you want to delete "${categoryName}"?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/categories/${categoryId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the category');
+    }
+}
+
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+{% endblock %}
