@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recurring Transactions - SaveIt{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-4">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-lg p-6 mb-6">
+        <h1 class="text-2xl font-bold mb-2">Recurring Transactions</h1>
+        <p class="text-purple-100 text-sm">Manage your monthly recurring transaction templates</p>
+    </div>
+
+    <!-- Info Box -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="flex gap-3">
+            <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0"></i>
+            <div class="text-sm text-blue-900">
+                <p class="font-semibold mb-1">How it works</p>
+                <ul class="list-disc list-inside space-y-1 text-blue-800">
+                    <li>These are master templates - copies are generated monthly</li>
+                    <li>Updating a template can update all future copies</li>
+                    <li>Deleting a template can delete all future copies</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recurring Transactions List -->
+    {% if recurring_transactions %}
+    <div class="space-y-4">
+        {% for transaction in recurring_transactions %}
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <!-- Transaction Info -->
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-3 h-3 rounded-full" style="background-color: {{ transaction.category.color }};"></div>
+                        <h3 class="text-lg font-bold text-gray-900">{{ transaction.description }}</h3>
+                        <span class="px-2 py-1 text-xs rounded-full {% if transaction.amount > 0 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ transaction.category.get_type_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-gray-600">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="tag" class="w-4 h-4"></i>
+                            {{ transaction.category.name }}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="euro" class="w-4 h-4"></i>
+                            <span class="font-semibold {% if transaction.amount > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                €{{ transaction.amount|floatformat:2 }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            Day {{ transaction.date.day }} of month
+                        </div>
+                    </div>
+                    
+                    {% if transaction.notes %}
+                    <p class="text-sm text-gray-500 mt-2">{{ transaction.notes }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2">
+                    <button 
+                        onclick="editTransaction({{ transaction.id }}, '{{ transaction.description|escapejs }}', {{ transaction.amount }}, {{ transaction.category.id }}, '{{ transaction.notes|escapejs }}')"
+                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                    >
+                        <i data-lucide="edit" class="w-4 h-4"></i>
+                        <span>Edit</span>
+                    </button>
+                    <button 
+                        onclick="deleteTransaction({{ transaction.id }}, '{{ transaction.description|escapejs }}')"
+                        class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                    >
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <span>Delete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-lg p-12 text-center">
+        <i data-lucide="repeat" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">No Recurring Transactions</h3>
+        <p class="text-gray-600 mb-6">You haven't set up any recurring transactions yet.</p>
+        <a 
+            href="{% url 'core:transaction_create' %}" 
+            class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition"
+        >
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            Create First Transaction
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="text-center mt-6">
+        <a 
+            href="{% url 'core:dashboard' %}" 
+            class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
+        >
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold mb-4">Edit Recurring Transaction</h3>
+        
+        <form id="editForm" class="space-y-4">
+            <input type="hidden" id="editId">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <input 
+                    type="text" 
+                    id="editDescription"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Amount (€)</label>
+                <input 
+                    type="number" 
+                    step="0.01"
+                    id="editAmount"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select 
+                    id="editCategory"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea 
+                    id="editNotes"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    rows="3"
+                ></textarea>
+            </div>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" id="updateCopies" class="mt-1">
+                    <span class="text-sm text-yellow-900">
+                        <strong>Update all future copies</strong><br>
+                        This will update all future monthly copies with these new values
+                    </span>
+                </label>
+            </div>
+            
+            <div class="flex gap-2">
+                <button 
+                    type="submit"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition"
+                >
+                    Save Changes
+                </button>
+                <button 
+                    type="button"
+                    onclick="closeEditModal()"
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold transition"
+                >
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                  document.querySelector('meta[name="csrf-token"]')?.content;
+
+function editTransaction(id, description, amount, categoryId, notes) {
+    document.getElementById('editId').value = id;
+    document.getElementById('editDescription').value = description;
+    document.getElementById('editAmount').value = amount;
+    document.getElementById('editCategory').value = categoryId;
+    document.getElementById('editNotes').value = notes || '';
+    document.getElementById('updateCopies').checked = false;
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+}
+
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const id = document.getElementById('editId').value;
+    const updateCopies = document.getElementById('updateCopies').checked;
+    
+    try {
+        const response = await fetch(`/recurring-transactions/${id}/update/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                description: document.getElementById('editDescription').value,
+                amount: parseFloat(document.getElementById('editAmount').value),
+                category_id: parseInt(document.getElementById('editCategory').value),
+                notes: document.getElementById('editNotes').value,
+                update_copies: updateCopies
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while updating the transaction');
+    }
+});
+
+async function deleteTransaction(id, description) {
+    const deleteCopies = confirm(
+        `Delete recurring transaction "${description}"?\n\n` +
+        'Click OK to also delete all future copies, or Cancel to keep them.'
+    );
+    
+    if (deleteCopies === null) return; // User cancelled first prompt
+    
+    try {
+        const response = await fetch(`/recurring-transactions/${id}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                delete_copies: deleteCopies
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the transaction');
+    }
+}
+
+// Close modal on outside click
+document.getElementById('editModal').addEventListener('click', (e) => {
+    if (e.target.id === 'editModal') {
+        closeEditModal();
+    }
+});
+
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+{% endblock %}

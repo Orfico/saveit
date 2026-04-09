@@ -525,3 +525,128 @@ class CategoryListView(LoginRequiredMixin, ListView):
         return Category.objects.filter(user=self.request.user).annotate(
             transaction_count=models.Count('transactions')
         ).order_by('type', 'name')
+    
+class RecurringTransactionsView(LoginRequiredMixin, ListView):
+    """Manage recurring transaction templates"""
+    model = Transaction
+    template_name = 'core/recurring_transactions.html'
+    context_object_name = 'recurring_transactions'
+    
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            user=self.request.user,
+            is_recurring=True
+        ).select_related('category').order_by('-date')
+    
+class RecurringTransactionDeleteView(LoginRequiredMixin, View):
+    """Delete recurring master and optionally all copies"""
+    
+    def post(self, request, pk):
+        try:
+            data = json.loads(request.body)
+            delete_copies = data.get('delete_copies', False)
+            
+            # Get master transaction
+            master = Transaction.objects.get(pk=pk, user=request.user, is_recurring=True)
+            
+            deleted_count = 0
+            
+            # Delete copies if requested
+            if delete_copies:
+                # Find all copies: same user, category, description, amount
+                copies = Transaction.objects.filter(
+                    user=request.user,
+                    category=master.category,
+                    description=master.description,
+                    amount=master.amount,
+                    is_recurring=False,
+                    date__gte=master.date  # Only future/current copies
+                )
+                deleted_count = copies.count()
+                copies.delete()
+            
+            # Delete master
+            master.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Recurring transaction deleted. {"" if not delete_copies else f"{deleted_count} copies also deleted."}'
+            })
+            
+        except Transaction.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Recurring transaction not found'
+            }, status=404)
+        except Exception as e:
+            logger.error(f"Error deleting recurring transaction: {e}")
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+
+class RecurringTransactionUpdateView(LoginRequiredMixin, View):
+    """Update recurring master and optionally all future copies"""
+    
+    def post(self, request, pk):
+        try:
+            data = json.loads(request.body)
+            update_copies = data.get('update_copies', False)
+            
+            # Get master transaction
+            master = Transaction.objects.get(pk=pk, user=request.user, is_recurring=True)
+            
+            # Store old values for finding copies
+            old_category = master.category
+            old_description = master.description
+            old_amount = master.amount
+            
+            # Update master
+            if 'amount' in data:
+                master.amount = data['amount']
+            if 'category_id' in data:
+                master.category_id = data['category_id']
+            if 'description' in data:
+                master.description = data['description']
+            if 'notes' in data:
+                master.notes = data['notes']
+            
+            master.save()
+            
+            updated_count = 0
+            
+            # Update future copies if requested
+            if update_copies:
+                today = timezone.now().date()
+                copies = Transaction.objects.filter(
+                    user=request.user,
+                    category=old_category,
+                    description=old_description,
+                    amount=old_amount,
+                    is_recurring=False,
+                    date__gte=today  # Only future copies
+                )
+                
+                updated_count = copies.update(
+                    amount=master.amount,
+                    category=master.category,
+                    description=master.description,
+                    notes=master.notes
+                )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Recurring transaction updated. {"" if not update_copies else f"{updated_count} future copies also updated."}'
+            })
+            
+        except Transaction.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Recurring transaction not found'
+            }, status=404)
+        except Exception as e:
+            logger.error(f"Error updating recurring transaction: {e}")
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
