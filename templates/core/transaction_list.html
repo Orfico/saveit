@@ -18,48 +18,94 @@
     </a>
   </div>
 
-  <!-- Filtri -->
-  <div class="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
-    <form method="get" class="space-y-4">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-          <select name="category" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
-            <option value="">All Categories</option>
-            {% for category in categories %}
-              <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
-                {{ category.name }}
-              </option>
-            {% endfor %}
-          </select>
+<!-- Search & Filters Section -->
+<div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+    <form method="GET" action="{% url 'core:transaction_list' %}" class="space-y-4">
+        <!-- Search Bar (Primary) -->
+        <div class="w-full">
+            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <i data-lucide="search" class="w-4 h-4"></i>
+                Search Transactions
+            </label>
+            <div class="flex gap-2">
+                <input 
+                    type="text" 
+                    name="search" 
+                    value="{{ search_query }}"
+                    placeholder="Search description, notes, or category..."
+                    class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                <button 
+                    type="submit" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2"
+                >
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Search</span>
+                </button>
+            </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
-          <input type="date" name="date_from" value="{{ request.GET.date_from }}"
-                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
-        </div>
+        <!-- Advanced Filters (Collapsible on mobile) -->
+        <details class="border-t pt-4">
+            <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-blue-600 flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4"></i>
+                Advanced Filters
+            </summary>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                <!-- Category Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select name="category" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
-          <input type="date" name="date_to" value="{{ request.GET.date_to }}"
-                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
-        </div>
+                <!-- Date From -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                    <input 
+                        type="date" 
+                        name="date_from" 
+                        value="{{ request.GET.date_from }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    >
+                </div>
 
-        <div class="flex items-end gap-2">
-          <button type="submit" 
-                  class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold transition flex items-center justify-center gap-2">
-            <i data-lucide="filter" class="w-4 h-4"></i>
-            Filter
-          </button>
-          <a href="{% url 'core:transaction_list' %}" 
-             class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 font-semibold transition flex items-center justify-center">
-            <i data-lucide="x" class="w-4 h-4"></i>
-          </a>
-        </div>
-      </div>
+                <!-- Date To -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                    <input 
+                        type="date" 
+                        name="date_to" 
+                        value="{{ request.GET.date_to }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                    >
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+                <button 
+                    type="submit" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                >
+                    Apply Filters
+                </button>
+                <a 
+                    href="{% url 'core:transaction_list' %}" 
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition"
+                >
+                    Clear All
+                </a>
+            </div>
+        </details>
     </form>
-  </div>
+</div>
 
   <!-- Lista Transazioni -->
   {% if transactions %}

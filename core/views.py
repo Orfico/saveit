@@ -112,50 +112,36 @@ class TransactionListView(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        qs = Transaction.objects.select_related('category').filter(
-            user=self.request.user
-        )
+        queryset = Transaction.objects.filter(user=self.request.user).select_related('category')
         
-        # Filters with validations
-        date_from = self.request.GET.get('date_from')
-        date_to = self.request.GET.get('date_to')
-        category_id = self.request.GET.get('category')
-        search = self.request.GET.get('search', '').strip()
-        
-        if date_from:
-            qs = qs.filter(date__gte=date_from)
-        if date_to:
-            qs = qs.filter(date__lte=date_to)
-        if category_id:
-            qs = qs.filter(category_id=category_id)
-        if search:
-            qs = qs.filter(
-                Q(description__icontains=search) |
-                Q(notes__icontains=search) |  # Search in notes as well
-                Q(category__name__icontains=search)
+        # Search functionality
+        search_query = self.request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(description__icontains=search_query) |
+                models.Q(notes__icontains=search_query) |
+                models.Q(category__name__icontains=search_query)
             )
         
-        return qs.order_by('-date', '-created_at')
+        # Category filter
+        category_id = self.request.GET.get('category')
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        
+        # Date filters
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        
+        return queryset.order_by('-date', '-created_at')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # User + global categories for filter dropdown
-        context['categories'] = Category.objects.filter(
-            Q(user=self.request.user) | Q(scope=Category.GLOBAL)
-        ).order_by('type', 'name')
-        
-        # Keep filter values in context
-        context['date_from'] = self.request.GET.get('date_from', '')
-        context['date_to'] = self.request.GET.get('date_to', '')
-        context['category_id'] = self.request.GET.get('category', '')
-        context['search'] = self.request.GET.get('search', '')
-        
-        # ✅ Rapid summary
-        qs = self.get_queryset()
-        context['filtered_count'] = qs.count()
-        context['filtered_total'] = qs.aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
-        
+        context['categories'] = Category.objects.filter(user=self.request.user)
+        context['search_query'] = self.request.GET.get('search', '')  # Pass search to template
         return context
 
 
