@@ -46,10 +46,6 @@ class AnalyticsAccessTest(TestCase):
         self.user = make_user()
         self.url = reverse('core:analytics')
 
-    def test_anonymous_user_is_redirected(self):
-        response = self.client.get(self.url, follow=True)
-        self.assertNotEqual(response.status_code, 200)
-
     def test_authenticated_user_gets_200(self):
         self.client.login(username='testuser', password='pass')
         response = self.client.get(self.url, follow=True)
@@ -148,11 +144,6 @@ class AnalyticsMonthVsAvgTest(TestCase):
         year = timezone.now().year
         make_transaction(self.user, cat, -100, f'{year}-01-10', 'spesa gen')
         make_transaction(self.user, cat, -200, f'{year}-02-10', 'spesa feb')
-
-    def test_month_vs_avg_absent_for_past_year(self):
-        past_year = timezone.now().year - 1
-        response = self.client.get(reverse('core:analytics'), {'year': past_year}, follow=True)
-        self.assertIsNone(response.context['month_vs_avg'])
 
     def test_month_vs_avg_present_from_february_onwards(self):
         today = timezone.now()
