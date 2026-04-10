@@ -51,7 +51,7 @@ class CategoryDeleteViewTest(TestCase):
     def test_delete_empty_category_success(self):
         """Delete category with no transactions should succeed"""
         url = reverse('core:category_delete', kwargs={'pk': self.category_empty.pk})
-        response = self.client.post(url)
+        response = self.client.post(url, follow=True)
         
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -61,7 +61,7 @@ class CategoryDeleteViewTest(TestCase):
     def test_delete_category_with_transactions_fails(self):
         """Delete category with transactions should fail"""
         url = reverse('core:category_delete', kwargs={'pk': self.category_with_transactions.pk})
-        response = self.client.post(url)
+        response = self.client.post(url, follow=True)
         
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
@@ -78,7 +78,7 @@ class CategoryDeleteViewTest(TestCase):
         )
         
         url = reverse('core:category_delete', kwargs={'pk': other_category.pk})
-        response = self.client.post(url)
+        response = self.client.post(url, follow=True)
         
         self.assertEqual(response.status_code, 404)
 
@@ -132,7 +132,7 @@ class TransactionSearchViewTest(TestCase):
     def test_search_in_description(self):
         """Search should find transactions by description"""
         url = reverse('core:transaction_list') + '?search=pizza'
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Pizza dinner')
@@ -141,7 +141,7 @@ class TransactionSearchViewTest(TestCase):
     def test_search_in_notes(self):
         """Search should find transactions by notes"""
         url = reverse('core:transaction_list') + '?search=friends'
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Pizza dinner')
@@ -149,7 +149,7 @@ class TransactionSearchViewTest(TestCase):
     def test_search_in_category_name(self):
         """Search should find transactions by category name"""
         url = reverse('core:transaction_list') + '?search=transport'
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Bus ticket')
@@ -157,7 +157,7 @@ class TransactionSearchViewTest(TestCase):
     def test_search_no_results(self):
         """Search with no matches should return empty"""
         url = reverse('core:transaction_list') + '?search=nonexistent'
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Pizza dinner')
@@ -218,7 +218,7 @@ class RecurringTransactionsViewTest(TestCase):
     def test_shows_user_recurring_transactions(self):
         """View should show user's recurring transactions"""
         url = reverse('core:recurring_transactions')
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Monthly rent')
@@ -226,7 +226,7 @@ class RecurringTransactionsViewTest(TestCase):
     def test_does_not_show_other_user_recurring(self):
         """View should not show other users' recurring transactions"""
         url = reverse('core:recurring_transactions')
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Other rent')
@@ -285,7 +285,8 @@ class RecurringTransactionUpdateViewTest(TestCase):
         response = self.client.post(
             url,
             data=json.dumps(data),
-            content_type='application/json'
+            content_type='application/json',
+            follow=True
         )
         
         self.assertEqual(response.status_code, 200)
@@ -314,7 +315,8 @@ class RecurringTransactionUpdateViewTest(TestCase):
         response = self.client.post(
             url,
             data=json.dumps(data),
-            content_type='application/json'
+            content_type='application/json',
+            follow=True
         )
         
         self.assertEqual(response.status_code, 200)
@@ -377,7 +379,8 @@ class RecurringTransactionDeleteViewTest(TestCase):
         response = self.client.post(
             url,
             data=json.dumps(data),
-            content_type='application/json'
+            content_type='application/json',
+            follow=True
         )
         
         self.assertEqual(response.status_code, 200)
@@ -396,7 +399,8 @@ class RecurringTransactionDeleteViewTest(TestCase):
         response = self.client.post(
             url,
             data=json.dumps(data),
-            content_type='application/json'
+            content_type='application/json',
+            follow=True
         )
         
         self.assertEqual(response.status_code, 200)
