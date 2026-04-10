@@ -47,12 +47,12 @@ class AnalyticsAccessTest(TestCase):
         self.url = reverse('core:analytics')
 
     def test_anonymous_user_is_redirected(self):
-        response = self.client.get(self.url)
+        response = self.client.get(self.url, follow=True)
         self.assertNotEqual(response.status_code, 200)
 
     def test_authenticated_user_gets_200(self):
         self.client.login(username='testuser', password='pass')
-        response = self.client.get(self.url)
+        response = self.client.get(self.url, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'core/analytics.html')
 
@@ -76,23 +76,23 @@ class AnalyticsContextTest(TestCase):
         make_transaction(self.user, cat_ex,   -50, f'{year}-02-10', 'Spesa supermercato')
 
     def test_total_income(self):
-        response = self.client.get(reverse('core:analytics'))
+        response = self.client.get(reverse('core:analytics'), follow=True)
         self.assertAlmostEqual(response.context['total_income'], 1000.0)
 
     def test_total_expense(self):
-        response = self.client.get(reverse('core:analytics'))
+        response = self.client.get(reverse('core:analytics'), follow=True)
         self.assertAlmostEqual(response.context['total_expense'], 250.0)
 
     def test_total_balance(self):
-        response = self.client.get(reverse('core:analytics'))
+        response = self.client.get(reverse('core:analytics'), follow=True)
         self.assertAlmostEqual(response.context['total_balance'], 750.0)
 
     def test_savings_rate(self):
-        response = self.client.get(reverse('core:analytics'))
+        response = self.client.get(reverse('core:analytics'), follow=True)
         self.assertEqual(response.context['savings_rate'], 75.0)
 
     def test_top_keywords_extracted(self):
-        response = self.client.get(reverse('core:analytics'))
+        response = self.client.get(reverse('core:analytics'), follow=True)
         keywords = [kw for kw, _ in response.context['top_keywords']]
         self.assertIn('supermercato', keywords)
 
@@ -100,7 +100,7 @@ class AnalyticsContextTest(TestCase):
         """Un secondo utente non vede i dati del primo."""
         make_user('other', 'pass')
         self.client.login(username='other', password='pass')
-        response = self.client.get(reverse('core:analytics'))
+        response = self.client.get(reverse('core:analytics'), follow=True)
         self.assertEqual(response.context['total_income'], 0)
         self.assertEqual(response.context['total_expense'], 0)
 
@@ -118,20 +118,20 @@ class AnalyticsYearSelectorTest(TestCase):
         make_transaction(self.user, cat, -100, '2024-06-15', 'vecchia spesa')
 
     def test_available_years_includes_transaction_year(self):
-        response = self.client.get(reverse('core:analytics'))
+        response = self.client.get(reverse('core:analytics'), follow=True)
         self.assertIn(2024, response.context['available_years'])
 
     def test_available_years_includes_current_year(self):
-        response = self.client.get(reverse('core:analytics'))
+        response = self.client.get(reverse('core:analytics'), follow=True)
         self.assertIn(timezone.now().year, response.context['available_years'])
 
     def test_year_param_filters_data(self):
-        response = self.client.get(reverse('core:analytics'), {'year': 2024})
+        response = self.client.get(reverse('core:analytics'), {'year': 2024}, follow=True)
         self.assertEqual(response.context['selected_year'], 2024)
         self.assertAlmostEqual(response.context['total_expense'], 100.0)
 
     def test_invalid_year_falls_back_to_current(self):
-        response = self.client.get(reverse('core:analytics'), {'year': 'abc'})
+        response = self.client.get(reverse('core:analytics'), {'year': 'abc'}, follow=True)
         self.assertEqual(response.context['selected_year'], timezone.now().year)
 
 
@@ -146,21 +146,18 @@ class AnalyticsMonthVsAvgTest(TestCase):
         self.client.login(username='mvguser', password='pass')
         cat = make_category(self.user)
         year = timezone.now().year
-        # Gennaio: 100 di uscite
         make_transaction(self.user, cat, -100, f'{year}-01-10', 'spesa gen')
-        # Febbraio: 200 di uscite
         make_transaction(self.user, cat, -200, f'{year}-02-10', 'spesa feb')
 
     def test_month_vs_avg_absent_for_past_year(self):
         past_year = timezone.now().year - 1
-        response = self.client.get(reverse('core:analytics'), {'year': past_year})
+        response = self.client.get(reverse('core:analytics'), {'year': past_year}, follow=True)
         self.assertIsNone(response.context['month_vs_avg'])
 
     def test_month_vs_avg_present_from_february_onwards(self):
         today = timezone.now()
-        response = self.client.get(reverse('core:analytics'))
+        response = self.client.get(reverse('core:analytics'), follow=True)
         if today.month >= 2:
-            # Con dati sia a gennaio che al mese corrente, deve essere popolato
             ctx_val = response.context['month_vs_avg']
             if ctx_val is not None:
                 self.assertIn('diff_pct', ctx_val)
