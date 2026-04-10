@@ -9,6 +9,7 @@ from django.conf import settings
 from datetime import timedelta
 from decimal import Decimal
 from django.db import models
+from collections import Counter
 
 # Django core imports
 from django.shortcuts import render, redirect, get_object_or_404
@@ -20,6 +21,10 @@ from django.db.models import Sum, Q, Count
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.views.generic import (
+    CreateView, DeleteView, DetailView,
+    ListView, TemplateView, UpdateView, View,
+)
 
 # Django auth imports
 from django.contrib.auth import login, logout, authenticate
@@ -33,6 +38,16 @@ from .utils.barcode_generator import BarcodeGenerator
 
 # Logger
 logger = logging.getLogger(__name__)
+
+ANALYTICS_STOPWORDS = {
+    'di', 'da', 'in', 'su', 'per', 'con', 'tra', 'fra',
+    'del', 'della', 'dello', 'dei', 'degli', 'delle',
+    'al', 'alla', 'allo', 'ai', 'agli', 'alle',
+    'il', 'la', 'lo', 'i', 'gli', 'le',
+    'un', 'una', 'uno', 'e', 'o', 'ma', 'se', 'che', 'non',
+    'a', 'è', 'ho', 'ha', 'the', 'and', 'or', 'at', 'to',
+    'of', 'for', 'on', 'by', 'with',
+}
 
 
 class DashboardView(LoginRequiredMixin, ListView):
@@ -655,3 +670,102 @@ class RecurringTransactionUpdateView(LoginRequiredMixin, View):
                 'success': False,
                 'error': str(e)
             }, status=500)
+        
+# ANALYTICS
+# ===========================================================================
+ 
+class AnalyticsView(LoginRequiredMixin, TemplateView):
+    template_name = 'core/analytics.html'
+ 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        today = timezone.now()
+        current_year = today.year
+        current_month = today.month
+ 
+        # ── Anno selezionato ────────────────────────────────────────────────
+        available_years = sorted(
+            set(
+                list(user.transactions
+                     .dates('date', 'year')
+                     .values_list('date__year', flat=True)) +
+                [current_year]
+            ),
+            reverse=True,
+        )
+ 
+        try:
+            selected_year = int(self.request.GET.get('year', current_year))
+        except (ValueError, TypeError):
+            selected_year = current_year
+        if selected_year not in available_years:
+            selected_year = current_year
+ 
+        qs = user.transactions.filter(date__year=selected_year)
+ 
+        # ── Dati mensili ────────────────────────────────────────────────────
+        income_by_month = [0.0] * 12
+        expense_by_month = [0.0] * 12
+ 
+        for item in qs.filter(amount__gt=0).values('date__month').annotate(t=Sum('amount')):
+            income_by_month[item['date__month'] - 1] = float(item['t'])
+ 
+        for item in qs.filter(amount__lt=0).values('date__month').annotate(t=Sum('amount')):
+            expense_by_month[item['date__month'] - 1] = abs(float(item['t']))
+ 
+        balance_by_month = [
+            round(income_by_month[i] - expense_by_month[i], 2)
+            for i in range(12)
+        ]
+ 
+        # ── Top 5 keyword nelle descrizioni delle uscite ────────────────────
+        descriptions = qs.filter(amount__lt=0).values_list('description', flat=True)
+        word_counter = Counter()
+        for desc in descriptions:
+            if desc:
+                words = [w.lower().strip('.,;:!?()[]{}«»"\'') for w in desc.split()]
+                word_counter.update(
+                    w for w in words if len(w) > 2 and w not in ANALYTICS_STOPWORDS
+                )
+        top_keywords = word_counter.most_common(5)
+ 
+        # ── Mese corrente vs media mesi precedenti (solo anno corrente) ─────
+        month_vs_avg = None
+        if selected_year == current_year and current_month >= 2:
+            this_month_expense = expense_by_month[current_month - 1]
+            past_expenses = [expense_by_month[i] for i in range(current_month - 1)]
+            past_avg = sum(past_expenses) / len(past_expenses) if past_expenses else 0
+            if past_avg > 0:
+                diff_pct = ((this_month_expense - past_avg) / past_avg) * 100
+                month_vs_avg = {
+                    'this_month': this_month_expense,
+                    'past_avg': past_avg,
+                    'diff_pct': round(diff_pct, 1),
+                    'is_over': diff_pct > 0,
+                }
+ 
+        # ── KPI di riepilogo ────────────────────────────────────────────────
+        total_income = sum(income_by_month)
+        total_expense = sum(expense_by_month)
+        total_balance = total_income - total_expense
+        savings_rate = (total_balance / total_income * 100) if total_income > 0 else 0
+        months_with_expense = sum(1 for e in expense_by_month if e > 0)
+        avg_monthly_expense = total_expense / months_with_expense if months_with_expense else 0
+ 
+        ctx.update({
+            'selected_year': selected_year,
+            'available_years': available_years,
+            'income_data': json.dumps(income_by_month),
+            'expense_data': json.dumps(expense_by_month),
+            'balance_data': json.dumps(balance_by_month),
+            'top_keywords': top_keywords,
+            'month_vs_avg': month_vs_avg,
+            'total_income': total_income,
+            'total_expense': total_expense,
+            'total_balance': total_balance,
+            'savings_rate': round(savings_rate, 1),
+            'avg_monthly_expense': avg_monthly_expense,
+        })
+        return ctx
+    

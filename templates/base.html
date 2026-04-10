@@ -69,9 +69,15 @@
                     </a>
 
                     <a href="{% url 'core:loyalty_cards_list' %}" 
-                        class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium flex items-center gap-2">
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'loyalty_cards_list' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                         <i data-lucide="credit-card" class="w-4 h-4"></i>
                         <span>Loyalty Cards</span>
+                    </a>
+
+                    <a href="{% url 'core:analytics' %}" 
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'analytics' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+                        <span>Analytics</span>
                     </a>
                     
                     <form method="POST" action="{% url 'core:logout' %}" class="inline">
@@ -121,6 +127,12 @@
                        class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'loyalty_cards_list' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
                         <i data-lucide="credit-card" class="w-4 h-4"></i>
                         <span>Loyalty Cards</span>
+                    </a>
+
+                    <a href="{% url 'core:analytics' %}" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'analytics' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+                        <span>Analytics</span>
                     </a>
                     
                     <form method="POST" action="{% url 'core:logout' %}">

@@ -62,4 +62,7 @@ urlpatterns = [
     path('loyalty-cards/<int:pk>/', views.LoyaltyCardDetailView.as_view(), name='loyalty_card_detail'),
     path('loyalty-cards/<int:pk>/delete/', views.LoyaltyCardDeleteView.as_view(), name='loyalty_card_delete'),
     path('loyalty-cards/validate/', views.validate_barcode, name='validate_barcode'),
+
+    # ── Analytics ────────────────────────────────────────────────────────────
+    path('analytics/', views.AnalyticsView.as_view(), name='analytics'),
 ]
