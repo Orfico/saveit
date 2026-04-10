@@ -51,7 +51,7 @@ class CategoryDeleteViewTest(TestCase):
     def test_delete_empty_category_success(self):
         """Delete category with no transactions should succeed"""
         url = reverse('core:category_delete', kwargs={'pk': self.category_empty.pk})
-        response = self.client.post(url, follow=True)
+        response = self.client.post(url)
         
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -61,7 +61,7 @@ class CategoryDeleteViewTest(TestCase):
     def test_delete_category_with_transactions_fails(self):
         """Delete category with transactions should fail"""
         url = reverse('core:category_delete', kwargs={'pk': self.category_with_transactions.pk})
-        response = self.client.post(url, follow=True)
+        response = self.client.post(url)
         
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
@@ -78,7 +78,7 @@ class CategoryDeleteViewTest(TestCase):
         )
         
         url = reverse('core:category_delete', kwargs={'pk': other_category.pk})
-        response = self.client.post(url, follow=True)
+        response = self.client.post(url)
         
         self.assertEqual(response.status_code, 404)
 
@@ -285,8 +285,7 @@ class RecurringTransactionUpdateViewTest(TestCase):
         response = self.client.post(
             url,
             data=json.dumps(data),
-            content_type='application/json',
-            follow=True
+            content_type='application/json'
         )
         
         self.assertEqual(response.status_code, 200)
@@ -315,8 +314,7 @@ class RecurringTransactionUpdateViewTest(TestCase):
         response = self.client.post(
             url,
             data=json.dumps(data),
-            content_type='application/json',
-            follow=True
+            content_type='application/json'
         )
         
         self.assertEqual(response.status_code, 200)
@@ -379,8 +377,7 @@ class RecurringTransactionDeleteViewTest(TestCase):
         response = self.client.post(
             url,
             data=json.dumps(data),
-            content_type='application/json',
-            follow=True
+            content_type='application/json'
         )
         
         self.assertEqual(response.status_code, 200)
@@ -399,8 +396,7 @@ class RecurringTransactionDeleteViewTest(TestCase):
         response = self.client.post(
             url,
             data=json.dumps(data),
-            content_type='application/json',
-            follow=True
+            content_type='application/json'
         )
         
         self.assertEqual(response.status_code, 200)

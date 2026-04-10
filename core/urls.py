@@ -47,16 +47,16 @@ urlpatterns = [
     path('transactions/<int:pk>/edit/', views.TransactionUpdateView.as_view(), name='transaction_update'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
 
-    # Recurring Transactions
-path('recurring-transactions/', views.RecurringTransactionsView.as_view(), name='recurring_transactions'),
-path('recurring-transactions/<int:pk>/update/', views.RecurringTransactionUpdateView.as_view(), name='recurring_transaction_update'),
-path('recurring-transactions/<int:pk>/delete/', views.RecurringTransactionDeleteView.as_view(), name='recurring_transaction_delete'),
-
     # Categories
     path('categories/', views.CategoryListView.as_view(), name='categories_list'),
     path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
 
-     # Loyalty Cards
+    # Recurring Transactions
+    path('recurring-transactions/', views.RecurringTransactionsView.as_view(), name='recurring_transactions'),
+    path('recurring-transactions/<int:pk>/update/', views.RecurringTransactionUpdateView.as_view(), name='recurring_transaction_update'),
+    path('recurring-transactions/<int:pk>/delete/', views.RecurringTransactionDeleteView.as_view(), name='recurring_transaction_delete'),
+
+    # Loyalty Cards
     path('loyalty-cards/', views.LoyaltyCardListView.as_view(), name='loyalty_cards_list'),
     path('loyalty-cards/create/', views.LoyaltyCardCreateView.as_view(), name='loyalty_card_create'),
     path('loyalty-cards/<int:pk>/', views.LoyaltyCardDetailView.as_view(), name='loyalty_card_detail'),
