@@ -719,16 +719,20 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             for i in range(12)
         ]
  
-        # ── Top 5 keyword nelle descrizioni delle uscite ────────────────────
-        descriptions = qs.filter(amount__lt=0).values_list('description', flat=True)
-        word_counter = Counter()
-        for desc in descriptions:
+        # ── Top 5 keyword per importo aggregato delle uscite ─────────────────
+        descriptions_with_amounts = (
+            qs.filter(amount__lt=0)
+            .values_list('description', 'amount')
+        )
+        word_totals = {}
+        for desc, amount in descriptions_with_amounts:
             if desc:
                 words = [w.lower().strip('.,;:!?()[]{}«»"\'') for w in desc.split()]
-                word_counter.update(
-                    w for w in words if len(w) > 2 and w not in ANALYTICS_STOPWORDS
-                )
-        top_keywords = word_counter.most_common(5)
+                for w in words:
+                    if len(w) > 2 and w not in ANALYTICS_STOPWORDS:
+                        word_totals[w] = word_totals.get(w, 0) + abs(float(amount))
+
+        top_keywords = sorted(word_totals.items(), key=lambda x: x[1], reverse=True)[:5]
  
         # ── Mese corrente vs media mesi precedenti (solo anno corrente) ─────
         month_vs_avg = None

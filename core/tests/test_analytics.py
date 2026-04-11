@@ -90,7 +90,9 @@ class AnalyticsContextTest(TestCase):
     def test_top_keywords_extracted(self):
         response = self.client.get(reverse('core:analytics'), follow=True)
         keywords = [kw for kw, _ in response.context['top_keywords']]
+        amounts = {kw: amt for kw, amt in response.context['top_keywords']}
         self.assertIn('supermercato', keywords)
+        self.assertAlmostEqual(amounts['supermercato'], 250.0)  # 200 + 50
 
     def test_user_isolation(self):
         """Un secondo utente non vede i dati del primo."""

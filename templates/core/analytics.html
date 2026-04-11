@@ -165,22 +165,20 @@
       </h2>
 
       {% if top_keywords %}
-        {% with max_count=top_keywords.0.1 %}
         <div class="flex flex-col gap-3">
-          {% for word, count in top_keywords %}
-          <div>
-            <div class="flex justify-between text-sm mb-1">
-              <span class="font-medium text-gray-700">{{ word }}</span>
-              <span class="text-gray-400">{{ count }}×</span>
-            </div>
-            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div class="h-full bg-blue-500 rounded-full"
-                   style="width: {% widthratio count max_count 100 %}%"></div>
-            </div>
+        {% for word, amount in top_keywords %}
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span class="font-medium text-gray-700">{{ word }}</span>
+            <span class="text-gray-400">€{{ amount|floatformat:0 }}</span>
           </div>
-          {% endfor %}
+          <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full bg-blue-500 rounded-full"
+                style="width: {% widthratio amount top_keywords.0.1 100 %}%"></div>
+          </div>
         </div>
-        {% endwith %}
+        {% endfor %}
+        </div>
       {% else %}
         <p class="text-sm text-gray-400 text-center py-6">
           Aggiungi descrizioni alle uscite per vedere le keyword.
