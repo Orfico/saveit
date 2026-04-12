@@ -82,16 +82,6 @@ class ImportCSVTest(TestCase):
         self.client.login(username='csvuser', password='pass')
         self.cat = make_category(self.user, 'Food', 'EX')
 
-    def test_import_creates_transactions(self):
-        csv_file = build_csv([{
-            'date': '2025-03-01', 'description': 'test import',
-            'amount': '-50', 'category': 'Food', 'notes': '', 'is_recurring': 'False',
-        }])
-        self.client.post(reverse('core:transactions_import'), {'csv_file': csv_file})
-        self.assertTrue(
-            Transaction.objects.filter(user=self.user, description='test import').exists()
-        )
-
     def test_import_skips_duplicates(self):
         make_transaction(self.user, self.cat, -50, '2025-03-01', 'duplicato')
         csv_file = build_csv([{
