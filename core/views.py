@@ -867,13 +867,14 @@ class ImportTransactionsView(LoginRequiredMixin, View):
 
             for row_num, row in enumerate(reader, start=2):
                 try:
-                    # Risolvi la categoria — deve già esistere
-                    try:
-                        category = Category.objects.get(
-                            name=row['category'].strip(),
-                            type=Category.EXPENSE if float(row['amount']) < 0 else Category.INCOME,
-                        )
-                    except Category.DoesNotExist:
+                    # Risolvi la categoria tra quelle dell'utente e quelle globali
+                    category = Category.objects.filter(
+                        Q(user=request.user) | Q(scope=Category.GLOBAL),
+                        name=row['category'].strip(),
+                        type=Category.EXPENSE if float(row['amount']) < 0 else Category.INCOME,
+                    ).order_by('scope').first()  # PERSONAL < GLOBAL alfabeticamente
+
+                    if not category:
                         logger.warning(
                             f'CSV import row {row_num}: categoria "{row["category"]}" '
                             f'non trovata — riga saltata.'
@@ -926,4 +927,3 @@ class ImportTransactionsView(LoginRequiredMixin, View):
         messages.success(request, ' · '.join(parts) + '.')
 
         return redirect('core:transaction_list')
-    
