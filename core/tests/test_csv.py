@@ -5,6 +5,7 @@ import csv
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 
 from core.models import Category, Transaction
@@ -27,15 +28,18 @@ def make_transaction(user, category, amount, date, description=''):
 
 
 def build_csv(rows):
-    """Costruisce un file CSV in memoria dalle righe fornite."""
+    """Costruisce un SimpleUploadedFile CSV dalle righe fornite."""
     buf = io.StringIO()
     writer = csv.DictWriter(
         buf, fieldnames=['date', 'description', 'amount', 'category', 'notes', 'is_recurring']
     )
     writer.writeheader()
     writer.writerows(rows)
-    buf.seek(0)
-    return io.BytesIO(buf.read().encode('utf-8'))
+    return SimpleUploadedFile(
+        name='transactions.csv',
+        content=buf.getvalue().encode('utf-8'),
+        content_type='text/csv',
+    )
 
 
 class ExportCSVTest(TestCase):
@@ -49,12 +53,12 @@ class ExportCSVTest(TestCase):
         make_transaction(self.user, cat, -200, f'{year}-02-10', 'spesa B')
 
     def test_export_returns_csv(self):
-        response = self.client.get(reverse('core:transactions_export'))
+        response = self.client.get(reverse('core:transactions_export'), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/csv')
 
     def test_export_contains_all_transactions(self):
-        response = self.client.get(reverse('core:transactions_export'))
+        response = self.client.get(reverse('core:transactions_export'), follow=True)
         content = response.content.decode('utf-8')
         self.assertIn('spesa A', content)
         self.assertIn('spesa B', content)
@@ -64,6 +68,7 @@ class ExportCSVTest(TestCase):
         response = self.client.get(
             reverse('core:transactions_export'),
             {'date_from': f'{year}-02-01', 'date_to': f'{year}-02-28'},
+            follow=True,
         )
         content = response.content.decode('utf-8')
         self.assertIn('spesa B', content)
@@ -82,10 +87,7 @@ class ImportCSVTest(TestCase):
             'date': '2025-03-01', 'description': 'test import',
             'amount': '-50', 'category': 'Food', 'notes': '', 'is_recurring': 'False',
         }])
-        self.client.post(
-            reverse('core:transactions_import'),
-            {'csv_file': csv_file},
-        )
+        self.client.post(reverse('core:transactions_import'), {'csv_file': csv_file})
         self.assertTrue(
             Transaction.objects.filter(user=self.user, description='test import').exists()
         )
@@ -96,19 +98,15 @@ class ImportCSVTest(TestCase):
             'date': '2025-03-01', 'description': 'duplicato',
             'amount': '-50', 'category': 'Food', 'notes': '', 'is_recurring': 'False',
         }])
-        self.client.post(
-            reverse('core:transactions_import'),
-            {'csv_file': csv_file},
-        )
+        self.client.post(reverse('core:transactions_import'), {'csv_file': csv_file})
         count = Transaction.objects.filter(user=self.user, description='duplicato').count()
         self.assertEqual(count, 1)
 
     def test_import_rejects_non_csv(self):
-        fake_file = io.BytesIO(b'not a csv file')
-        fake_file.name = 'data.txt'
-        response = self.client.post(
-            reverse('core:transactions_import'),
-            {'csv_file': fake_file},
-            follow=True,
+        fake_file = SimpleUploadedFile(
+            name='data.txt',
+            content=b'not a csv file',
+            content_type='text/plain',
         )
+        self.client.post(reverse('core:transactions_import'), {'csv_file': fake_file})
         self.assertEqual(Transaction.objects.filter(user=self.user).count(), 0)
