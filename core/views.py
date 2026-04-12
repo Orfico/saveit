@@ -10,6 +10,8 @@ from datetime import timedelta
 from decimal import Decimal
 from django.db import models
 from collections import Counter
+import math
+from datetime import date as date_type
 
 # Django core imports
 from django.shortcuts import render, redirect, get_object_or_404
@@ -734,17 +736,40 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
 
         top_keywords = sorted(word_totals.items(), key=lambda x: x[1], reverse=True)[:5]
  
-        # ── Mese corrente vs media mesi precedenti (solo anno corrente) ─────
+
+        # ── Mese tipo EWM vs mese corrente (solo anno corrente) ──────────────
         month_vs_avg = None
         if selected_year == current_year and current_month >= 2:
-            this_month_expense = expense_by_month[current_month - 1]
-            past_expenses = [expense_by_month[i] for i in range(current_month - 1)]
-            past_avg = sum(past_expenses) / len(past_expenses) if past_expenses else 0
-            if past_avg > 0:
-                diff_pct = ((this_month_expense - past_avg) / past_avg) * 100
+            today_date = today.date()
+            HALF_LIFE_DAYS = 180
+            decay = math.log(2) / HALF_LIFE_DAYS
+
+            # Tutte le uscite storiche escluso il mese corrente
+            historical_qs = (
+                user.transactions
+                .filter(amount__lt=0)
+                .exclude(date__year=current_year, date__month=current_month)
+                .values_list('date', 'amount')
+            )
+
+            weighted_sum = 0.0
+            weight_total = 0.0
+            for t_date, t_amount in historical_qs:
+                days_ago = (today_date - t_date).days
+                w = math.exp(-decay * days_ago)
+                weighted_sum += abs(float(t_amount)) * w
+                weight_total += w
+
+            if weight_total > 0:
+                # Tasso giornaliero pesato → mese tipo (30 giorni)
+                daily_rate = weighted_sum / weight_total
+                typical_month = daily_rate * 30
+
+                this_month_expense = expense_by_month[current_month - 1]
+                diff_pct = ((this_month_expense - typical_month) / typical_month) * 100
                 month_vs_avg = {
                     'this_month': this_month_expense,
-                    'past_avg': past_avg,
+                    'past_avg': round(typical_month, 2),
                     'diff_pct': round(diff_pct, 1),
                     'is_over': diff_pct > 0,
                 }
