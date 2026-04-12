@@ -12,6 +12,9 @@ from django.db import models
 from collections import Counter
 import math
 from datetime import date as date_type
+import csv
+import io
+
 
 # Django core imports
 from django.shortcuts import render, redirect, get_object_or_404
@@ -27,6 +30,9 @@ from django.views.generic import (
     CreateView, DeleteView, DetailView,
     ListView, TemplateView, UpdateView, View,
 )
+from django.http import HttpResponse
+from django.views.generic import View
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 # Django auth imports
 from django.contrib.auth import login, logout, authenticate
@@ -797,4 +803,127 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             'avg_monthly_expense': avg_monthly_expense,
         })
         return ctx
+
+# IMPORT/EXPORT CSV
+# ===========================================================================
+
+class ExportTransactionsView(LoginRequiredMixin, View):
+    def get(self, request):
+        # Riusa la stessa logica di filtraggio di TransactionListView
+        qs = Transaction.objects.select_related('category').filter(
+            user=request.user
+        )
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        category_id = request.GET.get('category')
+        search = request.GET.get('search', '').strip()
+
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+        if category_id:
+            qs = qs.filter(category_id=category_id)
+        if search:
+            qs = qs.filter(
+                Q(description__icontains=search) |
+                Q(notes__icontains=search) |
+                Q(category__name__icontains=search)
+            )
+        qs = qs.order_by('-date', '-created_at')
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="transactions.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['date', 'description', 'amount', 'category', 'notes', 'is_recurring'])
+        for t in qs:
+            writer.writerow([
+                t.date,
+                t.description,
+                t.amount,
+                t.category.name,
+                t.notes,
+                t.is_recurring,
+            ])
+        return response
+
+
+class ImportTransactionsView(LoginRequiredMixin, View):
+    def post(self, request):
+        csv_file = request.FILES.get('csv_file')
+
+        if not csv_file or not csv_file.name.endswith('.csv'):
+            messages.error(request, 'Carica un file CSV valido.')
+            return redirect('core:transaction_list')
+
+        imported = 0
+        skipped = 0
+        errors = 0
+
+        try:
+            decoded = csv_file.read().decode('utf-8')
+            reader = csv.DictReader(io.StringIO(decoded))
+
+            for row_num, row in enumerate(reader, start=2):
+                try:
+                    # Risolvi la categoria — deve già esistere
+                    try:
+                        category = Category.objects.get(
+                            name=row['category'].strip(),
+                            type=Category.EXPENSE if float(row['amount']) < 0 else Category.INCOME,
+                        )
+                    except Category.DoesNotExist:
+                        logger.warning(
+                            f'CSV import row {row_num}: categoria "{row["category"]}" '
+                            f'non trovata — riga saltata.'
+                        )
+                        errors += 1
+                        continue
+
+                    # Duplicate check: stesso utente, data, importo, categoria
+                    duplicate = Transaction.objects.filter(
+                        user=request.user,
+                        date=row['date'].strip(),
+                        amount=row['amount'].strip(),
+                        category=category,
+                    ).exists()
+
+                    if duplicate:
+                        logger.info(
+                            f'CSV import row {row_num}: duplicato ignorato — '
+                            f'{row["date"]} {row["amount"]} {category.name}'
+                        )
+                        skipped += 1
+                        continue
+
+                    Transaction.objects.create(
+                        user=request.user,
+                        date=row['date'].strip(),
+                        description=row.get('description', '').strip(),
+                        amount=row['amount'].strip(),
+                        category=category,
+                        notes=row.get('notes', '').strip(),
+                        is_recurring=row.get('is_recurring', 'False').strip() == 'True',
+                    )
+                    imported += 1
+
+                except Exception as e:
+                    logger.error(f'CSV import row {row_num}: errore — {e}')
+                    errors += 1
+
+        except Exception as e:
+            logger.error(f'CSV import: errore lettura file — {e}')
+            messages.error(request, 'Errore durante la lettura del file.')
+            return redirect('core:transaction_list')
+
+        # Feedback all'utente
+        parts = [f'{imported} transazioni importate']
+        if skipped:
+            parts.append(f'{skipped} duplicate ignorate')
+        if errors:
+            parts.append(f'{errors} righe saltate per errori')
+        messages.success(request, ' · '.join(parts) + '.')
+
+        return redirect('core:transaction_list')
     

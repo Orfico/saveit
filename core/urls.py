@@ -44,6 +44,8 @@ urlpatterns = [
     path('', views.DashboardView.as_view(), name='dashboard'),
     path('transactions/', views.TransactionListView.as_view(), name='transaction_list'),
     path('transactions/new/', views.TransactionCreateView.as_view(), name='transaction_create'),
+    path('transactions/export/', views.ExportTransactionsView.as_view(), name='transactions_export'),
+    path('transactions/import/', views.ImportTransactionsView.as_view(), name='transactions_import'),
     path('transactions/<int:pk>/edit/', views.TransactionUpdateView.as_view(), name='transaction_update'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction_delete'),
 
