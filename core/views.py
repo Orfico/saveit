@@ -408,10 +408,11 @@ class CategoryListView(LoginRequiredMixin, ListView):
     context_object_name = 'categories'
 
     def get_queryset(self):
-        qs = Category.objects.filter(user=self.request.user).annotate(
+        qs = Category.objects.filter(
+            Q(user=self.request.user) | Q(scope=Category.GLOBAL)
+        ).annotate(
             transaction_count=models.Count('transactions')
         ).order_by('type', 'name')
-        # Family: mostra solo expense categories
         if is_family(self.request.user):
             qs = qs.filter(type=Category.EXPENSE)
         return qs
@@ -422,6 +423,35 @@ class CategoryListView(LoginRequiredMixin, ListView):
         if ctx['is_family']:
             ctx['family_profile'] = self.request.user.family_profile
         return ctx
+
+
+class CategoryCreateView(LoginRequiredMixin, View):
+    def post(self, request):
+        name = request.POST.get('name', '').strip()
+        color = request.POST.get('color', '#3B82F6').strip()
+        if is_family(request.user):
+            cat_type = Category.EXPENSE
+        else:
+            cat_type = request.POST.get('type', Category.EXPENSE)
+            if cat_type not in (Category.INCOME, Category.EXPENSE):
+                cat_type = Category.EXPENSE
+
+        if not name:
+            messages.error(request, 'Il nome della categoria è obbligatorio.')
+            return redirect('core:categories_list')
+
+        _, created = Category.objects.get_or_create(
+            name=name,
+            user=request.user,
+            type=cat_type,
+            defaults={'scope': Category.PERSONAL, 'color': color},
+        )
+        if created:
+            messages.success(request, f'Categoria "{name}" creata.')
+        else:
+            messages.warning(request, f'La categoria "{name}" esiste già.')
+
+        return redirect('core:categories_list')
 
 
 class CategoryDeleteView(LoginRequiredMixin, View):
@@ -448,35 +478,6 @@ class CategoryDeleteView(LoginRequiredMixin, View):
         except Exception as e:
             logger.error(f"Error deleting category: {str(e)}", exc_info=True)
             return JsonResponse({'success': False, 'error': 'Error deleting category'}, status=500)
-
-class CategoryCreateView(LoginRequiredMixin, View):
-    def post(self, request):
-        name = request.POST.get('name', '').strip()
-        color = request.POST.get('color', '#3B82F6').strip()
-        # Family: sempre EXPENSE. Standard: dal form.
-        if is_family(request.user):
-            cat_type = Category.EXPENSE
-        else:
-            cat_type = request.POST.get('type', Category.EXPENSE)
-            if cat_type not in (Category.INCOME, Category.EXPENSE):
-                cat_type = Category.EXPENSE
-
-        if not name:
-            messages.error(request, 'Il nome della categoria è obbligatorio.')
-            return redirect('core:categories_list')
-
-        _, created = Category.objects.get_or_create(
-            name=name,
-            user=request.user,
-            type=cat_type,
-            defaults={'scope': Category.PERSONAL, 'color': color},
-        )
-        if created:
-            messages.success(request, f'Categoria "{name}" creata.')
-        else:
-            messages.warning(request, f'La categoria "{name}" esiste già.')
-
-        return redirect('core:categories_list')
 
 
 # ===========================================================================
@@ -976,4 +977,3 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             'member_breakdown': member_breakdown,
         })
         return ctx
-    
