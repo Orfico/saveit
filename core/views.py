@@ -635,14 +635,41 @@ class ImportTransactionsView(LoginRequiredMixin, View):
         imported = skipped = errors = 0
         try:
             decoded = csv_file.read().decode('utf-8')
-            reader = csv.DictReader(io.StringIO(decoded))
+            try:
+                dialect = csv.Sniffer().sniff(decoded[:2048], delimiters=',;\t')
+            except csv.Error:
+                dialect = csv.excel
+            reader = csv.DictReader(io.StringIO(decoded), dialect=dialect)
+
+            # Build paid_by name→key map for family accounts
+            paid_by_map = {}
+            if is_family(request.user):
+                fp = request.user.family_profile
+                paid_by_map = {
+                    fp.member_1.strip().lower(): Transaction.MEMBER_1,
+                    fp.member_2.strip().lower(): Transaction.MEMBER_2,
+                    Transaction.MEMBER_1: Transaction.MEMBER_1,
+                    Transaction.MEMBER_2: Transaction.MEMBER_2,
+                }
+
             for row_num, row in enumerate(reader, start=2):
                 try:
+                    amount_val = float(row['amount'].strip())
+                    primary_type = Category.EXPENSE if amount_val < 0 else Category.INCOME
+                    fallback_type = Category.INCOME if amount_val < 0 else Category.EXPENSE
+
                     category = Category.objects.filter(
                         Q(user=request.user) | Q(scope=Category.GLOBAL),
                         name=row['category'].strip(),
-                        type=Category.EXPENSE if float(row['amount']) < 0 else Category.INCOME,
+                        type=primary_type,
                     ).order_by('scope').first()
+
+                    if not category:
+                        category = Category.objects.filter(
+                            Q(user=request.user) | Q(scope=Category.GLOBAL),
+                            name=row['category'].strip(),
+                            type=fallback_type,
+                        ).order_by('scope').first()
 
                     if not category:
                         logger.warning(
@@ -665,6 +692,18 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                         skipped += 1
                         continue
 
+                    # Resolve paid_by: accepts real names or member_1/member_2 keys
+                    raw_paid_by = row.get('paid_by', '').strip()
+                    if paid_by_map:
+                        paid_by = paid_by_map.get(raw_paid_by.lower()) or None
+                        if raw_paid_by and not paid_by:
+                            logger.warning(
+                                f'CSV import row {row_num}: paid_by "{raw_paid_by}" '
+                                f'non riconosciuto — impostato a None.'
+                            )
+                    else:
+                        paid_by = raw_paid_by or None
+
                     Transaction.objects.create(
                         user=request.user,
                         date=row['date'].strip(),
@@ -673,7 +712,7 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                         category=category,
                         notes=row.get('notes', '').strip(),
                         is_recurring=row.get('is_recurring', 'False').strip() == 'True',
-                        paid_by=row.get('paid_by', '').strip() or None,
+                        paid_by=paid_by,
                     )
                     imported += 1
                 except Exception as e:
