@@ -29,6 +29,11 @@
     <form method="post">
       {% csrf_token %}
 
+      {# Hidden fields managed by form #}
+      {{ form.type }}
+      {{ form.is_recurring }}
+      {{ form.paid_by.as_hidden }}
+
       <!-- Date -->
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
@@ -54,12 +59,12 @@
           {% if is_family %}Importo (€){% else %}Importo (€ — positivo = entrata, negativo = uscita){% endif %}
         </label>
         <input type="number" name="amount" step="0.01"
-               {% if is_family %}min="0" placeholder="0.00"{% endif %}
+               {% if is_family %}min="0.01" placeholder="0.00"{% endif %}
                value="{{ form.amount.value|default:'' }}"
                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
                       {% if form.amount.errors %}border-red-400{% endif %}">
         {% if is_family %}
-          <p class="text-xs text-gray-400 mt-1">Inserisci sempre un valore positivo — le spese vengono registrate automaticamente.</p>
+          <p class="text-xs text-gray-400 mt-1">Inserisci sempre un valore positivo.</p>
         {% endif %}
         {% for e in form.amount.errors %}<p class="text-red-500 text-xs mt-1">{{ e }}</p>{% endfor %}
       </div>
@@ -82,21 +87,18 @@
       </div>
 
       {% if is_family %}
-      <!-- Paid by (family only) -->
+      <!-- Paid by (family only) — real member names from form choices -->
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">Chi ha pagato *</label>
         <select name="paid_by"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
                        {% if form.paid_by.errors %}border-red-400{% endif %}">
-          <option value="">---------</option>
-          <option value="member_1"
-                  {% if form.paid_by.value == "member_1" %}selected{% endif %}>
-            {{ family_profile.member_1 }}
-          </option>
-          <option value="member_2"
-                  {% if form.paid_by.value == "member_2" %}selected{% endif %}>
-            {{ family_profile.member_2 }}
-          </option>
+          {% for value, label in form.fields.paid_by.choices %}
+            <option value="{{ value }}"
+                    {% if form.paid_by.value == value %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
         </select>
         {% for e in form.paid_by.errors %}<p class="text-red-500 text-xs mt-1">{{ e }}</p>{% endfor %}
       </div>
@@ -115,7 +117,9 @@
 
       <!-- Notes -->
       <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Note <span class="text-gray-400 font-normal">(opzionale)</span></label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Note <span class="text-gray-400 font-normal">(opzionale)</span>
+        </label>
         <textarea name="notes" rows="2"
                   placeholder="Note aggiuntive..."
                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">{{ form.notes.value|default:'' }}</textarea>

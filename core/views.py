@@ -320,15 +320,6 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
             form.instance.category = category
 
         form.instance.user = self.request.user
-
-        # Family: set paid_by and ensure amount is negative
-        if is_family(self.request.user):
-            paid_by = self.request.POST.get('paid_by', '').strip()
-            if paid_by in (Transaction.MEMBER_1, Transaction.MEMBER_2):
-                form.instance.paid_by = paid_by
-            if form.instance.amount > 0:
-                form.instance.amount = -form.instance.amount
-
         return super().form_valid(form)
 
     def form_invalid(self, form):
@@ -371,14 +362,7 @@ class TransactionUpdateView(LoginRequiredMixin, UpdateView):
             )
             form.instance.category = category
 
-        # Family: set paid_by and ensure amount is negative
-        if is_family(self.request.user):
-            paid_by = self.request.POST.get('paid_by', '').strip()
-            if paid_by in (Transaction.MEMBER_1, Transaction.MEMBER_2):
-                form.instance.paid_by = paid_by
-            if form.instance.amount > 0:
-                form.instance.amount = -form.instance.amount
-
+        messages.success(self.request, 'Transazione aggiornata.')
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
