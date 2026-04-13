@@ -223,7 +223,9 @@
   Chart.defaults.color       = '#6b7280';
 
   function makeLineChart(id, data, borderColor, fillColor, label) {
-    const ctx = document.getElementById(id).getContext('2d');
+    const el = document.getElementById(id);
+    if (!el) return;
+    const ctx = el.getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, 0, 160);
     gradient.addColorStop(0, fillColor);
     gradient.addColorStop(1, 'transparent');
@@ -257,7 +259,8 @@
   makeLineChart('chartExpense', EXPENSE_DATA, '#ef4444', 'rgba(239,68,68,.12)',  'Uscite');
 
   // Weekday bar chart
-  new Chart(document.getElementById('chartWeekday'), {
+  const weekdayEl = document.getElementById('chartWeekday');
+  if (weekdayEl) new Chart(weekdayEl, {
     type: 'bar',
     data: {
       labels: WEEKDAY_LABELS,
