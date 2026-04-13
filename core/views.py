@@ -935,33 +935,50 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             for i in range(12)
         ]
 
-        # ── Top 5 keyword per importo aggregato ─────────────────────────────
-        word_totals = {}
-        for desc, amount in qs.filter(amount__lt=0).values_list('description', 'amount'):
-            if desc:
-                for w in [w.lower().strip('.,;:!?()[]{}«»"\'') for w in desc.split()]:
-                    if len(w) > 2 and w not in ANALYTICS_STOPWORDS:
-                        word_totals[w] = word_totals.get(w, 0) + abs(float(amount))
-        top_keywords = sorted(word_totals.items(), key=lambda x: x[1], reverse=True)[:5]
+        # ── Top 5 merchant per frequenza (descrizione esatta) ───────────────
+        from collections import Counter
+        merchant_counter = Counter()
+        for desc in qs.filter(amount__lt=0).values_list('description', flat=True):
+            if desc and desc.strip():
+                merchant_counter[desc.strip()] += 1
+        top_keywords = merchant_counter.most_common(5)  # (description, count)
+
+        # ── Spese per giorno della settimana ─────────────────────────────────
+        WEEKDAYS_LABELS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
+        weekday_totals = [0.0] * 7
+        for t_date, t_amount in qs.filter(amount__lt=0).values_list('date', 'amount'):
+            weekday_totals[t_date.weekday()] += abs(float(t_amount))
 
         # ── Mese tipo EWM vs mese corrente ──────────────────────────────────
         month_vs_avg = None
         if selected_year == current_year and current_month >= 2:
+            import calendar as cal
+            from datetime import date as date_cls
             today_date = today.date()
             decay = math.log(2) / 180
-            weighted_sum = weight_total = 0.0
-            for t_date, t_amount in (
+
+            # Aggregate by month first, then weight each monthly total by recency
+            monthly_totals = (
                 user.transactions
                 .filter(amount__lt=0)
                 .exclude(date__year=current_year, date__month=current_month)
-                .values_list('date', 'amount')
-            ):
-                w = math.exp(-decay * (today_date - t_date).days)
-                weighted_sum += abs(float(t_amount)) * w
-                weight_total += w
+                .values('date__year', 'date__month')
+                .annotate(total=Sum('amount'))
+            )
+
+            weighted_sum = weight_total = 0.0
+            for item in monthly_totals:
+                y, m = item['date__year'], item['date__month']
+                last_day = cal.monthrange(y, m)[1]
+                ref_date = date_cls(y, m, last_day)
+                days_ago = (today_date - ref_date).days
+                if days_ago > 0:
+                    w = math.exp(-decay * days_ago)
+                    weighted_sum += abs(float(item['total'])) * w
+                    weight_total += w
 
             if weight_total > 0:
-                typical_month = (weighted_sum / weight_total) * 30
+                typical_month = weighted_sum / weight_total  # weighted avg of monthly totals
                 this_month_expense = expense_by_month[current_month - 1]
                 diff_pct = ((this_month_expense - typical_month) / typical_month) * 100
                 month_vs_avg = {
@@ -1009,6 +1026,8 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             'income_data': json.dumps(income_by_month),
             'balance_data': json.dumps(balance_by_month),
             'top_keywords': top_keywords,
+            'weekday_data': json.dumps(weekday_totals),
+            'weekday_labels': json.dumps(['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']),
             'month_vs_avg': month_vs_avg,
             'total_income': total_income,
             'total_expense': total_expense,
