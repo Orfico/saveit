@@ -1,269 +1,154 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Transaction{% endblock %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Transaction – SaveIt{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg">
-  <h1 class="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-800 flex items-center gap-3">
-    {% if form.instance.pk %}
-      <i data-lucide="edit" class="w-5 h-5 sm:w-6 sm:h-6"></i> Edit Transaction
-    {% else %}
-      <i data-lucide="plus" class="w-5 h-5 sm:w-6 sm:h-6"></i> New Transaction
-    {% endif %}
-  </h1>
-  
-  <form method="post" class="space-y-6" id="transactionForm">
-    {% csrf_token %}
-    {% csrf_token %}
+<div class="max-w-lg mx-auto">
 
-<!-- 🔴 DEBUG: Show all errors -->
-{% if form.errors %}
-<div class="bg-red-100 border-2 border-red-500 rounded-lg p-4 mb-6">
-  <h3 class="font-bold text-red-800 mb-2">⚠️ Errors in the form:</h3>
-  <ul class="list-disc list-inside text-red-700">
-    {% for field, errors in form.errors.items %}
-      <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
-    {% endfor %}
-  </ul>
-</div>
-{% endif %}
+  <!-- Header -->
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{% if object %}{% url 'core:transaction_list' %}{% else %}{% url 'core:dashboard' %}{% endif %}"
+       class="p-2 rounded-lg hover:bg-gray-100 transition text-gray-500">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </a>
+    <div>
+      <h1 class="text-xl font-bold text-gray-900">
+        {% if object %}Modifica transazione{% else %}Nuova transazione{% endif %}
+      </h1>
+      {% if is_family %}
+        <p class="text-xs text-blue-600 font-medium flex items-center gap-1 mt-0.5">
+          <i data-lucide="users" class="w-3 h-3"></i>
+          Modalità famiglia · {{ family_profile.member_1 }} &amp; {{ family_profile.member_2 }}
+        </p>
+      {% endif %}
+    </div>
+  </div>
 
-    <!-- ✅ TYPE OF TRANSACTION (INCOME/EXPENSE) -->
-    <div class="bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
-      <label class="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-        <i data-lucide="activity" class="w-4 h-4"></i> Type of Transaction
-      </label>
-      <div class="flex gap-6">
-        {% for value, label in form.type.field.choices %}
-        <label class="flex items-center space-x-2 cursor-pointer">
-          <input type="radio" name="type" value="{{ value }}" 
-                 {% if form.type.value == value or form.initial.type == value %}checked{% endif %}
-                 class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-          <span class="text-base sm:text-lg">{{ label }}</span>
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- Date -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+        <input type="date" name="date"
+               value="{{ form.date.value|date:'Y-m-d' }}"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
+                      {% if form.date.errors %}border-red-400{% endif %}">
+        {% for e in form.date.errors %}<p class="text-red-500 text-xs mt-1">{{ e }}</p>{% endfor %}
+      </div>
+
+      <!-- Description -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Descrizione</label>
+        <input type="text" name="description"
+               value="{{ form.description.value|default:'' }}"
+               placeholder="es. Spesa supermercato"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- Amount -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          {% if is_family %}Importo (€){% else %}Importo (€ — positivo = entrata, negativo = uscita){% endif %}
         </label>
-        {% endfor %}
+        <input type="number" name="amount" step="0.01"
+               {% if is_family %}min="0" placeholder="0.00"{% endif %}
+               value="{{ form.amount.value|default:'' }}"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
+                      {% if form.amount.errors %}border-red-400{% endif %}">
+        {% if is_family %}
+          <p class="text-xs text-gray-400 mt-1">Inserisci sempre un valore positivo — le spese vengono registrate automaticamente.</p>
+        {% endif %}
+        {% for e in form.amount.errors %}<p class="text-red-500 text-xs mt-1">{{ e }}</p>{% endfor %}
       </div>
-      {% if form.type.errors %}
-        <p class="text-red-500 text-sm mt-1">{{ form.type.errors|join:", " }}</p>
-      {% endif %}
-    </div>
 
-    <!-- Date -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-        <i data-lucide="calendar" class="w-4 h-4"></i> Date
-      </label>
-      {{ form.date }}
-      {% if form.date.errors %}
-        <p class="text-red-500 text-sm mt-1">{{ form.date.errors|join:", " }}</p>
-      {% endif %}
-    </div>
-    
-    <!-- Amount -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-        <i data-lucide="euro" class="w-4 h-4"></i> Amount (€)
-      </label>
-      {{ form.amount }}
-      <p class="text-xs text-gray-600 mt-1">Always enter a positive value (e.g., 50.00)</p>
-      {% if form.amount.errors %}
-        <p class="text-red-500 text-sm mt-1">{{ form.amount.errors|join:", " }}</p>
-      {% endif %}
-    </div>
-    
-    <!-- Description -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-        <i data-lucide="edit-3" class="w-4 h-4"></i> Description
-      </label>
-      {{ form.description }}
-      {% if form.description.errors %}
-        <p class="text-red-500 text-sm mt-1">{{ form.description.errors|join:", " }}</p>
-      {% endif %}
-    </div>
-    
-    <!-- Category -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-        <i data-lucide="tag" class="w-4 h-4"></i> Category
-      </label>
-      
-      <select name="category" id="id_category" 
-              class="border border-gray-300 px-4 py-2 rounded-lg w-full mb-3 focus:ring-2 focus:ring-blue-500">
-        <option value="">-- Select Category --</option>
-        {% for category in form.category.field.queryset %}
-          <option value="{{ category.id }}" 
-                  {% if form.category.value == category.id|stringformat:"s" %}selected{% endif %}>
-            {{ category.get_type_display }} - {{ category.name }}
+      <!-- Category -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+        <select name="category"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
+                       {% if form.category.errors %}border-red-400{% endif %}">
+          <option value="">---------</option>
+          {% for cat in form.fields.category.queryset %}
+            <option value="{{ cat.pk }}"
+                    {% if form.category.value|stringformat:"s" == cat.pk|stringformat:"s" %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+          {% endfor %}
+        </select>
+        {% for e in form.category.errors %}<p class="text-red-500 text-xs mt-1">{{ e }}</p>{% endfor %}
+      </div>
+
+      {% if is_family %}
+      <!-- Paid by (family only) -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Chi ha pagato *</label>
+        <select name="paid_by"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
+                       {% if form.paid_by.errors %}border-red-400{% endif %}">
+          <option value="">---------</option>
+          <option value="member_1"
+                  {% if form.paid_by.value == "member_1" %}selected{% endif %}>
+            {{ family_profile.member_1 }}
           </option>
-        {% endfor %}
-        <option value="new">➕ New Category</option>
-      </select>
-      
-      <div id="newCategorySection" class="hidden space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1">Category name</label>
-          {{ form.new_category_name }}
-        </div>
-        
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Type</label>
-            {{ form.category_type }}
-          </div>
-          
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Colour</label>
-            {{ form.category_color }}
-          </div>
-        </div>
-        
-        <button type="button" id="cancelNewCategory"
-                class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-          ← Back to category selection
+          <option value="member_2"
+                  {% if form.paid_by.value == "member_2" %}selected{% endif %}>
+            {{ family_profile.member_2 }}
+          </option>
+        </select>
+        {% for e in form.paid_by.errors %}<p class="text-red-500 text-xs mt-1">{{ e }}</p>{% endfor %}
+      </div>
+
+      {% else %}
+      <!-- Recurring (standard only) -->
+      <div class="mb-4 flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+        <input type="checkbox" name="is_recurring" id="is_recurring"
+               {% if form.is_recurring.value %}checked{% endif %}
+               class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+        <label for="is_recurring" class="text-sm font-medium text-gray-700 cursor-pointer">
+          Transazione ricorrente mensile
+        </label>
+      </div>
+      {% endif %}
+
+      <!-- Notes -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Note <span class="text-gray-400 font-normal">(opzionale)</span></label>
+        <textarea name="notes" rows="2"
+                  placeholder="Note aggiuntive..."
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">{{ form.notes.value|default:'' }}</textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3">
+        <button type="submit"
+                class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition shadow-sm">
+          {% if object %}Salva modifiche{% else %}Aggiungi transazione{% endif %}
         </button>
+        <a href="{% if object %}{% url 'core:transaction_list' %}{% else %}{% url 'core:dashboard' %}{% endif %}"
+           class="px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+          Annulla
+        </a>
       </div>
-      
-      {% if form.category.errors %}
-        <p class="text-red-500 text-sm mt-1">{{ form.category.errors|join:", " }}</p>
-      {% endif %}
-    </div>
-    
-    <!-- Note -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-        <i data-lucide="file-text" class="w-4 h-4"></i> Notes (opzionale)
-      </label>
-      {{ form.notes }}
-      {% if form.notes.errors %}
-        <p class="text-red-500 text-sm mt-1">{{ form.notes.errors|join:", " }}</p>
-      {% endif %}
-    </div>
-    
-    <!-- ✅ RECURRING TRANSACTIONS SECTION -->
-    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4 sm:p-5">
-      <div class="flex items-start gap-4">
-        <!-- Toggle Switch Custom -->
-        <div class="flex-shrink-0 pt-1">
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" 
-                   name="is_recurring" 
-                   id="{{ form.is_recurring.id_for_label }}"
-                   {% if form.is_recurring.value or form.initial.is_recurring %}checked{% endif %}
-                   class="sr-only peer">
-            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-          </label>
-        </div>
-        
-        <!-- Content -->
-        <div class="flex-1">
-          <label for="{{ form.is_recurring.id_for_label }}" class="text-sm sm:text-base font-semibold text-gray-900 cursor-pointer flex items-center gap-2">
-            <i data-lucide="repeat" class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600"></i>
-            Repeat automatically every month
-          </label>
-          <p class="text-xs sm:text-sm text-gray-600 mt-1.5 leading-relaxed">
-            Perfect for rent, salary, subscriptions, recurring bills. The transaction will be automatically duplicated on the same day each month.
-          </p>
-          
-          {% if form.instance.pk and form.instance.is_recurring %}
-            <div class="mt-3 flex items-start gap-2 text-xs sm:text-sm text-purple-800 bg-purple-100 px-3 py-2 rounded-lg">
-              <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
-              <div>
-                <p class="font-semibold">✓ Recurring transaction active</p>
-                <p class="mt-1 text-purple-700">Deactivate the toggle to stop future duplications. Previously created transactions will remain.</p>
-              </div>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-      {% if form.is_recurring.errors %}
-        <p class="mt-2 text-sm text-red-600">{{ form.is_recurring.errors|join:", " }}</p>
-      {% endif %}
-    </div>
-    
-    <!-- General errors -->
-    {% if form.non_field_errors %}
-    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-      <p class="text-red-600 font-semibold">{{ form.non_field_errors|join:", " }}</p>
+
+    </form>
+
+    <!-- Delete (edit only) -->
+    {% if object %}
+    <div class="mt-4 pt-4 border-t border-gray-100">
+      <form method="post" action="{% url 'core:transaction_delete' object.pk %}"
+            onsubmit="return confirm('Eliminare questa transazione?')">
+        {% csrf_token %}
+        <button type="submit"
+                class="w-full flex items-center justify-center gap-2 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg transition">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>Elimina transazione
+        </button>
+      </form>
     </div>
     {% endif %}
-    
-    <!-- Buttons -->
-<div class="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 pt-4 border-t">
-  {% if form.instance.pk %}
-    <!-- Delete button (edit mode only) -->
-    <button type="button" 
-            onclick="if(confirm('Are you sure you want to delete this transaction?')) { document.getElementById('deleteForm').submit(); }"
-            class="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 font-semibold shadow-lg transition flex items-center justify-center gap-2">
-      <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
-    </button>
-  {% endif %}
-  
-  <a href="{% url 'core:transaction_list' %}" 
-     class="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 font-semibold text-center shadow-lg transition flex items-center justify-center gap-2">
-    <i data-lucide="x" class="w-4 h-4"></i> Cancel
-  </a>
-  
-  <button type="submit" 
-          class="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 text-white py-3 px-6 rounded-lg hover:from-emerald-700 hover:to-green-700 font-semibold shadow-lg transition flex items-center justify-center gap-2">
-    <i data-lucide="save" class="w-4 h-4"></i> Save
-  </button>
-</div>
-</form>
 
-<!-- Hidden form for delete -->
-{% if form.instance.pk %}
-<form id="deleteForm" method="post" action="{% url 'core:transaction_delete' form.instance.pk %}" class="hidden">
-  {% csrf_token %}
-</form>
-{% endif %}
-  
+  </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialize Lucide icons
-  lucide.createIcons();
-  
-  const categorySelect = document.getElementById('id_category');
-  const newCategorySection = document.getElementById('newCategorySection');
-  const newCategoryInput = document.getElementById('new_category_input');
-  const cancelBtn = document.getElementById('cancelNewCategory');
-  
-  categorySelect.addEventListener('change', function() {
-    if (this.value === 'new') {
-      newCategorySection.classList.remove('hidden');
-      newCategoryInput.focus();
-      this.value = '';
-    } else {
-      newCategorySection.classList.add('hidden');
-      newCategoryInput.value = '';
-    }
-  });
-  
-  cancelBtn.addEventListener('click', function() {
-    newCategorySection.classList.add('hidden');
-    newCategoryInput.value = '';
-    categorySelect.value = '';
-  });
-  
-  document.getElementById('transactionForm').addEventListener('submit', function(e) {
-    const selectedCategory = categorySelect.value;
-    const newCategoryName = newCategoryInput.value.trim();
-    
-    if (!selectedCategory && !newCategoryName) {
-      e.preventDefault();
-      alert('Devi selezionare una categoria esistente o crearne una nuova!');
-      return false;
-    }
-    
-    if (newCategorySection.classList.contains('hidden') === false && !newCategoryName) {
-      e.preventDefault();
-      alert('Inserisci un nome per la nuova categoria!');
-      newCategoryInput.focus();
-      return false;
-    }
-  });
-});
-</script>
 {% endblock %}
