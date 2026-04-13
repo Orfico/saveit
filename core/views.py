@@ -641,6 +641,19 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                 dialect = csv.excel
             reader = csv.DictReader(io.StringIO(decoded), dialect=dialect)
 
+            # Date normalization: accept YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY, DD-MM-YYYY
+            from datetime import datetime as dt
+            DATE_FORMATS = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y', '%Y/%m/%d']
+
+            def parse_date(raw):
+                raw = raw.strip()
+                for fmt in DATE_FORMATS:
+                    try:
+                        return dt.strptime(raw, fmt).date().isoformat()
+                    except ValueError:
+                        continue
+                raise ValueError(f'Unrecognised date format: {raw}')
+
             # Build paid_by name→key map for family accounts
             paid_by_map = {}
             if is_family(request.user):
@@ -679,9 +692,11 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                         errors += 1
                         continue
 
+                    parsed_date = parse_date(row['date'])
+
                     if Transaction.objects.filter(
                         user=request.user,
-                        date=row['date'].strip(),
+                        date=parsed_date,
                         amount=row['amount'].strip(),
                         category=category,
                     ).exists():
@@ -706,7 +721,7 @@ class ImportTransactionsView(LoginRequiredMixin, View):
 
                     Transaction.objects.create(
                         user=request.user,
-                        date=row['date'].strip(),
+                        date=parsed_date,
                         description=row.get('description', '').strip(),
                         amount=row['amount'].strip(),
                         category=category,
