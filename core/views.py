@@ -652,6 +652,9 @@ class ImportTransactionsView(LoginRequiredMixin, View):
             for row_num, row in enumerate(reader, start=2):
                 try:
                     amount_val = float(row['amount'].strip())
+                    # Family accounts: all transactions are expenses
+                    if paid_by_map:
+                        amount_val = -abs(amount_val)
                     primary_type = Category.EXPENSE if amount_val < 0 else Category.INCOME
                     fallback_type = Category.INCOME if amount_val < 0 else Category.EXPENSE
 
@@ -681,12 +684,12 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                     if Transaction.objects.filter(
                         user=request.user,
                         date=parsed_date,
-                        amount=row['amount'].strip(),
+                        amount=amount_val,
                         category=category,
                     ).exists():
                         logger.info(
                             f'CSV import row {row_num}: duplicato ignorato — '
-                            f'{row["date"]} {row["amount"]} {category.name}'
+                            f'{row["date"]} {amount_val} {category.name}'
                         )
                         skipped += 1
                         continue
@@ -707,7 +710,7 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                         user=request.user,
                         date=parsed_date,
                         description=row.get('description', '').strip(),
-                        amount=row['amount'].strip(),
+                        amount=amount_val,
                         category=category,
                         notes=row.get('notes', '').strip(),
                         is_recurring=row.get('is_recurring', 'False').strip() == 'True',
