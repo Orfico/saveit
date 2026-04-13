@@ -220,14 +220,14 @@
 
 {# Inject data as JSON in a script tag so JS can read it safely #}
 <script id="analyticsData" type="application/json">{
-  "income":   {{ income_data|default:"[]" }},
-  "expense":  {{ expense_data|default:"[]" }},
-  "balance":  {{ balance_data|default:"[]" }},
-  "weekday":  {{ weekday_data|default:"[]" }},
-  "wdLabels": {{ weekday_labels|default:'["Lun","Mar","Mer","Gio","Ven","Sab","Dom"]' }}
+  "income":   {{ income_data|default:"[]"|safe }},
+  "expense":  {{ expense_data|default:"[]"|safe }},
+  "balance":  {{ balance_data|default:"[]"|safe }},
+  "weekday":  {{ weekday_data|default:"[]"|safe }},
+  "wdLabels": {{ weekday_labels|default:'["Lun","Mar","Mer","Gio","Ven","Sab","Dom"]'|safe }}
   {% if is_family and member_breakdown %}
-  ,"m1": {{ member_breakdown.member_1_data }},
-  "m2": {{ member_breakdown.member_2_data }},
+  ,"m1": {{ member_breakdown.member_1_data|safe }},
+  "m2": {{ member_breakdown.member_2_data|safe }},
   "m1name": "{{ member_breakdown.member_1_name|escapejs }}",
   "m2name": "{{ member_breakdown.member_2_name|escapejs }}"
   {% endif %}
