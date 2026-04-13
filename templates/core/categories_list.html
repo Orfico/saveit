@@ -5,6 +5,92 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto p-4">
+
+    {% if is_family %}
+    <!-- ════════════════════════════════════════════════════════════════════
+         FAMILY: solo expense categories + form di creazione
+         ════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg p-6 mb-6">
+        <h1 class="text-2xl font-bold mb-2">Manage Categories</h1>
+        <p class="text-blue-100 text-sm">
+            Family account · {{ family_profile.member_1 }} &amp; {{ family_profile.member_2 }}
+        </p>
+    </div>
+
+    <!-- Create new category (family) -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-5 h-5 text-blue-600"></i>
+            New Category
+        </h2>
+        <form method="post" action="{% url 'core:category_create' %}" class="flex flex-col sm:flex-row gap-3">
+            {% csrf_token %}
+            <input type="text" name="name" placeholder="Category name" required
+                   class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap">Color</label>
+                <input type="color" name="color" value="#3B82F6"
+                       class="w-10 h-10 rounded cursor-pointer border border-gray-300">
+            </div>
+            <button type="submit"
+                    class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap">
+                Add
+            </button>
+        </form>
+    </div>
+
+    <!-- Expense categories list (family) -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i data-lucide="tag" class="w-5 h-5 text-blue-600"></i>
+            Expense Categories
+        </h2>
+        <div class="space-y-3">
+            {% for category in categories %}
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <div class="flex items-center gap-3">
+                    <div class="w-4 h-4 rounded-full" style="background-color: {{ category.color }};"></div>
+                    <div>
+                        <p class="font-semibold text-gray-900">{{ category.name }}</p>
+                        <p class="text-sm text-gray-500">
+                            {{ category.transaction_count }} transaction{{ category.transaction_count|pluralize }}
+                            {% if category.is_global %}
+                                <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Global</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% if not category.is_global %}
+                    {% if category.transaction_count == 0 %}
+                    <button onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+                            class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
+                            title="Delete category">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                    {% else %}
+                    <button onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
+                            class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
+                            disabled title="Cannot delete - has transactions">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                    {% endif %}
+                {% else %}
+                    <span class="text-xs text-gray-400 px-2">Global</span>
+                {% endif %}
+            </div>
+            {% empty %}
+                <p class="text-gray-500 text-center py-4">No expense categories yet</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% else %}
+    <!-- ════════════════════════════════════════════════════════════════════
+         STANDARD: layout originale invariato
+         ════════════════════════════════════════════════════════════════════ -->
+
     <!-- Header -->
     <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg p-6 mb-6">
         <h1 class="text-2xl font-bold mb-2">Manage Categories</h1>
@@ -17,7 +103,6 @@
             <i data-lucide="trending-up" class="w-5 h-5 text-green-600"></i>
             Income Categories
         </h2>
-        
         <div class="space-y-3">
             {% for category in categories %}
                 {% if category.type == 'IN' %}
@@ -34,23 +119,17 @@
                             </p>
                         </div>
                     </div>
-                    
                     {% if not category.is_global %}
                         {% if category.transaction_count == 0 %}
-                        <button 
-                            onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
-                            class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
-                            title="Delete category"
-                        >
+                        <button onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+                                class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
+                                title="Delete category">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
                         {% else %}
-                        <button 
-                            onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
-                            class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
-                            title="Cannot delete - has transactions"
-                            disabled
-                        >
+                        <button onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
+                                class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
+                                disabled title="Cannot delete - has transactions">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
                         {% endif %}
@@ -71,7 +150,6 @@
             <i data-lucide="trending-down" class="w-5 h-5 text-red-600"></i>
             Expense Categories
         </h2>
-        
         <div class="space-y-3">
             {% for category in categories %}
                 {% if category.type == 'EX' %}
@@ -88,23 +166,17 @@
                             </p>
                         </div>
                     </div>
-                    
                     {% if not category.is_global %}
                         {% if category.transaction_count == 0 %}
-                        <button 
-                            onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
-                            class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
-                            title="Delete category"
-                        >
+                        <button onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+                                class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
+                                title="Delete category">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
                         {% else %}
-                        <button 
-                            onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
-                            class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
-                            title="Cannot delete - has transactions"
-                            disabled
-                        >
+                        <button onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
+                                class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
+                                disabled title="Cannot delete - has transactions">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
                         {% endif %}
@@ -119,7 +191,9 @@
         </div>
     </div>
 
-    <!-- Info Box -->
+    {% endif %}
+
+    <!-- Info Box (comune) -->
     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <div class="flex gap-3">
             <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0"></i>
@@ -128,7 +202,9 @@
                 <ul class="list-disc list-inside space-y-1 text-blue-800">
                     <li>Global categories cannot be deleted</li>
                     <li>Custom categories can only be deleted if they have no transactions</li>
+                    {% if not is_family %}
                     <li>Create new categories when adding transactions</li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -136,10 +212,8 @@
 
     <!-- Back Button -->
     <div class="text-center">
-        <a 
-            href="{% url 'core:dashboard' %}" 
-            class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
-        >
+        <a href="{% url 'core:dashboard' %}"
+           class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold">
             <i data-lucide="arrow-left" class="w-5 h-5"></i>
             Back to Dashboard
         </a>
@@ -147,25 +221,22 @@
 </div>
 
 <script>
-const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                   document.querySelector('meta[name="csrf-token"]')?.content;
 
 async function deleteCategory(categoryId, categoryName) {
     if (!confirm(`Are you sure you want to delete "${categoryName}"?\n\nThis action cannot be undone.`)) {
         return;
     }
-
     try {
         const response = await fetch(`/categories/${categoryId}/delete/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrftoken,
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+            },
         });
-
         const data = await response.json();
-
         if (data.success) {
             alert(data.message);
             location.reload();
@@ -178,7 +249,6 @@ async function deleteCategory(categoryId, categoryName) {
     }
 }
 
-// Initialize Lucide icons
 if (typeof lucide !== 'undefined') {
     lucide.createIcons();
 }
