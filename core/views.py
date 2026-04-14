@@ -1017,6 +1017,24 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
                 'member_2_total': sum(m2_by_month),
             }
 
+        # ── Entrate per categoria (solo account standard) ───────────────────
+        income_by_category = []
+        if not family:
+            cat_qs = (
+                qs.filter(amount__gt=0)
+                .values('category__name', 'category__color')
+                .annotate(total=Sum('amount'))
+                .order_by('-total')
+            )
+            income_by_category = [
+                {
+                    'name': c['category__name'],
+                    'total': float(c['total']),
+                    'color': c['category__color'] or '#3B82F6',
+                }
+                for c in cat_qs
+            ]
+
         ctx.update({
             'is_family': family,
             'family_profile': user.family_profile if family else None,
@@ -1035,5 +1053,6 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             'savings_rate': round(savings_rate, 1),
             'avg_monthly_expense': avg_monthly_expense,
             'member_breakdown': member_breakdown,
+            'income_by_category': json.dumps(income_by_category),
         })
         return ctx
