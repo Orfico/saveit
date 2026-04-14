@@ -29,10 +29,38 @@
     <form method="post">
       {% csrf_token %}
 
-      {# Hidden fields managed by form #}
-      {{ form.type }}
-      {{ form.is_recurring }}
-      {{ form.paid_by.as_hidden }}
+      {# For family: type and is_recurring are hidden inputs managed by the form widget #}
+      {% if is_family %}
+        {{ form.type }}
+        {{ form.is_recurring }}
+      {% endif %}
+
+      {% if not is_family %}
+      <!-- Income / Expense toggle (standard only) -->
+      <div class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+        <div class="flex rounded-xl overflow-hidden border border-gray-300" id="type-toggle">
+          <label class="flex-1 text-center cursor-pointer">
+            <input type="radio" name="type" value="expense"
+                   class="sr-only"
+                   {% if form.type.value == 'expense' or not form.type.value %}checked{% endif %}>
+            <span class="block py-2 text-sm font-semibold transition-colors duration-150"
+                  id="label-expense">
+              Uscita
+            </span>
+          </label>
+          <label class="flex-1 text-center cursor-pointer border-l border-gray-300">
+            <input type="radio" name="type" value="income"
+                   class="sr-only"
+                   {% if form.type.value == 'income' %}checked{% endif %}>
+            <span class="block py-2 text-sm font-semibold transition-colors duration-150"
+                  id="label-income">
+              Entrata
+            </span>
+          </label>
+        </div>
+      </div>
+      {% endif %}
 
       <!-- Date -->
       <div class="mb-4">
@@ -55,17 +83,12 @@
 
       <!-- Amount -->
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">
-          {% if is_family %}Importo (€){% else %}Importo (€ — positivo = entrata, negativo = uscita){% endif %}
-        </label>
-        <input type="number" name="amount" step="0.01"
-               {% if is_family %}min="0.01" placeholder="0.00"{% endif %}
+        <label class="block text-sm font-medium text-gray-700 mb-1">Importo (€)</label>
+        <input type="number" name="amount" step="0.01" min="0.01"
+               placeholder="0.00"
                value="{{ form.amount.value|default:'' }}"
                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
                       {% if form.amount.errors %}border-red-400{% endif %}">
-        {% if is_family %}
-          <p class="text-xs text-gray-400 mt-1">Inserisci sempre un valore positivo.</p>
-        {% endif %}
         {% for e in form.amount.errors %}<p class="text-red-500 text-xs mt-1">{{ e }}</p>{% endfor %}
       </div>
 
@@ -87,7 +110,7 @@
       </div>
 
       {% if is_family %}
-      <!-- Paid by (family only) — real member names from form choices -->
+      <!-- Paid by (family only) -->
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">Chi ha pagato *</label>
         <select name="paid_by"
@@ -155,4 +178,29 @@
 
   </div>
 </div>
+
+{% if not is_family %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var radios = document.querySelectorAll('input[name="type"]');
+  var labelExpense = document.getElementById('label-expense');
+  var labelIncome  = document.getElementById('label-income');
+
+  function updateToggle() {
+    var val = document.querySelector('input[name="type"]:checked').value;
+    if (val === 'expense') {
+      labelExpense.className = 'block py-2 text-sm font-semibold bg-red-500 text-white transition-colors duration-150';
+      labelIncome.className  = 'block py-2 text-sm font-semibold text-gray-500 transition-colors duration-150';
+    } else {
+      labelIncome.className  = 'block py-2 text-sm font-semibold bg-green-500 text-white transition-colors duration-150';
+      labelExpense.className = 'block py-2 text-sm font-semibold text-gray-500 transition-colors duration-150';
+    }
+  }
+
+  radios.forEach(function(r) { r.addEventListener('change', updateToggle); });
+  updateToggle();
+});
+</script>
+{% endif %}
+
 {% endblock %}
