@@ -87,12 +87,13 @@ class AnalyticsContextTest(TestCase):
         response = self.client.get(reverse('core:analytics'), follow=True)
         self.assertEqual(response.context['savings_rate'], 75.0)
 
-    def test_top_keywords_extracted(self):
+    def test_top_categories_by_expense(self):
         response = self.client.get(reverse('core:analytics'), follow=True)
-        descriptions = [desc for desc, _ in response.context['top_keywords']]
-        counts = {desc: cnt for desc, cnt in response.context['top_keywords']}
-        self.assertIn('Spesa supermercato', descriptions)
-        self.assertEqual(counts['Spesa supermercato'], 2)
+        categories = [name for name, _, _color in response.context['top_keywords']]
+        amounts = {name: amt for name, amt, _color in response.context['top_keywords']}
+        # Food category should appear (transactions of -200 and -50)
+        self.assertIn('Food', categories)
+        self.assertAlmostEqual(amounts['Food'], 250.0)
 
     def test_user_isolation(self):
         """Un secondo utente non vede i dati del primo."""
