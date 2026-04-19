@@ -192,33 +192,36 @@
     </div>
     {% endif %}
 
-    <!-- Top 5 merchant per frequenza -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 {% if not month_vs_avg %}md:col-span-2{% endif %}">
-      <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-4">
-        <i data-lucide="store" class="w-4 h-4 text-blue-500"></i>Top 5 voci più frequenti
-      </h2>
-      {% if top_keywords %}
-        {% with max_count=top_keywords.0.1 %}
-        <div class="flex flex-col gap-3">
-          {% for desc, count in top_keywords %}
-          <div>
-            <div class="flex justify-between text-sm mb-1">
-              <span class="font-medium text-gray-700 truncate max-w-[70%]">{{ desc }}</span>
-              <span class="text-gray-400 flex-shrink-0">{{ count }}×</span>
+  <!-- Top 5 categorie per volume di spesa -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 {% if not month_vs_avg %}md:col-span-2{% endif %}">
+    <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-4">
+      <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>Top 5 categorie · uscite {{ selected_year }}
+    </h2>
+    {% if top_keywords %}
+      {% with max_amount=top_keywords.0.1 %}
+      <div class="flex flex-col gap-3">
+        {% for name, amount, color in top_keywords %}
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style="background-color: {{ color }}"></span>
+              <span class="font-medium text-gray-700 truncate">{{ name }}</span>
             </div>
-            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div class="h-full bg-blue-500 rounded-full"
-                   style="width: {% widthratio count max_count 100 %}%"></div>
-            </div>
+            <span class="text-gray-500 flex-shrink-0 ml-2">€{{ amount|floatformat:0 }}</span>
           </div>
-          {% endfor %}
+          <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full"
+                style="width: {% widthratio amount max_amount 100 %}%;
+                        background-color: {{ color }}"></div>
+          </div>
         </div>
-        {% endwith %}
-      {% else %}
-        <p class="text-sm text-gray-400 text-center py-6">Nessuna uscita registrata.</p>
-      {% endif %}
-    </div>
-
+        {% endfor %}
+      </div>
+      {% endwith %}
+    {% else %}
+      <p class="text-sm text-gray-400 text-center py-6">Nessuna uscita registrata.</p>
+    {% endif %}
   </div>
 
   <!-- ── Distribuzione settimanale ────────────────────────────────────────── -->

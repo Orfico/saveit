@@ -8,7 +8,6 @@ import json
 import logging
 import math
 import os
-from collections import Counter
 from datetime import date as date_type
 from datetime import timedelta
 from decimal import Decimal
@@ -935,13 +934,17 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             for i in range(12)
         ]
 
-        # ── Top 5 merchant per frequenza (descrizione esatta) ───────────────
-        from collections import Counter
-        merchant_counter = Counter()
-        for desc in qs.filter(amount__lt=0).values_list('description', flat=True):
-            if desc and desc.strip():
-                merchant_counter[desc.strip()] += 1
-        top_keywords = merchant_counter.most_common(5)  # (description, count)
+        # ── Top 5 categorie ───────────────
+        top_keywords = (
+            qs.filter(amount__lt=0)
+            .values('category__name', 'category__color')
+            .annotate(total=Sum('amount'))
+            .order_by('total')[:5]
+        )
+        top_keywords = [
+            (item['category__name'], abs(float(item['total'])), item['category__color'] or '#3B82F6')
+            for item in top_keywords
+        ]
 
         # ── Spese per giorno della settimana ─────────────────────────────────
         WEEKDAYS_LABELS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
