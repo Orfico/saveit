@@ -33,6 +33,22 @@
       </button>
     </form>
 
+    <!-- Bulk Delete -->
+    <form method="post" action="{% url 'core:transactions_bulk_delete' %}"
+          id="bulk-delete-form">
+      {% csrf_token %}
+      <input type="hidden" name="date_from"  value="{{ date_from }}">
+      <input type="hidden" name="date_to"    value="{{ date_to }}">
+      <input type="hidden" name="category"   value="{{ category_id }}">
+      <input type="hidden" name="search"     value="{{ search }}">
+      <button type="button"
+              onclick="confirmBulkDelete()"
+              class="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors">
+        <i data-lucide="trash-2" class="w-4 h-4"></i>
+        <span class="hidden sm:inline">Delete</span>
+      </button>
+    </form>
+
     <!-- New Transaction -->
     <a href="{% url 'core:transaction_create' %}"
        class="flex-1 sm:flex-none bg-gradient-to-r from-emerald-600 to-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-emerald-700 hover:to-green-700 font-semibold shadow-lg transition flex items-center gap-2 justify-center">
@@ -292,5 +308,20 @@
   document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
   });
+
+  function confirmBulkDelete() {
+  var count = {{ filtered_count|default:0 }};
+  var msg = count > 0
+    ? 'Eliminare ' + count + ' transazioni' +
+      ({{ date_from|default:"''"|safe }} || {{ date_to|default:"''"|safe }} || {{ category_id|default:"''"|safe }} || {{ search|default:"''"|safe }}
+        ? ' (con i filtri attivi)'
+        : ' (tutte le tue transazioni)')
+      + '?\n\nQuesta azione è irreversibile.'
+    : 'Nessuna transazione da eliminare con i filtri attivi.';
+
+  if (count > 0 && confirm(msg)) {
+    document.getElementById('bulk-delete-form').submit();
+  }
+}
 </script>
 {% endblock %}
