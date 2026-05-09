@@ -154,3 +154,56 @@ class RecurringTransactionsViewTest(TestCase):
         
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Other rent')
+
+
+class CategoryViewTest(TestCase):
+    """Tests for the categories list and create views (standard accounts)"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='catuser', password='pass')
+        self.client.login(username='catuser', password='pass')
+
+    def test_categories_list_renders(self):
+        response = self.client.get(reverse('core:categories_list'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_create_expense_category(self):
+        response = self.client.post(
+            reverse('core:category_create'),
+            {'name': 'Groceries', 'type': 'EX', 'color': '#ff0000'},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Category.objects.filter(name='Groceries', user=self.user, type=Category.EXPENSE).exists())
+
+    def test_create_income_category(self):
+        self.client.post(
+            reverse('core:category_create'),
+            {'name': 'Freelance', 'type': 'IN', 'color': '#00ff00'},
+            follow=True,
+        )
+        self.assertTrue(Category.objects.filter(name='Freelance', user=self.user, type=Category.INCOME).exists())
+
+    def test_create_category_requires_name(self):
+        self.client.post(
+            reverse('core:category_create'),
+            {'name': '', 'type': 'EX', 'color': '#ff0000'},
+            follow=True,
+        )
+        self.assertEqual(Category.objects.filter(user=self.user).count(), 0)
+
+    def test_create_duplicate_category_does_not_duplicate(self):
+        Category.objects.create(name='Food', type=Category.EXPENSE, user=self.user, scope='PERSONAL')
+        self.client.post(
+            reverse('core:category_create'),
+            {'name': 'Food', 'type': 'EX', 'color': '#aabbcc'},
+            follow=True,
+        )
+        self.assertEqual(Category.objects.filter(name='Food', user=self.user).count(), 1)
+
+    def test_categories_list_shows_both_types(self):
+        Category.objects.create(name='Salary', type=Category.INCOME, user=self.user, scope='PERSONAL')
+        Category.objects.create(name='Rent', type=Category.EXPENSE, user=self.user, scope='PERSONAL')
+        response = self.client.get(reverse('core:categories_list'))
+        self.assertContains(response, 'Salary')
+        self.assertContains(response, 'Rent')

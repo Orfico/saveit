@@ -141,6 +141,27 @@ class ImportCSVTest(TestCase):
         # La transazione dell'altro utente non deve essere modificata
         self.assertEqual(t.description, 'altrui')
 
+    def test_import_auto_creates_unknown_category(self):
+        csv_file = build_csv([{
+            'date': '2025-06-01', 'description': 'nuova voce',
+            'amount': '-30', 'category': 'BrandNew', 'notes': '', 'is_recurring': 'False',
+        }])
+        self.client.post(reverse('core:transactions_import'), {'csv_file': csv_file})
+        # Category must have been created automatically
+        self.assertTrue(Category.objects.filter(name='BrandNew', user=self.user).exists())
+        # Transaction must have been imported, not skipped
+        self.assertTrue(Transaction.objects.filter(user=self.user, description='nuova voce').exists())
+
+    def test_import_auto_creates_income_category_for_positive_amount(self):
+        csv_file = build_csv([{
+            'date': '2025-06-02', 'description': 'stipendio',
+            'amount': '2000', 'category': 'NewSalary', 'notes': '', 'is_recurring': 'False',
+        }])
+        self.client.post(reverse('core:transactions_import'), {'csv_file': csv_file})
+        cat = Category.objects.filter(name='NewSalary', user=self.user).first()
+        self.assertIsNotNone(cat)
+        self.assertEqual(cat.type, Category.INCOME)
+
     def test_import_unknown_id_counts_as_error(self):
         csv_file = build_csv([{
             'id': '999999',

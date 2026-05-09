@@ -595,12 +595,17 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                             name=row['category'].strip(), type=fallback_type,
                         ).order_by('scope').first()
                     if not category:
-                        logger.warning(
-                            f'CSV import row {row_num}: categoria "{row["category"]}" '
-                            f'non trovata — riga saltata.'
+                        cat_name = row['category'].strip()
+                        category, _ = Category.objects.get_or_create(
+                            name=cat_name,
+                            user=request.user,
+                            type=primary_type,
+                            defaults={'scope': Category.PERSONAL, 'color': '#3B82F6'},
                         )
-                        errors += 1
-                        continue
+                        logger.info(
+                            f'CSV import row {row_num}: categoria "{cat_name}" '
+                            f'creata automaticamente.'
+                        )
 
                     parsed_date = parse_date(row['date'])
                     row_id = row.get('id', '').strip()

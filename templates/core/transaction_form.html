@@ -95,12 +95,13 @@
       <!-- Category -->
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-        <select name="category"
+        <select name="category" id="id_category"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
                        {% if form.category.errors %}border-red-400{% endif %}">
           <option value="">---------</option>
           {% for cat in form.fields.category.queryset %}
             <option value="{{ cat.pk }}"
+                    data-cat-type="{{ cat.type }}"
                     {% if form.category.value|stringformat:"s" == cat.pk|stringformat:"s" %}selected{% endif %}>
               {{ cat.name }}
             </option>
@@ -185,6 +186,23 @@ document.addEventListener('DOMContentLoaded', function () {
   var radios = document.querySelectorAll('input[name="type"]');
   var labelExpense = document.getElementById('label-expense');
   var labelIncome  = document.getElementById('label-income');
+  var categorySelect = document.getElementById('id_category');
+  var allOptions = Array.from(categorySelect.querySelectorAll('option[data-cat-type]'));
+
+  function filterCategories(type) {
+    var targetType = type === 'income' ? 'IN' : 'EX';
+    var currentVal = categorySelect.value;
+    allOptions.forEach(function(opt) {
+      var matches = opt.dataset.catType === targetType;
+      opt.hidden = !matches;
+      opt.disabled = !matches;
+    });
+    // Reset selection if current category doesn't match new type
+    var currentOpt = categorySelect.querySelector('option[value="' + currentVal + '"]');
+    if (currentOpt && currentOpt.dataset.catType && currentOpt.dataset.catType !== targetType) {
+      categorySelect.value = '';
+    }
+  }
 
   function updateToggle() {
     var val = document.querySelector('input[name="type"]:checked').value;
@@ -195,6 +213,7 @@ document.addEventListener('DOMContentLoaded', function () {
       labelIncome.className  = 'block py-2 text-sm font-semibold bg-green-500 text-white transition-colors duration-150';
       labelExpense.className = 'block py-2 text-sm font-semibold text-gray-500 transition-colors duration-150';
     }
+    filterCategories(val);
   }
 
   radios.forEach(function(r) { r.addEventListener('change', updateToggle); });

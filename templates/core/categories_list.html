@@ -94,7 +94,39 @@
     <!-- Header -->
     <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg p-6 mb-6">
         <h1 class="text-2xl font-bold mb-2">Manage Categories</h1>
-        <p class="text-blue-100 text-sm">View and delete your custom categories</p>
+        <p class="text-blue-100 text-sm">Create and manage your custom categories</p>
+    </div>
+
+    <!-- Create new category (standard) -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-5 h-5 text-blue-600"></i>
+            New Category
+        </h2>
+        <form method="post" action="{% url 'core:category_create' %}" class="flex flex-col sm:flex-row gap-3 items-end">
+            {% csrf_token %}
+            <div class="flex-1">
+                <input type="text" name="name" placeholder="Category name" required
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap">Type</label>
+                <select name="type"
+                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="EX">Expense</option>
+                    <option value="IN">Income</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 whitespace-nowrap">Color</label>
+                <input type="color" name="color" value="#3B82F6"
+                       class="w-10 h-10 rounded cursor-pointer border border-gray-300">
+            </div>
+            <button type="submit"
+                    class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap">
+                Add
+            </button>
+        </form>
     </div>
 
     <!-- Income Categories -->
@@ -203,7 +235,7 @@
                     <li>Global categories cannot be deleted</li>
                     <li>Custom categories can only be deleted if they have no transactions</li>
                     {% if not is_family %}
-                    <li>Create new categories when adding transactions</li>
+                    <li>Use the form above to add income or expense categories</li>
                     {% endif %}
                 </ul>
             </div>

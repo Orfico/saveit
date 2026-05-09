@@ -250,6 +250,14 @@ class TransactionFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('amount', form.errors)
     
+    def test_form_category_queryset_contains_both_types(self):
+        """Queryset must include both income and expense categories so JS can filter client-side"""
+        form = TransactionForm(user=self.user)
+        qs = form.fields['category'].queryset
+        types = set(qs.values_list('type', flat=True))
+        self.assertIn(Category.EXPENSE, types)
+        self.assertIn(Category.INCOME, types)
+
     def test_form_filters_categories_by_user(self):
         """Test that the form shows only categories of the current user"""
         # Create an additional user
