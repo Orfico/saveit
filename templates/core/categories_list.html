@@ -7,11 +7,8 @@
 <div class="max-w-4xl mx-auto p-4">
 
     {% if is_family %}
-    <!-- ════════════════════════════════════════════════════════════════════
-         FAMILY: solo expense categories + form di creazione
-         ════════════════════════════════════════════════════════════════════ -->
+    <!-- FAMILY: solo expense categories + form di creazione -->
 
-    <!-- Header -->
     <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg p-6 mb-6">
         <h1 class="text-2xl font-bold mb-2">Manage Categories</h1>
         <p class="text-blue-100 text-sm">
@@ -49,11 +46,15 @@
         </h2>
         <div class="space-y-3">
             {% for category in categories %}
-            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 rounded-full" style="background-color: {{ category.color }};"></div>
-                    <div>
-                        <p class="font-semibold text-gray-900">{{ category.name }}</p>
+            <div id="cat-row-{{ category.id }}"
+                 class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+
+                <!-- View mode -->
+                <div id="cat-view-{{ category.id }}" class="flex items-center gap-3 flex-1 min-w-0">
+                    <div id="cat-dot-{{ category.id }}" class="w-4 h-4 rounded-full flex-shrink-0"
+                         style="background-color: {{ category.color }};"></div>
+                    <div class="min-w-0">
+                        <p id="cat-name-{{ category.id }}" class="font-semibold text-gray-900 truncate">{{ category.name }}</p>
                         <p class="text-sm text-gray-500">
                             {{ category.transaction_count }} transaction{{ category.transaction_count|pluralize }}
                             {% if category.is_global %}
@@ -62,23 +63,47 @@
                         </p>
                     </div>
                 </div>
-                {% if not category.is_global %}
-                    {% if category.transaction_count == 0 %}
-                    <button onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
-                            class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
-                            title="Delete category">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+
+                <!-- Edit mode (hidden by default) -->
+                <div id="cat-edit-{{ category.id }}" class="hidden flex items-center gap-2 flex-1">
+                    <input type="color" id="cat-edit-color-{{ category.id }}" value="{{ category.color }}"
+                           class="w-10 h-10 rounded cursor-pointer border border-gray-300 flex-shrink-0">
+                    <input type="text" id="cat-edit-name-{{ category.id }}" value="{{ category.name }}"
+                           class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500">
+                    <button onclick="saveCategory({{ category.id }})"
+                            class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap">
+                        Save
                     </button>
+                    <button onclick="cancelEdit({{ category.id }})"
+                            class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
+                        Cancel
+                    </button>
+                </div>
+
+                <!-- Action buttons -->
+                <div id="cat-actions-{{ category.id }}" class="flex items-center gap-1 ml-3 flex-shrink-0">
+                    {% if not category.is_global %}
+                        <button onclick="editCategory({{ category.id }})"
+                                class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded-lg transition"
+                                title="Edit category">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                        {% if category.transaction_count == 0 %}
+                        <button onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+                                class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
+                                title="Delete category">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                        {% else %}
+                        <button class="text-gray-400 cursor-not-allowed p-2 rounded-lg" disabled
+                                title="Cannot delete - has transactions">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                        {% endif %}
                     {% else %}
-                    <button onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
-                            class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
-                            disabled title="Cannot delete - has transactions">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
+                        <span class="text-xs text-gray-400 px-2">Global</span>
                     {% endif %}
-                {% else %}
-                    <span class="text-xs text-gray-400 px-2">Global</span>
-                {% endif %}
+                </div>
             </div>
             {% empty %}
                 <p class="text-gray-500 text-center py-4">No expense categories yet</p>
@@ -87,11 +112,8 @@
     </div>
 
     {% else %}
-    <!-- ════════════════════════════════════════════════════════════════════
-         STANDARD: layout originale invariato
-         ════════════════════════════════════════════════════════════════════ -->
+    <!-- STANDARD: income + expense + create form -->
 
-    <!-- Header -->
     <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg p-6 mb-6">
         <h1 class="text-2xl font-bold mb-2">Manage Categories</h1>
         <p class="text-blue-100 text-sm">Create and manage your custom categories</p>
@@ -138,11 +160,14 @@
         <div class="space-y-3">
             {% for category in categories %}
                 {% if category.type == 'IN' %}
-                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                    <div class="flex items-center gap-3">
-                        <div class="w-4 h-4 rounded-full" style="background-color: {{ category.color }};"></div>
-                        <div>
-                            <p class="font-semibold text-gray-900">{{ category.name }}</p>
+                <div id="cat-row-{{ category.id }}"
+                     class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+
+                    <div id="cat-view-{{ category.id }}" class="flex items-center gap-3 flex-1 min-w-0">
+                        <div id="cat-dot-{{ category.id }}" class="w-4 h-4 rounded-full flex-shrink-0"
+                             style="background-color: {{ category.color }};"></div>
+                        <div class="min-w-0">
+                            <p id="cat-name-{{ category.id }}" class="font-semibold text-gray-900 truncate">{{ category.name }}</p>
                             <p class="text-sm text-gray-500">
                                 {{ category.transaction_count }} transaction{{ category.transaction_count|pluralize }}
                                 {% if category.is_global %}
@@ -151,23 +176,45 @@
                             </p>
                         </div>
                     </div>
-                    {% if not category.is_global %}
-                        {% if category.transaction_count == 0 %}
-                        <button onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
-                                class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
-                                title="Delete category">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+
+                    <div id="cat-edit-{{ category.id }}" class="hidden flex items-center gap-2 flex-1">
+                        <input type="color" id="cat-edit-color-{{ category.id }}" value="{{ category.color }}"
+                               class="w-10 h-10 rounded cursor-pointer border border-gray-300 flex-shrink-0">
+                        <input type="text" id="cat-edit-name-{{ category.id }}" value="{{ category.name }}"
+                               class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500">
+                        <button onclick="saveCategory({{ category.id }})"
+                                class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap">
+                            Save
                         </button>
+                        <button onclick="cancelEdit({{ category.id }})"
+                                class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
+                            Cancel
+                        </button>
+                    </div>
+
+                    <div id="cat-actions-{{ category.id }}" class="flex items-center gap-1 ml-3 flex-shrink-0">
+                        {% if not category.is_global %}
+                            <button onclick="editCategory({{ category.id }})"
+                                    class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded-lg transition"
+                                    title="Edit category">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                            {% if category.transaction_count == 0 %}
+                            <button onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+                                    class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
+                                    title="Delete category">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                            {% else %}
+                            <button class="text-gray-400 cursor-not-allowed p-2 rounded-lg" disabled
+                                    title="Cannot delete - has transactions">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                            {% endif %}
                         {% else %}
-                        <button onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
-                                class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
-                                disabled title="Cannot delete - has transactions">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
+                            <span class="text-xs text-gray-400 px-2">Global</span>
                         {% endif %}
-                    {% else %}
-                        <span class="text-xs text-gray-400 px-2">Global</span>
-                    {% endif %}
+                    </div>
                 </div>
                 {% endif %}
             {% empty %}
@@ -185,11 +232,14 @@
         <div class="space-y-3">
             {% for category in categories %}
                 {% if category.type == 'EX' %}
-                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                    <div class="flex items-center gap-3">
-                        <div class="w-4 h-4 rounded-full" style="background-color: {{ category.color }};"></div>
-                        <div>
-                            <p class="font-semibold text-gray-900">{{ category.name }}</p>
+                <div id="cat-row-{{ category.id }}"
+                     class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+
+                    <div id="cat-view-{{ category.id }}" class="flex items-center gap-3 flex-1 min-w-0">
+                        <div id="cat-dot-{{ category.id }}" class="w-4 h-4 rounded-full flex-shrink-0"
+                             style="background-color: {{ category.color }};"></div>
+                        <div class="min-w-0">
+                            <p id="cat-name-{{ category.id }}" class="font-semibold text-gray-900 truncate">{{ category.name }}</p>
                             <p class="text-sm text-gray-500">
                                 {{ category.transaction_count }} transaction{{ category.transaction_count|pluralize }}
                                 {% if category.is_global %}
@@ -198,23 +248,45 @@
                             </p>
                         </div>
                     </div>
-                    {% if not category.is_global %}
-                        {% if category.transaction_count == 0 %}
-                        <button onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
-                                class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
-                                title="Delete category">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+
+                    <div id="cat-edit-{{ category.id }}" class="hidden flex items-center gap-2 flex-1">
+                        <input type="color" id="cat-edit-color-{{ category.id }}" value="{{ category.color }}"
+                               class="w-10 h-10 rounded cursor-pointer border border-gray-300 flex-shrink-0">
+                        <input type="text" id="cat-edit-name-{{ category.id }}" value="{{ category.name }}"
+                               class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500">
+                        <button onclick="saveCategory({{ category.id }})"
+                                class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap">
+                            Save
                         </button>
+                        <button onclick="cancelEdit({{ category.id }})"
+                                class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
+                            Cancel
+                        </button>
+                    </div>
+
+                    <div id="cat-actions-{{ category.id }}" class="flex items-center gap-1 ml-3 flex-shrink-0">
+                        {% if not category.is_global %}
+                            <button onclick="editCategory({{ category.id }})"
+                                    class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded-lg transition"
+                                    title="Edit category">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                            {% if category.transaction_count == 0 %}
+                            <button onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+                                    class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
+                                    title="Delete category">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                            {% else %}
+                            <button class="text-gray-400 cursor-not-allowed p-2 rounded-lg" disabled
+                                    title="Cannot delete - has transactions">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                            {% endif %}
                         {% else %}
-                        <button onclick="alert('Cannot delete category with {{ category.transaction_count }} transaction(s). Delete or move them first.')"
-                                class="text-gray-400 cursor-not-allowed p-2 rounded-lg"
-                                disabled title="Cannot delete - has transactions">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
+                            <span class="text-xs text-gray-400 px-2">Global</span>
                         {% endif %}
-                    {% else %}
-                        <span class="text-xs text-gray-400 px-2">Global</span>
-                    {% endif %}
+                    </div>
                 </div>
                 {% endif %}
             {% empty %}
@@ -225,14 +297,14 @@
 
     {% endif %}
 
-    <!-- Info Box (comune) -->
+    <!-- Info Box -->
     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <div class="flex gap-3">
             <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0"></i>
             <div class="text-sm text-blue-900">
                 <p class="font-semibold mb-1">About Categories</p>
                 <ul class="list-disc list-inside space-y-1 text-blue-800">
-                    <li>Global categories cannot be deleted</li>
+                    <li>Global categories cannot be edited or deleted</li>
                     <li>Custom categories can only be deleted if they have no transactions</li>
                     {% if not is_family %}
                     <li>Use the form above to add income or expense categories</li>
@@ -242,7 +314,6 @@
         </div>
     </div>
 
-    <!-- Back Button -->
     <div class="text-center">
         <a href="{% url 'core:dashboard' %}"
            class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold">
@@ -256,33 +327,60 @@
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                   document.querySelector('meta[name="csrf-token"]')?.content;
 
-async function deleteCategory(categoryId, categoryName) {
-    if (!confirm(`Are you sure you want to delete "${categoryName}"?\n\nThis action cannot be undone.`)) {
-        return;
-    }
+function editCategory(id) {
+    document.getElementById(`cat-view-${id}`).classList.add('hidden');
+    document.getElementById(`cat-actions-${id}`).classList.add('hidden');
+    document.getElementById(`cat-edit-${id}`).classList.remove('hidden');
+    document.getElementById(`cat-edit-name-${id}`).focus();
+}
+
+function cancelEdit(id) {
+    document.getElementById(`cat-edit-${id}`).classList.add('hidden');
+    document.getElementById(`cat-view-${id}`).classList.remove('hidden');
+    document.getElementById(`cat-actions-${id}`).classList.remove('hidden');
+}
+
+async function saveCategory(id) {
+    const name = document.getElementById(`cat-edit-name-${id}`).value.trim();
+    const color = document.getElementById(`cat-edit-color-${id}`).value;
+    if (!name) { alert('Category name is required.'); return; }
     try {
-        const response = await fetch(`/categories/${categoryId}/delete/`, {
+        const body = new FormData();
+        body.append('name', name);
+        body.append('color', color);
+        const response = await fetch(`/categories/${id}/edit/`, {
             method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'Content-Type': 'application/json',
-            },
+            headers: { 'X-CSRFToken': csrftoken },
+            body,
         });
         const data = await response.json();
         if (data.success) {
-            alert(data.message);
-            location.reload();
+            document.getElementById(`cat-name-${id}`).textContent = data.name;
+            document.getElementById(`cat-dot-${id}`).style.backgroundColor = data.color;
+            cancelEdit(id);
         } else {
             alert(data.error);
         }
-    } catch (error) {
-        console.error('Error:', error);
+    } catch (e) {
+        alert('An error occurred while saving the category');
+    }
+}
+
+async function deleteCategory(id, name) {
+    if (!confirm(`Are you sure you want to delete "${name}"?\n\nThis action cannot be undone.`)) return;
+    try {
+        const response = await fetch(`/categories/${id}/delete/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
+        });
+        const data = await response.json();
+        if (data.success) { alert(data.message); location.reload(); }
+        else { alert(data.error); }
+    } catch (e) {
         alert('An error occurred while deleting the category');
     }
 }
 
-if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
-}
+if (typeof lucide !== 'undefined') { lucide.createIcons(); }
 </script>
 {% endblock %}

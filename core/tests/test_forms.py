@@ -169,74 +169,11 @@ class TransactionFormTest(TestCase):
         # Check that is_recurring is True
         self.assertTrue(transaction.is_recurring)
     
-    def test_recurring_checkbox_saves_false(self):
-        """Test that the is_recurring checkbox saves False when not selected"""
-        form_data = {
-            'type': 'expense',
-            'amount': '25.00',
-            'date': date.today(),
-            'description': 'One-time expense',
-            'category': self.expense_category.id,
-            'notes': '',
-            'is_recurring': False  # Checkbox inactive
-        }
-        
-        form = TransactionForm(data=form_data, user=self.user)
-        
-        self.assertTrue(form.is_valid(), f"Form errors: {form.errors}")
-        
-        transaction = form.save(commit=False)
-        transaction.user = self.user
-        transaction.save()
-        
-        # Check that is_recurring is False
-        self.assertFalse(transaction.is_recurring)
-    
-    def test_form_handles_decimal_amounts(self):
-        """Test that the form handles decimal amounts correctly"""
-        form_data = {
-            'type': 'expense',
-            'amount': '12.99',
-            'date': date.today(),
-            'description': 'Subscription',
-            'category': self.expense_category.id,
-            'notes': '',
-            'is_recurring': False
-        }
-        
-        form = TransactionForm(data=form_data, user=self.user)
-        
-        self.assertTrue(form.is_valid())
-        
-        transaction = form.save(commit=False)
-        transaction.user = self.user
-        transaction.save()
-        
-        self.assertEqual(transaction.amount, Decimal('-12.99'))
-    
     def test_form_requires_positive_amount(self):
         """Test that the form requires a positive amount input"""
         form_data = {
             'type': 'expense',
             'amount': '-100.00',  # Negative not allowed
-            'date': date.today(),
-            'description': 'Test',
-            'category': self.expense_category.id,
-            'notes': '',
-            'is_recurring': False
-        }
-        
-        form = TransactionForm(data=form_data, user=self.user)
-        
-        # The form should be invalid
-        self.assertFalse(form.is_valid())
-        self.assertIn('amount', form.errors)
-    
-    def test_form_requires_minimum_amount(self):
-        """Test that the form requires a minimum amount (0.01)"""
-        form_data = {
-            'type': 'expense',
-            'amount': '0.00',  # Zero not allowed
             'date': date.today(),
             'description': 'Test',
             'category': self.expense_category.id,

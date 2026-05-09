@@ -393,6 +393,32 @@ class CategoryCreateView(LoginRequiredMixin, View):
         return redirect('core:categories_list')
 
 
+class CategoryUpdateView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        try:
+            category = Category.objects.get(pk=pk, user=request.user)
+        except Category.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Category not found'}, status=404)
+
+        name = request.POST.get('name', '').strip()
+        color = request.POST.get('color', '').strip() or category.color
+
+        if not name:
+            return JsonResponse({'success': False, 'error': 'Name is required'}, status=400)
+
+        if Category.objects.filter(
+            user=request.user, name=name, type=category.type
+        ).exclude(pk=pk).exists():
+            return JsonResponse(
+                {'success': False, 'error': f'A category named "{name}" already exists'}, status=400
+            )
+
+        category.name = name
+        category.color = color
+        category.save()
+        return JsonResponse({'success': True, 'name': category.name, 'color': category.color})
+
+
 class CategoryDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         try:
