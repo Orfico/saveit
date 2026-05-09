@@ -1,5 +1,6 @@
 # finance_app/settings.py
 import os
+import sys
 import dj_database_url
 from pathlib import Path
 
@@ -221,7 +222,7 @@ SECURE_BROWSER_XSS_FILTER = True
 # ============================================
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    SECURE_SSL_REDIRECT = 'test' not in sys.argv  # disabled during test runs
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
