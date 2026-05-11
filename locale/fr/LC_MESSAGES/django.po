@@ -1,0 +1,788 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SaveIt 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-11 00:00+0000\n"
+"PO-Revision-Date: 2026-05-11 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: fr\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Invalid username or password."
+msgstr "Identifiant ou mot de passe invalide."
+
+msgid ""
+"Account created as standard: enter both members' names to activate family "
+"mode."
+msgstr ""
+"Compte créé en mode standard : entrez les noms des deux membres pour activer"
+" le mode famille."
+
+msgid "Welcome %(username)s! Your account has been created."
+msgstr "Bienvenue %(username)s ! Votre compte a été créé."
+
+msgid "Registration failed. Please correct the errors below."
+msgstr "Échec de l'inscription. Veuillez corriger les erreurs ci-dessous."
+
+msgid "Logout successful."
+msgstr "Déconnexion réussie."
+
+msgid "Transaction updated."
+msgstr "Transaction mise à jour."
+
+msgid "Category name is required."
+msgstr "Le nom de la catégorie est obligatoire."
+
+msgid "Category \"%(name)s\" created."
+msgstr "Catégorie \"%(name)s\" créée."
+
+msgid "Category \"%(name)s\" already exists."
+msgstr "La catégorie \"%(name)s\" existe déjà."
+
+msgid "Category not found"
+msgstr "Catégorie introuvable"
+
+msgid "Name is required"
+msgstr "Le nom est obligatoire"
+
+msgid "A category named \"%(name)s\" already exists"
+msgstr "Une catégorie nommée \"%(name)s\" existe déjà"
+
+msgid ""
+"Cannot delete category with %(count)d transaction(s). Move or delete them "
+"first."
+msgstr ""
+"Impossible de supprimer la catégorie avec %(count)d transaction(s). "
+"Déplacez-les ou supprimez-les d'abord."
+
+msgid "Category \"%(name)s\" deleted successfully"
+msgstr "Catégorie \"%(name)s\" supprimée avec succès"
+
+msgid "Error deleting category"
+msgstr "Erreur lors de la suppression de la catégorie"
+
+msgid "Please upload a valid CSV file."
+msgstr "Veuillez télécharger un fichier CSV valide."
+
+msgid "Error reading the file."
+msgstr "Erreur lors de la lecture du fichier."
+
+msgid "%(count)d transaction(s) imported/updated"
+msgstr "%(count)d transaction(s) importée(s)/mise(s) à jour"
+
+msgid "%(count)d transaction(s) deleted."
+msgstr "%(count)d transaction(s) supprimée(s)."
+
+msgid "Jan"
+msgstr "Jan"
+
+msgid "Feb"
+msgstr "Fév"
+
+msgid "Mar"
+msgstr "Mar"
+
+msgid "Apr"
+msgstr "Avr"
+
+msgid "May"
+msgstr "Mai"
+
+msgid "Jun"
+msgstr "Juin"
+
+msgid "Jul"
+msgstr "Juil"
+
+msgid "Aug"
+msgstr "Août"
+
+msgid "Sep"
+msgstr "Sep"
+
+msgid "Oct"
+msgstr "Oct"
+
+msgid "Nov"
+msgstr "Nov"
+
+msgid "Dec"
+msgstr "Déc"
+
+msgid "Mon"
+msgstr "Lun"
+
+msgid "Tue"
+msgstr "Mar"
+
+msgid "Wed"
+msgstr "Mer"
+
+msgid "Thu"
+msgstr "Jeu"
+
+msgid "Fri"
+msgstr "Ven"
+
+msgid "Sat"
+msgstr "Sam"
+
+msgid "Sun"
+msgstr "Dim"
+
+msgid "Dashboard"
+msgstr "Tableau de bord"
+
+msgid "Transactions"
+msgstr "Transactions"
+
+msgid "Categories"
+msgstr "Catégories"
+
+msgid "Recurring"
+msgstr "Récurrentes"
+
+msgid "Loyalty Cards"
+msgstr "Cartes de fidélité"
+
+msgid "Analytics"
+msgstr "Analytique"
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Manage your budget with simplicity."
+msgstr "Gérez votre budget en toute simplicité."
+
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Welcome!"
+msgstr "Bienvenue !"
+
+msgid "Log in to your SaveIt account"
+msgstr "Connectez-vous à votre compte SaveIt"
+
+msgid "Your username"
+msgstr "Votre nom d'utilisateur"
+
+msgid "Your password"
+msgstr "Votre mot de passe"
+
+msgid "Show/Hide password"
+msgstr "Afficher/Masquer le mot de passe"
+
+msgid "Log In"
+msgstr "Connexion"
+
+msgid "Forgot password?"
+msgstr "Mot de passe oublié ?"
+
+msgid "or"
+msgstr "ou"
+
+msgid "Don't have an account yet?"
+msgstr "Vous n'avez pas encore de compte ?"
+
+msgid "Register for Free"
+msgstr "Inscription gratuite"
+
+msgid "Submitting..."
+msgstr "Envoi en cours..."
+
+msgid "Create your account"
+msgstr "Créez votre compte"
+
+msgid "Start managing your finances"
+msgstr "Commencez à gérer vos finances"
+
+msgid "Family account"
+msgstr "Compte famille"
+
+msgid "Track shared expenses between two members"
+msgstr "Suivez les dépenses partagées entre deux membres"
+
+msgid "Member names"
+msgstr "Noms des membres"
+
+msgid "Member 1"
+msgstr "Membre 1"
+
+msgid "Member 2"
+msgstr "Membre 2"
+
+msgid "e.g. Mario"
+msgstr "ex. Mario"
+
+msgid "e.g. Lucia"
+msgstr "ex. Lucia"
+
+msgid "Create account"
+msgstr "Créer un compte"
+
+msgid "Already have an account?"
+msgstr "Vous avez déjà un compte ?"
+
+msgid "Log in"
+msgstr "Se connecter"
+
+msgid "Please enter both members' names to activate family mode."
+msgstr ""
+"Veuillez entrer les noms des deux membres pour activer le mode famille."
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "New"
+msgstr "Nouveau"
+
+msgid "Transaction"
+msgstr "Transaction"
+
+msgid "Edit transaction"
+msgstr "Modifier la transaction"
+
+msgid "New transaction"
+msgstr "Nouvelle transaction"
+
+msgid "Family mode"
+msgstr "Mode famille"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Expense"
+msgstr "Dépense"
+
+msgid "Income"
+msgstr "Revenu"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "e.g. Grocery shopping"
+msgstr "ex. Courses alimentaires"
+
+msgid "Amount (€)"
+msgstr "Montant (€)"
+
+msgid "Category"
+msgstr "Catégorie"
+
+msgid "Who paid *"
+msgstr "Qui a payé *"
+
+msgid "Monthly recurring transaction"
+msgstr "Transaction récurrente mensuelle"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "optional"
+msgstr "optionnel"
+
+msgid "Additional notes..."
+msgstr "Notes supplémentaires..."
+
+msgid "Save changes"
+msgstr "Enregistrer les modifications"
+
+msgid "Add transaction"
+msgstr "Ajouter une transaction"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Delete transaction"
+msgstr "Supprimer la transaction"
+
+msgid "Delete this transaction?"
+msgstr "Supprimer cette transaction ?"
+
+msgid "Welcome, %(username)s!"
+msgstr "Bienvenue, %(username)s !"
+
+msgid "Here is a summary of your budget"
+msgstr "Voici un résumé de votre budget"
+
+msgid "Start Date"
+msgstr "Date de début"
+
+msgid "End Date"
+msgstr "Date de fin"
+
+msgid "Update"
+msgstr "Mettre à jour"
+
+msgid "%(debtor)s owes €%(debt)s to %(creditor)s to settle expenses."
+msgstr "%(debtor)s doit €%(debt)s à %(creditor)s pour solder les dépenses."
+
+msgid "Expenses are perfectly balanced."
+msgstr "Les dépenses sont parfaitement équilibrées."
+
+msgid "Total Expenses"
+msgstr "Dépenses totales"
+
+msgid "fair share"
+msgstr "part équitable"
+
+msgid "Total Balance"
+msgstr "Solde total"
+
+msgid "Expenses by Category"
+msgstr "Dépenses par catégorie"
+
+msgid "No expenses"
+msgstr "Aucune dépense"
+
+msgid "Add transactions to view the chart"
+msgstr "Ajoutez des transactions pour afficher le graphique"
+
+msgid "Quick Actions"
+msgstr "Actions rapides"
+
+msgid "New Transaction"
+msgstr "Nouvelle transaction"
+
+msgid "Register a shared expense"
+msgstr "Enregistrer une dépense partagée"
+
+msgid "Register income or expenses"
+msgstr "Enregistrer des revenus ou des dépenses"
+
+msgid "All Transactions"
+msgstr "Toutes les transactions"
+
+msgid "View and filter your history"
+msgstr "Voir et filtrer votre historique"
+
+msgid "%(count)s transactions"
+msgstr "%(count)s transactions"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "transactions"
+msgstr "transactions"
+
+msgid "(with active filters)"
+msgstr "(avec filtres actifs)"
+
+msgid "(all your transactions)"
+msgstr "(toutes vos transactions)"
+
+msgid "This action cannot be undone."
+msgstr "Cette action est irréversible."
+
+msgid "No transactions to delete with active filters."
+msgstr "Aucune transaction à supprimer avec les filtres actifs."
+
+msgid "First"
+msgstr "Première"
+
+msgid "Previous"
+msgstr "Précédente"
+
+msgid "Page %(num)s of %(total)s"
+msgstr "Page %(num)s sur %(total)s"
+
+msgid "Next"
+msgstr "Suivante"
+
+msgid "Last"
+msgstr "Dernière"
+
+msgid "Aggregate statistics"
+msgstr "Statistiques globales"
+
+msgid "Expenses YTD"
+msgstr "Dépenses YTD"
+
+msgid "Monthly average"
+msgstr "Moyenne mensuelle"
+
+msgid "Income YTD"
+msgstr "Revenus YTD"
+
+msgid "Balance YTD"
+msgstr "Solde YTD"
+
+msgid "Savings rate"
+msgstr "Taux d'épargne"
+
+msgid "Income by category"
+msgstr "Revenus par catégorie"
+
+msgid "Monthly trend"
+msgstr "Tendance mensuelle"
+
+msgid "Balance"
+msgstr "Solde"
+
+msgid "Jan – Dec"
+msgstr "Jan – Déc"
+
+msgid "Avg"
+msgstr "Moy"
+
+msgid "mo"
+msgstr "mois"
+
+msgid "Member breakdown"
+msgstr "Répartition par membre"
+
+msgid "Current month vs typical month"
+msgstr "Mois en cours vs mois type"
+
+msgid "This month"
+msgstr "Ce mois"
+
+msgid "Typical month"
+msgstr "Mois type"
+
+msgid "above average"
+msgstr "au-dessus de la moyenne"
+
+msgid "below average"
+msgstr "en dessous de la moyenne"
+
+msgid "Top 5 categories · expenses"
+msgstr "Top 5 catégories · dépenses"
+
+msgid "No expenses recorded."
+msgstr "Aucune dépense enregistrée."
+
+msgid "Weekly distribution"
+msgstr "Répartition hebdomadaire"
+
+msgid "Day of the week"
+msgstr "Jour de la semaine"
+
+msgid "Total aggregate expenses"
+msgstr "Dépenses totales agrégées"
+
+msgid "Delete Transaction"
+msgstr "Supprimer la transaction"
+
+msgid "Confirm Deletion"
+msgstr "Confirmer la suppression"
+
+msgid "Are you sure you want to delete this transaction?"
+msgstr "Êtes-vous sûr de vouloir supprimer cette transaction ?"
+
+msgid "No description"
+msgstr "Aucune description"
+
+msgid "Amount"
+msgstr "Montant"
+
+msgid "This action cannot be undone"
+msgstr "Cette action est irréversible"
+
+msgid "Manage Categories"
+msgstr "Gérer les catégories"
+
+msgid "Create and manage your custom categories"
+msgstr "Créez et gérez vos catégories personnalisées"
+
+msgid "New Category"
+msgstr "Nouvelle catégorie"
+
+msgid "Category name"
+msgstr "Nom de la catégorie"
+
+msgid "Color"
+msgstr "Couleur"
+
+msgid "Add"
+msgstr "Ajouter"
+
+msgid "Expense Categories"
+msgstr "Catégories de dépenses"
+
+msgid "Income Categories"
+msgstr "Catégories de revenus"
+
+msgid "transaction"
+msgstr "transaction"
+
+msgid "Global"
+msgstr "Global"
+
+msgid "Edit category"
+msgstr "Modifier la catégorie"
+
+msgid "Delete category"
+msgstr "Supprimer la catégorie"
+
+msgid "Cannot delete - has transactions"
+msgstr "Impossible de supprimer - a des transactions"
+
+msgid "No expense categories yet"
+msgstr "Aucune catégorie de dépenses"
+
+msgid "No income categories"
+msgstr "Aucune catégorie de revenus"
+
+msgid "No expense categories"
+msgstr "Aucune catégorie de dépenses"
+
+msgid "About Categories"
+msgstr "À propos des catégories"
+
+msgid "Global categories cannot be edited or deleted"
+msgstr "Les catégories globales ne peuvent pas être modifiées ou supprimées"
+
+msgid "Custom categories can only be deleted if they have no transactions"
+msgstr ""
+"Les catégories personnalisées ne peuvent être supprimées que si elles n'ont "
+"pas de transactions"
+
+msgid "Use the form above to add income or expense categories"
+msgstr ""
+"Utilisez le formulaire ci-dessus pour ajouter des catégories de revenus ou "
+"de dépenses"
+
+msgid "Back to Dashboard"
+msgstr "Retour au tableau de bord"
+
+msgid "An error occurred while saving the category"
+msgstr "Une erreur s'est produite lors de l'enregistrement de la catégorie"
+
+msgid "Are you sure you want to delete"
+msgstr "Êtes-vous sûr de vouloir supprimer"
+
+msgid "An error occurred while deleting the category"
+msgstr "Une erreur s'est produite lors de la suppression de la catégorie"
+
+msgid "Save"
+msgstr "Enregistrer"
+
+msgid "Recurring Transactions"
+msgstr "Transactions récurrentes"
+
+msgid "Manage your monthly recurring transaction templates"
+msgstr "Gérez vos modèles de transactions récurrentes mensuelles"
+
+msgid "How it works"
+msgstr "Comment ça fonctionne"
+
+msgid "These are master templates - copies are generated monthly"
+msgstr "Ce sont des modèles maîtres - des copies sont générées chaque mois"
+
+msgid "Updating a template can update all future copies"
+msgstr ""
+"La mise à jour d'un modèle peut mettre à jour toutes les copies futures"
+
+msgid "Deleting a template can delete all future copies"
+msgstr "La suppression d'un modèle peut supprimer toutes les copies futures"
+
+msgid "Day"
+msgstr "Jour"
+
+msgid "of month"
+msgstr "du mois"
+
+msgid "No Recurring Transactions"
+msgstr "Aucune transaction récurrente"
+
+msgid "You haven't set up any recurring transactions yet."
+msgstr "Vous n'avez pas encore configuré de transactions récurrentes."
+
+msgid "Create First Transaction"
+msgstr "Créer la première transaction"
+
+msgid "Edit Recurring Transaction"
+msgstr "Modifier la transaction récurrente"
+
+msgid "Update all future copies"
+msgstr "Mettre à jour toutes les copies futures"
+
+msgid "This will update all future monthly copies with these new values"
+msgstr ""
+"Cela mettra à jour toutes les copies mensuelles futures avec ces nouvelles "
+"valeurs"
+
+msgid "Save Changes"
+msgstr "Enregistrer les modifications"
+
+msgid "An error occurred while updating the transaction"
+msgstr "Une erreur s'est produite lors de la mise à jour de la transaction"
+
+msgid "Delete recurring transaction"
+msgstr "Supprimer la transaction récurrente"
+
+msgid "Click OK to also delete all future copies, or Cancel to keep them."
+msgstr ""
+"Cliquez sur OK pour supprimer toutes les copies futures, ou Annuler pour les"
+" conserver."
+
+msgid "An error occurred while deleting the transaction"
+msgstr "Une erreur s'est produite lors de la suppression de la transaction"
+
+msgid "My Loyalty Cards"
+msgstr "Mes cartes de fidélité"
+
+msgid "Manage your loyalty and membership cards"
+msgstr "Gérez vos cartes de fidélité et d'abonnement"
+
+msgid "Add Card"
+msgstr "Ajouter une carte"
+
+msgid "View Barcode"
+msgstr "Voir le code-barres"
+
+msgid "No loyalty cards"
+msgstr "Aucune carte de fidélité"
+
+msgid "Start by adding your first loyalty card"
+msgstr "Commencez par ajouter votre première carte de fidélité"
+
+msgid "Add First Card"
+msgstr "Ajouter la première carte"
+
+msgid "New Loyalty Card"
+msgstr "Nouvelle carte de fidélité"
+
+msgid "Store Name"
+msgstr "Nom du magasin"
+
+msgid "e.g., Walmart, Target, Costco..."
+msgstr "ex., Carrefour, Leclerc, Auchan..."
+
+msgid "Card Number"
+msgstr "Numéro de carte"
+
+msgid "Enter card number"
+msgstr "Entrez le numéro de carte"
+
+msgid "e.g., Current points, expiration date..."
+msgstr "ex., Points actuels, date d'expiration..."
+
+msgid "The barcode will be generated automatically"
+msgstr "Le code-barres sera généré automatiquement"
+
+msgid "Save Card"
+msgstr "Enregistrer la carte"
+
+msgid "Created"
+msgstr "Créée"
+
+msgid "No barcode available"
+msgstr "Aucun code-barres disponible"
+
+msgid "Print"
+msgstr "Imprimer"
+
+msgid "Download"
+msgstr "Télécharger"
+
+msgid "Share"
+msgstr "Partager"
+
+msgid "Back to Cards"
+msgstr "Retour aux cartes"
+
+msgid "Password Reset"
+msgstr "Réinitialisation du mot de passe"
+
+msgid "We will send you a link to reset your password"
+msgstr "Nous vous enverrons un lien pour réinitialiser votre mot de passe"
+
+msgid "Email"
+msgstr "E-mail"
+
+msgid "Enter the email associated with your account"
+msgstr "Entrez l'e-mail associé à votre compte"
+
+msgid "Send Reset Link"
+msgstr "Envoyer le lien de réinitialisation"
+
+msgid "Return to Login"
+msgstr "Retour à la connexion"
+
+msgid "Don't have an account?"
+msgstr "Vous n'avez pas de compte ?"
+
+msgid "Register"
+msgstr "S'inscrire"
+
+msgid "Email Sent"
+msgstr "E-mail envoyé"
+
+msgid "Email Sent!"
+msgstr "E-mail envoyé !"
+
+msgid ""
+"We have sent the instructions to reset your password to the email address "
+"you provided."
+msgstr ""
+"Nous avons envoyé les instructions de réinitialisation à l'adresse e-mail "
+"fournie."
+
+msgid ""
+"If you don't receive the email within a few minutes, check your spam folder "
+"or verify that you entered the correct address."
+msgstr ""
+"Si vous ne recevez pas l'e-mail dans quelques minutes, vérifiez votre "
+"dossier spam ou l'adresse saisie."
+
+msgid "What to do now:"
+msgstr "Que faire maintenant :"
+
+msgid "Check your email"
+msgstr "Vérifiez votre e-mail"
+
+msgid "Click the link received"
+msgstr "Cliquez sur le lien reçu"
+
+msgid "Set a new password"
+msgstr "Définissez un nouveau mot de passe"
+
+msgid "Set New Password"
+msgstr "Définir un nouveau mot de passe"
+
+msgid "New Password"
+msgstr "Nouveau mot de passe"
+
+msgid "Choose a secure password"
+msgstr "Choisissez un mot de passe sécurisé"
+
+msgid "At least 8 characters"
+msgstr "Au moins 8 caractères"
+
+msgid "Confirm Password"
+msgstr "Confirmer le mot de passe"
+
+msgid "Invalid Link"
+msgstr "Lien invalide"
+
+msgid "The password reset link is invalid or has expired."
+msgstr "Le lien de réinitialisation est invalide ou a expiré."
+
+msgid "Links expire after 1 hour for security reasons."
+msgstr "Les liens expirent après 1 heure pour des raisons de sécurité."
+
+msgid "Request New Link"
+msgstr "Demander un nouveau lien"
+
+msgid "Password Reset!"
+msgstr "Mot de passe réinitialisé !"
+
+msgid "Your password has been reset successfully."
+msgstr "Votre mot de passe a été réinitialisé avec succès."
+
+msgid "You can now log in with your new password."
+msgstr ""
+"Vous pouvez maintenant vous connecter avec votre nouveau mot de passe."
+
+msgid "Go to Login"
+msgstr "Aller à la connexion"

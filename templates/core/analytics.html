@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}Analytics {{ selected_year }} – SaveIt{% endblock %}
 
@@ -18,7 +18,7 @@
           </span>
         {% endif %}
       </h1>
-      <p class="text-sm text-gray-500 mt-0.5">Statistiche aggregate</p>
+      <p class="text-sm text-gray-500 mt-0.5">{% trans "Aggregate statistics" %}</p>
     </div>
     <form method="get">
       <select name="year" onchange="this.form.submit()"
@@ -35,13 +35,13 @@
   <div class="grid grid-cols-2 gap-3 mb-8">
     <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
       <div class="flex items-center gap-1.5 text-red-500 text-xs font-medium mb-1">
-        <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>Spese YTD
+        <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>{% trans "Expenses YTD" %}
       </div>
       <p class="text-lg font-bold text-gray-900">€{{ total_expense|floatformat:2 }}</p>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
       <div class="flex items-center gap-1.5 text-amber-500 text-xs font-medium mb-1">
-        <i data-lucide="piggy-bank" class="w-3.5 h-3.5"></i>Media mensile
+        <i data-lucide="piggy-bank" class="w-3.5 h-3.5"></i>{% trans "Monthly average" %}
       </div>
       <p class="text-lg font-bold text-gray-900">€{{ avg_monthly_expense|floatformat:2 }}</p>
     </div>
@@ -50,19 +50,19 @@
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
     <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
       <div class="flex items-center gap-1.5 text-green-600 text-xs font-medium mb-1">
-        <i data-lucide="trending-down" class="w-3.5 h-3.5"></i>Entrate YTD
+        <i data-lucide="trending-down" class="w-3.5 h-3.5"></i>{% trans "Income YTD" %}
       </div>
       <p class="text-lg font-bold text-gray-900">€{{ total_income|floatformat:2 }}</p>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
       <div class="flex items-center gap-1.5 text-red-500 text-xs font-medium mb-1">
-        <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>Uscite YTD
+        <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>{% trans "Expenses YTD" %}
       </div>
       <p class="text-lg font-bold text-gray-900">€{{ total_expense|floatformat:2 }}</p>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
       <div class="flex items-center gap-1.5 text-blue-600 text-xs font-medium mb-1">
-        <i data-lucide="wallet" class="w-3.5 h-3.5"></i>Bilancio YTD
+        <i data-lucide="wallet" class="w-3.5 h-3.5"></i>{% trans "Balance YTD" %}
       </div>
       <p class="text-lg font-bold {% if total_balance >= 0 %}text-green-600{% else %}text-red-500{% endif %}">
         €{{ total_balance|floatformat:2 }}
@@ -70,7 +70,7 @@
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
       <div class="flex items-center gap-1.5 text-amber-500 text-xs font-medium mb-1">
-        <i data-lucide="piggy-bank" class="w-3.5 h-3.5"></i>Savings rate
+        <i data-lucide="piggy-bank" class="w-3.5 h-3.5"></i>{% trans "Savings rate" %}
       </div>
       <p class="text-lg font-bold text-gray-900">{{ savings_rate }}%</p>
     </div>
@@ -81,7 +81,7 @@
   {% if not is_family %}
   <div id="incomeCategorySection" style="display:none">
     <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-      Entrate per categoria · {{ selected_year }}
+      {% trans "Income by category" %} · {{ selected_year }}
     </p>
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-8">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
@@ -96,21 +96,21 @@
 
   <!-- ── Grafici trend mensile ────────────────────────────────────────────── -->
   <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-    Trend mensile · {{ selected_year }}
+    {% trans "Monthly trend" %} · {{ selected_year }}
   </p>
 
   {% if not is_family %}
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
     <div class="flex items-center gap-2 mb-3">
-      <span class="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Bilancio</span>
-      <span class="text-xs text-gray-400">Gen – Dic</span>
+      <span class="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{% trans "Balance" %}</span>
+      <span class="text-xs text-gray-400">{% trans "Jan – Dec" %}</span>
     </div>
     <div class="relative h-40"><canvas id="chartBalance"></canvas></div>
   </div>
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
     <div class="flex items-center gap-2 mb-3">
-      <span class="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Entrate</span>
-      <span class="text-xs text-gray-400">Gen – Dic</span>
+      <span class="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{% trans "Income" %}</span>
+      <span class="text-xs text-gray-400">{% trans "Jan – Dec" %}</span>
     </div>
     <div class="relative h-40"><canvas id="chartIncome"></canvas></div>
   </div>
@@ -118,9 +118,9 @@
 
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-8">
     <div class="flex items-center gap-2 mb-3">
-      <span class="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Uscite</span>
-      <span class="text-xs text-gray-400">Gen – Dic</span>
-      <span class="ml-auto text-xs text-gray-400">Media: €{{ avg_monthly_expense|floatformat:0 }}/mese</span>
+      <span class="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{% trans "Expenses" %}</span>
+      <span class="text-xs text-gray-400">{% trans "Jan – Dec" %}</span>
+      <span class="ml-auto text-xs text-gray-400">{% trans "Avg" %}: €{{ avg_monthly_expense|floatformat:0 }}/{% trans "mo" %}</span>
     </div>
     <div class="relative h-40"><canvas id="chartExpense"></canvas></div>
   </div>
@@ -128,7 +128,7 @@
   <!-- ── Ripartizione per membro (family only) ────────────────────────────── -->
   {% if is_family and member_breakdown %}
   <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-    Ripartizione per membro · {{ selected_year }}
+    {% trans "Member breakdown" %} · {{ selected_year }}
   </p>
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-8">
     <div class="flex items-center gap-4 mb-3">
@@ -153,16 +153,16 @@
     {% if month_vs_avg %}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
       <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-4">
-        <i data-lucide="calendar-check" class="w-4 h-4 text-blue-500"></i>Mese in corso vs mese tipo
+        <i data-lucide="calendar-check" class="w-4 h-4 text-blue-500"></i>{% trans "Current month vs typical month" %}
       </h2>
       <div class="flex items-end gap-4 mb-4">
         <div>
-          <p class="text-xs text-gray-400 mb-0.5">Questo mese</p>
+          <p class="text-xs text-gray-400 mb-0.5">{% trans "This month" %}</p>
           <p class="text-xl font-bold text-gray-900">€{{ month_vs_avg.this_month|floatformat:2 }}</p>
         </div>
         <p class="text-gray-300 mb-1">vs</p>
         <div>
-          <p class="text-xs text-gray-400 mb-0.5">Mese tipo</p>
+          <p class="text-xs text-gray-400 mb-0.5">{% trans "Typical month" %}</p>
           <p class="text-xl font-bold text-gray-900">€{{ month_vs_avg.past_avg|floatformat:2 }}</p>
         </div>
         <div class="ml-auto text-right">
@@ -171,14 +171,14 @@
             {% if month_vs_avg.is_over %}+{% endif %}{{ month_vs_avg.diff_pct }}%
           </span>
           <p class="text-xs text-gray-400 mt-1">
-            {% if month_vs_avg.is_over %}sopra la media{% else %}sotto la media{% endif %}
+            {% if month_vs_avg.is_over %}{% trans "above average" %}{% else %}{% trans "below average" %}{% endif %}
           </p>
         </div>
       </div>
       {% with total=month_vs_avg.this_month|add:month_vs_avg.past_avg %}
       <div>
         <div class="flex justify-between text-xs text-gray-400 mb-1">
-          <span>Questo mese</span><span>Mese tipo</span>
+          <span>{% trans "This month" %}</span><span>{% trans "Typical month" %}</span>
         </div>
         <div class="relative h-2 bg-gray-100 rounded-full overflow-hidden">
           <div class="absolute inset-y-0 left-0 bg-gray-300 rounded-full"
@@ -195,7 +195,7 @@
   <!-- Top 5 categorie per volume di spesa -->
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 {% if not month_vs_avg %}md:col-span-2{% endif %}">
     <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-4">
-      <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>Top 5 categorie · uscite {{ selected_year }}
+      <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>{% trans "Top 5 categories · expenses" %} {{ selected_year }}
     </h2>
     {% if top_keywords %}
       {% with max_amount=top_keywords.0.1 %}
@@ -220,18 +220,20 @@
       </div>
       {% endwith %}
     {% else %}
-      <p class="text-sm text-gray-400 text-center py-6">Nessuna uscita registrata.</p>
+      <p class="text-sm text-gray-400 text-center py-6">{% trans "No expenses recorded." %}</p>
     {% endif %}
+  </div>
+
   </div>
 
   <!-- ── Distribuzione settimanale ────────────────────────────────────────── -->
   <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-    Distribuzione settimanale · {{ selected_year }}
+    {% trans "Weekly distribution" %} · {{ selected_year }}
   </p>
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-8">
     <div class="flex items-center gap-2 mb-3">
-      <span class="text-xs font-semibold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">Giorno della settimana</span>
-      <span class="text-xs text-gray-400">Spese totali aggregate</span>
+      <span class="text-xs font-semibold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">{% trans "Day of the week" %}</span>
+      <span class="text-xs text-gray-400">{% trans "Total aggregate expenses" %}</span>
     </div>
     <div class="relative h-40"><canvas id="chartWeekday"></canvas></div>
   </div>
@@ -244,7 +246,8 @@
   "expense":       {{ expense_data|default:"[]"|safe }},
   "balance":       {{ balance_data|default:"[]"|safe }},
   "weekday":       {{ weekday_data|default:"[]"|safe }},
-  "wdLabels":      {{ weekday_labels|default:'["Lun","Mar","Mer","Gio","Ven","Sab","Dom"]'|safe }},
+  "wdLabels":      {{ weekday_labels|safe }},
+  "monthLabels":   {{ month_labels|safe }},
   "incomeByCategory": {{ income_by_category|default:"[]"|safe }}
   {% if is_family and member_breakdown %}
   ,"m1":     {{ member_breakdown.member_1_data|safe }},
@@ -266,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var d;
   try { d = JSON.parse(raw.textContent); } catch(e) { console.error('Analytics data parse error:', e); return; }
 
-  var MONTHS = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+  var MONTHS = d.monthLabels;
 
   Chart.defaults.font.family = 'ui-sans-serif, system-ui, sans-serif';
   Chart.defaults.font.size   = 11;
@@ -303,9 +306,9 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch(e) { console.error('Chart error (' + id + '):', e); }
   }
 
-  makeLine('chartBalance', d.balance, '#3b82f6', 'rgba(59,130,246,.12)', 'Bilancio');
-  makeLine('chartIncome',  d.income,  '#16a34a', 'rgba(22,163,74,.12)',  'Entrate');
-  makeLine('chartExpense', d.expense, '#ef4444', 'rgba(239,68,68,.12)',  'Uscite');
+  makeLine('chartBalance', d.balance, '#3b82f6', 'rgba(59,130,246,.12)', '{% trans "Balance" %}');
+  makeLine('chartIncome',  d.income,  '#16a34a', 'rgba(22,163,74,.12)',  '{% trans "Income" %}');
+  makeLine('chartExpense', d.expense, '#ef4444', 'rgba(239,68,68,.12)',  '{% trans "Expenses" %}');
 
   // Weekday bar chart
   try {

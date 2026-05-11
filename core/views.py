@@ -24,6 +24,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.http import require_POST
 from django.views.generic import (
@@ -70,7 +71,7 @@ class CustomLoginView(LoginView):
         return reverse_lazy('core:dashboard')
 
     def form_invalid(self, form):
-        messages.error(self.request, 'Invalid Username or password.')
+        messages.error(self.request, _('Invalid username or password.'))
         return super().form_invalid(form)
 
 
@@ -91,8 +92,7 @@ class RegisterView(CreateView):
             else:
                 messages.warning(
                     self.request,
-                    'Account creato come standard: inserisci i nomi di entrambi i '
-                    'membri per attivare la modalità famiglia.',
+                    _('Account created as standard: enter both members\' names to activate family mode.'),
                 )
 
         username = form.cleaned_data.get('username')
@@ -100,18 +100,18 @@ class RegisterView(CreateView):
         authenticated_user = authenticate(username=username, password=password)
         login(self.request, authenticated_user)
         logger.info(f"✅ User registered successfully: {user.username}")
-        messages.success(self.request, f'Welcome {username}! Your account has been created.')
+        messages.success(self.request, _('Welcome %(username)s! Your account has been created.') % {'username': username})
         return response
 
     def form_invalid(self, form):
         logger.warning(f"❌ Registration failed with errors: {form.errors.as_json()}")
-        messages.error(self.request, 'Registration failed. Please correct the errors below.')
+        messages.error(self.request, _('Registration failed. Please correct the errors below.'))
         return super().form_invalid(form)
 
 
 def logout_view(request):
     logout(request)
-    messages.success(request, 'Logout successful.')
+    messages.success(request, _('Logout successful.'))
     return redirect('core:login')
 
 
@@ -278,12 +278,12 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         new_category_name = form.cleaned_data.get('new_category_name')
         if new_category_name:
-            category, _ = Category.objects.get_or_create(
+            category = Category.objects.get_or_create(
                 name=new_category_name,
                 user=self.request.user,
                 type=form.cleaned_data.get('category_type', Category.EXPENSE),
                 defaults={'scope': Category.PERSONAL, 'color': form.cleaned_data.get('category_color', '#3B82F6')},
-            )
+            )[0]
             form.instance.category = category
         form.instance.user = self.request.user
         return super().form_valid(form)
@@ -317,14 +317,14 @@ class TransactionUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         new_category_name = form.cleaned_data.get('new_category_name')
         if new_category_name:
-            category, _ = Category.objects.get_or_create(
+            category = Category.objects.get_or_create(
                 name=new_category_name,
                 user=self.request.user,
                 type=form.cleaned_data.get('category_type', Category.EXPENSE),
                 defaults={'scope': Category.PERSONAL, 'color': form.cleaned_data.get('category_color', '#3B82F6')},
-            )
+            )[0]
             form.instance.category = category
-        messages.success(self.request, 'Transazione aggiornata.')
+        messages.success(self.request, _('Transaction updated.'))
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -380,16 +380,16 @@ class CategoryCreateView(LoginRequiredMixin, View):
             if cat_type not in (Category.INCOME, Category.EXPENSE):
                 cat_type = Category.EXPENSE
         if not name:
-            messages.error(request, 'Il nome della categoria è obbligatorio.')
+            messages.error(request, _('Category name is required.'))
             return redirect('core:categories_list')
-        _, created = Category.objects.get_or_create(
+        cat, cat_created = Category.objects.get_or_create(
             name=name, user=request.user, type=cat_type,
             defaults={'scope': Category.PERSONAL, 'color': color},
         )
-        if created:
-            messages.success(request, f'Categoria "{name}" creata.')
+        if cat_created:
+            messages.success(request, _('Category "%(name)s" created.') % {'name': name})
         else:
-            messages.warning(request, f'La categoria "{name}" esiste già.')
+            messages.warning(request, _('Category "%(name)s" already exists.') % {'name': name})
         return redirect('core:categories_list')
 
 
@@ -398,19 +398,19 @@ class CategoryUpdateView(LoginRequiredMixin, View):
         try:
             category = Category.objects.get(pk=pk, user=request.user)
         except Category.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Category not found'}, status=404)
+            return JsonResponse({'success': False, 'error': _('Category not found')}, status=404)
 
         name = request.POST.get('name', '').strip()
         color = request.POST.get('color', '').strip() or category.color
 
         if not name:
-            return JsonResponse({'success': False, 'error': 'Name is required'}, status=400)
+            return JsonResponse({'success': False, 'error': _('Name is required')}, status=400)
 
         if Category.objects.filter(
             user=request.user, name=name, type=category.type
         ).exclude(pk=pk).exists():
             return JsonResponse(
-                {'success': False, 'error': f'A category named "{name}" already exists'}, status=400
+                {'success': False, 'error': _('A category named "%(name)s" already exists') % {'name': name}}, status=400
             )
 
         category.name = name
@@ -427,16 +427,16 @@ class CategoryDeleteView(LoginRequiredMixin, View):
             if transaction_count > 0:
                 return JsonResponse({
                     'success': False,
-                    'error': f'Cannot delete category with {transaction_count} transaction(s). Move or delete them first.',
+                    'error': _('Cannot delete category with %(count)d transaction(s). Move or delete them first.') % {'count': transaction_count},
                 }, status=400)
             category_name = category.name
             category.delete()
-            return JsonResponse({'success': True, 'message': f'Category "{category_name}" deleted successfully'})
+            return JsonResponse({'success': True, 'message': _('Category "%(name)s" deleted successfully') % {'name': category_name}})
         except Category.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Category not found'}, status=404)
+            return JsonResponse({'success': False, 'error': _('Category not found')}, status=404)
         except Exception as e:
             logger.error(f"Error deleting category: {str(e)}", exc_info=True)
-            return JsonResponse({'success': False, 'error': 'Error deleting category'}, status=500)
+            return JsonResponse({'success': False, 'error': _('Error deleting category')}, status=500)
 
 
 # ===========================================================================
@@ -569,7 +569,7 @@ class ImportTransactionsView(LoginRequiredMixin, View):
     def post(self, request):
         csv_file = request.FILES.get('csv_file')
         if not csv_file or not csv_file.name.endswith('.csv'):
-            messages.error(request, 'Carica un file CSV valido.')
+            messages.error(request, _('Please upload a valid CSV file.'))
             return redirect('core:transaction_list')
 
         imported = skipped = errors = 0
@@ -622,12 +622,12 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                         ).order_by('scope').first()
                     if not category:
                         cat_name = row['category'].strip()
-                        category, _ = Category.objects.get_or_create(
+                        category = Category.objects.get_or_create(
                             name=cat_name,
                             user=request.user,
                             type=primary_type,
                             defaults={'scope': Category.PERSONAL, 'color': '#3B82F6'},
-                        )
+                        )[0]
                         logger.info(
                             f'CSV import row {row_num}: categoria "{cat_name}" '
                             f'creata automaticamente.'
@@ -698,14 +698,14 @@ class ImportTransactionsView(LoginRequiredMixin, View):
 
         except Exception as e:
             logger.error(f'CSV import: errore lettura file — {e}')
-            messages.error(request, 'Errore durante la lettura del file.')
+            messages.error(request, _('Error reading the file.'))
             return redirect('core:transaction_list')
 
-        parts = [f'{imported} transazioni importate/aggiornate']
+        parts = [_('%(count)d transaction(s) imported/updated') % {'count': imported}]
         if skipped:
-            parts.append(f'{skipped} duplicate ignorate')
+            parts.append(_('%(count)d duplicate(s) skipped') % {'count': skipped})
         if errors:
-            parts.append(f'{errors} righe saltate per errori')
+            parts.append(_('%(count)d row(s) skipped due to errors') % {'count': errors})
         messages.success(request, ' · '.join(parts) + '.')
         return redirect('core:transaction_list')
 
@@ -729,8 +729,8 @@ class BulkDeleteTransactionsView(LoginRequiredMixin, View):
                 Q(notes__icontains=search) |
                 Q(category__name__icontains=search)
             )
-        count, _ = qs.delete()
-        messages.success(request, f'{count} transazioni eliminate.')
+        count = qs.delete()[0]
+        messages.success(request, _('%(count)d transaction(s) deleted.') % {'count': count})
         return redirect('core:transaction_list')
 
 
@@ -985,6 +985,13 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
                 for c in cat_qs
             ]
 
+        month_labels = [
+            _('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'),
+            _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec'),
+        ]
+        weekday_labels = [
+            _('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun'),
+        ]
         ctx.update({
             'is_family': family,
             'family_profile': user.family_profile if family else None,
@@ -995,7 +1002,8 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             'balance_data': json.dumps(balance_by_month),
             'top_keywords': top_keywords,
             'weekday_data': json.dumps(weekday_totals),
-            'weekday_labels': json.dumps(['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']),
+            'weekday_labels': json.dumps(weekday_labels),
+            'month_labels': json.dumps(month_labels),
             'month_vs_avg': month_vs_avg,
             'total_income': total_income,
             'total_expense': total_expense,

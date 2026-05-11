@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
 {% endblock %}
@@ -11,12 +11,12 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Welcome, {{ user.username }}!</h1>
+            <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{% blocktrans with username=user.username %}Welcome, {{ username }}!{% endblocktrans %}</h1>
             <p class="text-sm sm:text-base text-gray-600 mt-1">
                 {% if is_family %}
-                    Family account · {{ family_profile.member_1 }} &amp; {{ family_profile.member_2 }}
+                    {% trans "Family account" %} · {{ family_profile.member_1 }} &amp; {{ family_profile.member_2 }}
                 {% else %}
-                    Here is a summary of your budget
+                    {% trans "Here is a summary of your budget" %}
                 {% endif %}
             </p>
         </div>
@@ -24,7 +24,7 @@
         <a href="{% url 'core:transaction_create' %}" 
            class="flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg font-semibold transition-all w-full sm:w-auto">
             <i data-lucide="plus" class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0"></i>
-            <span class="text-sm sm:text-base whitespace-nowrap">New Transaction</span>
+            <span class="text-sm sm:text-base whitespace-nowrap">{% trans "New Transaction" %}</span>
         </a>
     </div>
     
@@ -34,7 +34,7 @@
             <div class="flex-1 min-w-0">
                 <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                     <i data-lucide="calendar" class="w-3 h-3 sm:w-4 sm:h-4"></i>
-                    Start Date
+                    {% trans "Start Date" %}
                 </label>
                 <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" 
                        class="w-full border border-gray-300 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -42,7 +42,7 @@
             <div class="flex-1 min-w-0">
                 <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                     <i data-lucide="calendar" class="w-3 h-3 sm:w-4 sm:h-4"></i>
-                    End Date
+                    {% trans "End Date" %}
                 </label>
                 <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" 
                        class="w-full border border-gray-300 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -51,7 +51,7 @@
                 <button type="submit" 
                         class="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-2.5 bg-blue-600 text-white rounded-lg sm:rounded-xl hover:bg-blue-700 font-semibold shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 text-sm">
                     <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    <span>Update</span>
+                    <span>{% trans "Update" %}</span>
                 </button>
             </div>
         </form>
@@ -64,15 +64,15 @@
     <div class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
         <i data-lucide="arrow-right-left" class="w-5 h-5 text-amber-500 flex-shrink-0"></i>
         <p class="text-sm font-medium text-gray-800">
-            <span class="font-bold">{{ debtor }}</span> deve
-            <span class="font-bold text-amber-600">€{{ debt|floatformat:2 }}</span>
-            a <span class="font-bold">{{ creditor }}</span> per pareggiare le spese.
+            {% blocktrans with debtor=debtor debt=debt|floatformat:2 creditor=creditor %}
+            <span class="font-bold">{{ debtor }}</span> owes <span class="font-bold text-amber-600">€{{ debt }}</span> to <span class="font-bold">{{ creditor }}</span> to settle expenses.
+            {% endblocktrans %}
         </p>
     </div>
     {% else %}
     <div class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
         <i data-lucide="check-circle" class="w-5 h-5 text-green-500 flex-shrink-0"></i>
-        <p class="text-sm font-medium text-gray-800">Le spese sono in perfetto pareggio.</p>
+        <p class="text-sm font-medium text-gray-800">{% trans "Expenses are perfectly balanced." %}</p>
     </div>
     {% endif %}
 
@@ -84,7 +84,7 @@
                     <i data-lucide="shopping-cart" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                 </div>
             </div>
-            <p class="text-xs sm:text-sm opacity-90 mb-1">Total Expenses</p>
+            <p class="text-xs sm:text-sm opacity-90 mb-1">{% trans "Total Expenses" %}</p>
             <p class="text-2xl sm:text-3xl lg:text-4xl font-bold break-all">€{{ total_expenses|floatformat:2 }}</p>
         </div>
 
@@ -97,7 +97,7 @@
             </div>
             <p class="text-xs sm:text-sm opacity-90 mb-1">{{ family_profile.member_1 }}</p>
             <p class="text-2xl sm:text-3xl lg:text-4xl font-bold break-all">€{{ m1_total|floatformat:2 }}</p>
-            <p class="text-xs opacity-75 mt-1">quota equa: €{{ fair_share|floatformat:2 }}</p>
+            <p class="text-xs opacity-75 mt-1">{% trans "fair share" %}: €{{ fair_share|floatformat:2 }}</p>
         </div>
 
         <!-- Member 2 -->
@@ -109,7 +109,7 @@
             </div>
             <p class="text-xs sm:text-sm opacity-90 mb-1">{{ family_profile.member_2 }}</p>
             <p class="text-2xl sm:text-3xl lg:text-4xl font-bold break-all">€{{ m2_total|floatformat:2 }}</p>
-            <p class="text-xs opacity-75 mt-1">quota equa: €{{ fair_share|floatformat:2 }}</p>
+            <p class="text-xs opacity-75 mt-1">{% trans "fair share" %}: €{{ fair_share|floatformat:2 }}</p>
         </div>
     </div>
 
@@ -124,7 +124,7 @@
                 </div>
                 <i data-lucide="trending-up" class="w-4 h-4 sm:w-5 sm:h-5 opacity-70"></i>
             </div>
-            <p class="text-xs sm:text-sm opacity-90 mb-1">Total Balance</p>
+            <p class="text-xs sm:text-sm opacity-90 mb-1">{% trans "Total Balance" %}</p>
             <p class="text-2xl sm:text-3xl lg:text-4xl font-bold break-all">€{{ total_balance|floatformat:2 }}</p>
         </div>
         
@@ -136,7 +136,7 @@
                 </div>
                 <i data-lucide="trending-up" class="w-4 h-4 sm:w-5 sm:h-5 opacity-70"></i>
             </div>
-            <p class="text-xs sm:text-sm opacity-90 mb-1">Income</p>
+            <p class="text-xs sm:text-sm opacity-90 mb-1">{% trans "Income" %}</p>
             <p class="text-2xl sm:text-3xl lg:text-4xl font-bold break-all">€{{ total_income|floatformat:2 }}</p>
         </div>
         
@@ -148,7 +148,7 @@
                 </div>
                 <i data-lucide="trending-down" class="w-4 h-4 sm:w-5 sm:h-5 opacity-70"></i>
             </div>
-            <p class="text-xs sm:text-sm opacity-90 mb-1">Expenses</p>
+            <p class="text-xs sm:text-sm opacity-90 mb-1">{% trans "Expenses" %}</p>
             <p class="text-2xl sm:text-3xl lg:text-4xl font-bold break-all">€{{ total_expenses|floatformat:2 }}</p>
         </div>
     </div>
@@ -162,7 +162,7 @@
                 <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
                     <i data-lucide="pie-chart" class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600"></i>
                 </div>
-                <h3 class="text-base sm:text-lg lg:text-xl font-bold text-gray-900">Expenses by Category</h3>
+                <h3 class="text-base sm:text-lg lg:text-xl font-bold text-gray-900">{% trans "Expenses by Category" %}</h3>
             </div>
             {% if pie_data %}
                 <div class="relative w-full" style="max-width: 400px; margin: 0 auto;">
@@ -171,8 +171,8 @@
             {% else %}
                 <div class="text-center text-gray-500 py-12 sm:py-16">
                     <i data-lucide="inbox" class="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 opacity-50"></i>
-                    <p class="font-semibold text-sm sm:text-base">No expenses</p>
-                    <p class="text-xs sm:text-sm mt-1">Add transactions to view the chart</p>
+                    <p class="font-semibold text-sm sm:text-base">{% trans "No expenses" %}</p>
+                    <p class="text-xs sm:text-sm mt-1">{% trans "Add transactions to view the chart" %}</p>
                 </div>
             {% endif %}
         </div>
@@ -183,7 +183,7 @@
                 <div class="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
                     <i data-lucide="zap" class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600"></i>
                 </div>
-                <h3 class="text-base sm:text-lg lg:text-xl font-bold text-gray-900">Quick Actions</h3>
+                <h3 class="text-base sm:text-lg lg:text-xl font-bold text-gray-900">{% trans "Quick Actions" %}</h3>
             </div>
             
             <div class="space-y-3">
@@ -193,9 +193,9 @@
                         <i data-lucide="plus" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-gray-900 text-sm sm:text-base truncate">New Transaction</p>
+                        <p class="font-semibold text-gray-900 text-sm sm:text-base truncate">{% trans "New Transaction" %}</p>
                         <p class="text-xs sm:text-sm text-gray-600 truncate">
-                            {% if is_family %}Register a shared expense{% else %}Register income or expenses{% endif %}
+                            {% if is_family %}{% trans "Register a shared expense" %}{% else %}{% trans "Register income or expenses" %}{% endif %}
                         </p>
                     </div>
                     <i data-lucide="chevron-right" class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all flex-shrink-0"></i>
@@ -207,8 +207,8 @@
                         <i data-lucide="list" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-gray-900 text-sm sm:text-base truncate">All Transactions</p>
-                        <p class="text-xs sm:text-sm text-gray-600 truncate">View and filter your history</p>
+                        <p class="font-semibold text-gray-900 text-sm sm:text-base truncate">{% trans "All Transactions" %}</p>
+                        <p class="text-xs sm:text-sm text-gray-600 truncate">{% trans "View and filter your history" %}</p>
                     </div>
                     <i data-lucide="chevron-right" class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all flex-shrink-0"></i>
                 </a>
@@ -221,7 +221,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <i data-lucide="activity" class="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0"></i>
-                    <span>{{ transactions.count }} transactions</span>
+                    <span>{% blocktrans with count=transactions.count %}{{ count }} transactions{% endblocktrans %}</span>
                 </div>
             </div>
         </div>

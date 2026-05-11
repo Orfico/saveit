@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Recurring Transactions - SaveIt{% endblock %}
+{% block title %}{% trans "Recurring Transactions" %} - SaveIt{% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto p-4">
     <!-- Header -->
     <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-lg p-6 mb-6">
-        <h1 class="text-2xl font-bold mb-2">Recurring Transactions</h1>
-        <p class="text-purple-100 text-sm">Manage your monthly recurring transaction templates</p>
+        <h1 class="text-2xl font-bold mb-2">{% trans "Recurring Transactions" %}</h1>
+        <p class="text-purple-100 text-sm">{% trans "Manage your monthly recurring transaction templates" %}</p>
     </div>
 
     <!-- Info Box -->
@@ -16,11 +16,11 @@
         <div class="flex gap-3">
             <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0"></i>
             <div class="text-sm text-blue-900">
-                <p class="font-semibold mb-1">How it works</p>
+                <p class="font-semibold mb-1">{% trans "How it works" %}</p>
                 <ul class="list-disc list-inside space-y-1 text-blue-800">
-                    <li>These are master templates - copies are generated monthly</li>
-                    <li>Updating a template can update all future copies</li>
-                    <li>Deleting a template can delete all future copies</li>
+                    <li>{% trans "These are master templates - copies are generated monthly" %}</li>
+                    <li>{% trans "Updating a template can update all future copies" %}</li>
+                    <li>{% trans "Deleting a template can delete all future copies" %}</li>
                 </ul>
             </div>
         </div>
@@ -55,7 +55,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <i data-lucide="calendar" class="w-4 h-4"></i>
-                            Day {{ transaction.date.day }} of month
+                            {% trans "Day" %} {{ transaction.date.day }} {% trans "of month" %}
                         </div>
                     </div>
                     
@@ -71,14 +71,14 @@
                         class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
                     >
                         <i data-lucide="edit" class="w-4 h-4"></i>
-                        <span>Edit</span>
+                        <span>{% trans "Edit" %}</span>
                     </button>
-                    <button 
+                    <button
                         onclick="deleteTransaction({{ transaction.id }}, '{{ transaction.description|escapejs }}')"
                         class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
                     >
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        <span>Delete</span>
+                        <span>{% trans "Delete" %}</span>
                     </button>
                 </div>
             </div>
@@ -89,14 +89,14 @@
     <!-- Empty State -->
     <div class="bg-white rounded-lg shadow-lg p-12 text-center">
         <i data-lucide="repeat" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
-        <h3 class="text-xl font-bold text-gray-900 mb-2">No Recurring Transactions</h3>
-        <p class="text-gray-600 mb-6">You haven't set up any recurring transactions yet.</p>
-        <a 
-            href="{% url 'core:transaction_create' %}" 
+        <h3 class="text-xl font-bold text-gray-900 mb-2">{% trans "No Recurring Transactions" %}</h3>
+        <p class="text-gray-600 mb-6">{% trans "You haven't set up any recurring transactions yet." %}</p>
+        <a
+            href="{% url 'core:transaction_create' %}"
             class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition"
         >
             <i data-lucide="plus" class="w-5 h-5"></i>
-            Create First Transaction
+            {% trans "Create First Transaction" %}
         </a>
     </div>
     {% endif %}
@@ -108,7 +108,7 @@
             class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
         >
             <i data-lucide="arrow-left" class="w-5 h-5"></i>
-            Back to Dashboard
+            {% trans "Back to Dashboard" %}
         </a>
     </div>
 </div>
@@ -116,13 +116,13 @@
 <!-- Edit Modal -->
 <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h3 class="text-xl font-bold mb-4">Edit Recurring Transaction</h3>
+        <h3 class="text-xl font-bold mb-4">{% trans "Edit Recurring Transaction" %}</h3>
         
         <form id="editForm" class="space-y-4">
             <input type="hidden" id="editId">
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Description" %}</label>
                 <input 
                     type="text" 
                     id="editDescription"
@@ -132,7 +132,7 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Amount (€)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Amount (€)" %}</label>
                 <input 
                     type="number" 
                     step="0.01"
@@ -143,7 +143,7 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Category" %}</label>
                 <select 
                     id="editCategory"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
@@ -156,7 +156,7 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Notes" %}</label>
                 <textarea 
                     id="editNotes"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
@@ -168,8 +168,8 @@
                 <label class="flex items-start gap-2 cursor-pointer">
                     <input type="checkbox" id="updateCopies" class="mt-1">
                     <span class="text-sm text-yellow-900">
-                        <strong>Update all future copies</strong><br>
-                        This will update all future monthly copies with these new values
+                        <strong>{% trans "Update all future copies" %}</strong><br>
+                        {% trans "This will update all future monthly copies with these new values" %}
                     </span>
                 </label>
             </div>
@@ -179,14 +179,14 @@
                     type="submit"
                     class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition"
                 >
-                    Save Changes
+                    {% trans "Save Changes" %}
                 </button>
-                <button 
+                <button
                     type="button"
                     onclick="closeEditModal()"
                     class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold transition"
                 >
-                    Cancel
+                    {% trans "Cancel" %}
                 </button>
             </div>
         </form>
@@ -243,14 +243,14 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while updating the transaction');
+        alert('{% trans "An error occurred while updating the transaction" %}');
     }
 });
 
 async function deleteTransaction(id, description) {
     const deleteCopies = confirm(
-        `Delete recurring transaction "${description}"?\n\n` +
-        'Click OK to also delete all future copies, or Cancel to keep them.'
+        `{% trans "Delete recurring transaction" %} "${description}"?\n\n` +
+        '{% trans "Click OK to also delete all future copies, or Cancel to keep them." %}'
     );
     
     if (deleteCopies === null) return; // User cancelled first prompt
@@ -277,7 +277,7 @@ async function deleteTransaction(id, description) {
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while deleting the transaction');
+        alert('{% trans "An error occurred while deleting the transaction" %}');
     }
 }
 

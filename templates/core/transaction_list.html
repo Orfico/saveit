@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Transactions{% endblock %}
+{% block title %}{% trans "Transactions" %}{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-6 sm:py-8">
@@ -8,7 +9,7 @@
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
   <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
     <i data-lucide="list" class="w-6 h-6 sm:w-8 sm:h-8"></i>
-    Transactions
+    {% trans "Transactions" %}
   </h1>
 
   <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -66,22 +67,22 @@
         <div class="w-full">
             <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 <i data-lucide="search" class="w-4 h-4"></i>
-                Search Transactions
+                {% trans "Search Transactions" %}
             </label>
             <div class="flex gap-2">
-                <input 
-                    type="text" 
-                    name="search" 
+                <input
+                    type="text"
+                    name="search"
                     value="{{ search_query }}"
-                    placeholder="Search description, notes, or category..."
+                    placeholder="{% trans "Search description, notes, or category..." %}"
                     class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 flex-shrink-0"
                 >
                     <i data-lucide="search" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">Search</span>
+                    <span class="hidden sm:inline">{% trans "Search" %}</span>
                 </button>
             </div>
         </div>
@@ -90,15 +91,15 @@
         <details class="border-t pt-4">
             <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-blue-600 flex items-center gap-2">
                 <i data-lucide="filter" class="w-4 h-4"></i>
-                Advanced Filters
+                {% trans "Advanced Filters" %}
             </summary>
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                 <!-- Category Filter -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "Category" %}</label>
                     <select name="category" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Categories</option>
+                        <option value="">{% trans "All Categories" %}</option>
                         {% for category in categories %}
                             <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
                                 {{ category.name }}
@@ -109,7 +110,7 @@
 
                 <!-- Date From -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "From Date" %}</label>
                     <input 
                         type="date" 
                         name="date_from" 
@@ -120,7 +121,7 @@
 
                 <!-- Date To -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "To Date" %}</label>
                     <input 
                         type="date" 
                         name="date_to" 
@@ -135,13 +136,13 @@
                     type="submit" 
                     class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
                 >
-                    Apply Filters
+                    {% trans "Apply Filters" %}
                 </button>
-                <a 
-                    href="{% url 'core:transaction_list' %}" 
+                <a
+                    href="{% url 'core:transaction_list' %}"
                     class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition"
                 >
-                    Clear All
+                    {% trans "Clear All" %}
                 </a>
             </div>
         </details>
@@ -155,11 +156,11 @@
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
           <tr>
-            <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Date</th>
-            <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Description</th>
-            <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Category</th>
-            <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Amount</th>
-            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">{% trans "Date" %}</th>
+            <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">{% trans "Description" %}</th>
+            <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">{% trans "Category" %}</th>
+            <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">{% trans "Amount" %}</th>
+            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">{% trans "Actions" %}</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -175,7 +176,7 @@
                 {% if transaction.is_recurring %}
                   <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
                     <i data-lucide="repeat" class="w-3 h-3"></i>
-                    <span>Recurring</span>
+                    {% trans "Recurring" %}
                   </span>
                 {% endif %}
               </div>
@@ -184,7 +185,7 @@
               {% endif %}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-3 py-1 rounded-full text-xs font-semibold" 
+              <span class="px-3 py-1 rounded-full text-xs font-semibold"
                     style="background-color: {{ transaction.category.color }}20; color: {{ transaction.category.color }};">
                 {{ transaction.category.name }}
               </span>
@@ -197,17 +198,17 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-center">
               <div class="flex items-center justify-center gap-2" onclick="event.stopPropagation()">
-                <a href="{% url 'core:transaction_update' transaction.pk %}" 
+                <a href="{% url 'core:transaction_update' transaction.pk %}"
                    class="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition inline-flex items-center justify-center"
-                   title="Edit">
+                   title="{% trans "Edit" %}">
                   <i data-lucide="edit-2" class="w-4 h-4"></i>
                 </a>
-                <form method="post" action="{% url 'core:transaction_delete' transaction.pk %}" 
-                      class="inline" onsubmit="return confirm('Are you sure you want to delete this transaction?');">
+                <form method="post" action="{% url 'core:transaction_delete' transaction.pk %}"
+                      class="inline" onsubmit="return confirm('{% trans "Are you sure you want to delete this transaction?" %}');">
                   {% csrf_token %}
-                  <button type="submit" 
+                  <button type="submit"
                           class="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition inline-flex items-center justify-center"
-                          title="Delete">
+                          title="{% trans "Delete" %}">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                   </button>
                 </form>
@@ -233,7 +234,7 @@
             {% if transaction.is_recurring %}
               <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
                 <i data-lucide="repeat" class="w-3 h-3"></i>
-                <span>Recurring</span>
+                {% trans "Recurring" %}
               </span>
             {% endif %}
           </div>
@@ -258,7 +259,7 @@
           {% endif %}
 
           <div class="flex items-center justify-end gap-1 mt-3 text-xs text-gray-400">
-            <span>Tap to edit</span>
+            <span>{% trans "Tap to edit" %}</span>
             <i data-lucide="chevron-right" class="w-3 h-3"></i>
           </div>
         </div>
@@ -271,20 +272,20 @@
     <div class="mt-6 flex flex-wrap justify-center gap-2">
       {% if page_obj.has_previous %}
         <a href="?page=1{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" 
-           class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">First</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" 
-           class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Previous</a>
+           class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">{% trans "First" %}</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}"
+           class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">{% trans "Previous" %}</a>
       {% endif %}
 
       <span class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        {% blocktrans with num=page_obj.number total=page_obj.paginator.num_pages %}Page {{ num }} of {{ total }}{% endblocktrans %}
       </span>
 
       {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" 
-           class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" 
-           class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Last</a>
+           class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">{% trans "Next" %}</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}"
+           class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">{% trans "Last" %}</a>
       {% endif %}
     </div>
     {% endif %}
@@ -293,12 +294,12 @@
     <!-- Empty state -->
     <div class="bg-white rounded-xl shadow-md p-8 sm:p-12 text-center">
       <i data-lucide="inbox" class="w-16 h-16 sm:w-20 sm:h-20 mx-auto text-gray-400 mb-4"></i>
-      <h2 class="text-xl sm:text-2xl font-bold text-gray-700 mb-2">No Transactions Found</h2>
-      <p class="text-gray-500 mb-6">Start by creating your first transaction!</p>
-      <a href="{% url 'core:transaction_create' %}" 
+      <h2 class="text-xl sm:text-2xl font-bold text-gray-700 mb-2">{% trans "No Transactions Found" %}</h2>
+      <p class="text-gray-500 mb-6">{% trans "Start by creating your first transaction!" %}</p>
+      <a href="{% url 'core:transaction_create' %}"
          class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white px-6 py-3 rounded-lg hover:from-emerald-700 hover:to-green-700 font-semibold shadow-lg transition">
         <i data-lucide="plus" class="w-5 h-5"></i>
-        Create Transaction
+        {% trans "Create Transaction" %}
       </a>
     </div>
   {% endif %}
@@ -311,13 +312,12 @@
 
   function confirmBulkDelete() {
   var count = {{ filtered_count|default:0 }};
+  var hasFilters = {{ date_from|default:"''"|safe }} || {{ date_to|default:"''"|safe }} || {{ category_id|default:"''"|safe }} || {{ search|default:"''"|safe }};
   var msg = count > 0
-    ? 'Eliminare ' + count + ' transazioni' +
-      ({{ date_from|default:"''"|safe }} || {{ date_to|default:"''"|safe }} || {{ category_id|default:"''"|safe }} || {{ search|default:"''"|safe }}
-        ? ' (con i filtri attivi)'
-        : ' (tutte le tue transazioni)')
-      + '?\n\nQuesta azione è irreversibile.'
-    : 'Nessuna transazione da eliminare con i filtri attivi.';
+    ? '{% trans "Delete" %} ' + count + ' {% trans "transactions" %}' +
+      (hasFilters ? ' {% trans "(with active filters)" %}' : ' {% trans "(all your transactions)" %}') +
+      '?\n\n{% trans "This action cannot be undone." %}'
+    : '{% trans "No transactions to delete with active filters." %}';
 
   if (count > 0 && confirm(msg)) {
     document.getElementById('bulk-delete-form').submit();

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}{% if object %}Edit{% else %}New{% endif %} Transaction – SaveIt{% endblock %}
+{% block title %}{% if object %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "Transaction" %} – SaveIt{% endblock %}
 
 {% block content %}
 <div class="max-w-lg mx-auto">
@@ -14,12 +14,12 @@
     </a>
     <div>
       <h1 class="text-xl font-bold text-gray-900">
-        {% if object %}Modifica transazione{% else %}Nuova transazione{% endif %}
+        {% if object %}{% trans "Edit transaction" %}{% else %}{% trans "New transaction" %}{% endif %}
       </h1>
       {% if is_family %}
         <p class="text-xs text-blue-600 font-medium flex items-center gap-1 mt-0.5">
           <i data-lucide="users" class="w-3 h-3"></i>
-          Modalità famiglia · {{ family_profile.member_1 }} &amp; {{ family_profile.member_2 }}
+          {% trans "Family mode" %} · {{ family_profile.member_1 }} &amp; {{ family_profile.member_2 }}
         </p>
       {% endif %}
     </div>
@@ -38,7 +38,7 @@
       {% if not is_family %}
       <!-- Income / Expense toggle (standard only) -->
       <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2">{% trans "Type" %}</label>
         <div class="flex rounded-xl overflow-hidden border border-gray-300" id="type-toggle">
           <label class="flex-1 text-center cursor-pointer">
             <input type="radio" name="type" value="expense"
@@ -46,7 +46,7 @@
                    {% if form.type.value == 'expense' or not form.type.value %}checked{% endif %}>
             <span class="block py-2 text-sm font-semibold transition-colors duration-150"
                   id="label-expense">
-              Uscita
+              {% trans "Expense" %}
             </span>
           </label>
           <label class="flex-1 text-center cursor-pointer border-l border-gray-300">
@@ -55,7 +55,7 @@
                    {% if form.type.value == 'income' %}checked{% endif %}>
             <span class="block py-2 text-sm font-semibold transition-colors duration-150"
                   id="label-income">
-              Entrata
+              {% trans "Income" %}
             </span>
           </label>
         </div>
@@ -64,7 +64,7 @@
 
       <!-- Date -->
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Date" %}</label>
         <input type="date" name="date"
                value="{{ form.date.value|date:'Y-m-d' }}"
                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
@@ -74,16 +74,16 @@
 
       <!-- Description -->
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Descrizione</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Description" %}</label>
         <input type="text" name="description"
                value="{{ form.description.value|default:'' }}"
-               placeholder="es. Spesa supermercato"
+               placeholder="{% trans "e.g. Grocery shopping" %}"
                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
 
       <!-- Amount -->
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Importo (€)</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Amount (€)" %}</label>
         <input type="number" name="amount" step="0.01" min="0.01"
                placeholder="0.00"
                value="{{ form.amount.value|default:'' }}"
@@ -94,7 +94,7 @@
 
       <!-- Category -->
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Category" %}</label>
         <select name="category" id="id_category"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
                        {% if form.category.errors %}border-red-400{% endif %}">
@@ -113,7 +113,7 @@
       {% if is_family %}
       <!-- Paid by (family only) -->
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Chi ha pagato *</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Who paid *" %}</label>
         <select name="paid_by"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
                        {% if form.paid_by.errors %}border-red-400{% endif %}">
@@ -134,7 +134,7 @@
                {% if form.is_recurring.value %}checked{% endif %}
                class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
         <label for="is_recurring" class="text-sm font-medium text-gray-700 cursor-pointer">
-          Transazione ricorrente mensile
+          {% trans "Monthly recurring transaction" %}
         </label>
       </div>
       {% endif %}
@@ -142,10 +142,10 @@
       <!-- Notes -->
       <div class="mb-6">
         <label class="block text-sm font-medium text-gray-700 mb-1">
-          Note <span class="text-gray-400 font-normal">(opzionale)</span>
+          {% trans "Notes" %} <span class="text-gray-400 font-normal">({% trans "optional" %})</span>
         </label>
         <textarea name="notes" rows="2"
-                  placeholder="Note aggiuntive..."
+                  placeholder="{% trans "Additional notes..." %}"
                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">{{ form.notes.value|default:'' }}</textarea>
       </div>
 
@@ -153,11 +153,11 @@
       <div class="flex gap-3">
         <button type="submit"
                 class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition shadow-sm">
-          {% if object %}Salva modifiche{% else %}Aggiungi transazione{% endif %}
+          {% if object %}{% trans "Save changes" %}{% else %}{% trans "Add transaction" %}{% endif %}
         </button>
         <a href="{% if object %}{% url 'core:transaction_list' %}{% else %}{% url 'core:dashboard' %}{% endif %}"
            class="px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-          Annulla
+          {% trans "Cancel" %}
         </a>
       </div>
 
@@ -167,11 +167,11 @@
     {% if object %}
     <div class="mt-4 pt-4 border-t border-gray-100">
       <form method="post" action="{% url 'core:transaction_delete' object.pk %}"
-            onsubmit="return confirm('Eliminare questa transazione?')">
+            onsubmit="return confirm('{% trans "Delete this transaction?" %}')">
         {% csrf_token %}
         <button type="submit"
                 class="w-full flex items-center justify-center gap-2 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg transition">
-          <i data-lucide="trash-2" class="w-4 h-4"></i>Elimina transazione
+          <i data-lucide="trash-2" class="w-4 h-4"></i>{% trans "Delete transaction" %}
         </button>
       </form>
     </div>

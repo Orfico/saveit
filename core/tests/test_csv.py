@@ -171,7 +171,7 @@ class ImportCSVTest(TestCase):
         response = self.client.post(
             reverse('core:transactions_import'), {'csv_file': csv_file}, follow=True
         )
-        self.assertIn('saltate per errori', response.content.decode('utf-8'))
+        self.assertIn('skipped due to errors', response.content.decode('utf-8'))
 
 
 class BulkDeleteTest(TestCase):
