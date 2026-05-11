@@ -8,7 +8,7 @@
 // ============================================================================
 
 // Cache version - increment this to force cache refresh on all clients
-const CACHE_VERSION = 'saveit-v4';
+const CACHE_VERSION = 'saveit-v5';
 
 // Cache names for different content types
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
@@ -27,7 +27,7 @@ const STATIC_ASSETS = [
 // INSTALL EVENT - Pre-cache essential static assets
 // ============================================================================
 self.addEventListener('install', event => {
-  console.log('[SW] Installing service worker v3...');
+  console.log('[SW] Installing service worker v5...');
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(cache => {
@@ -42,7 +42,7 @@ self.addEventListener('install', event => {
 // ACTIVATE EVENT - Clean up old caches from previous versions
 // ============================================================================
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating service worker v3...');
+  console.log('[SW] Activating service worker v5...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
@@ -92,7 +92,9 @@ self.addEventListener('fetch', event => {
           
           // Not in cache, fetch and cache for future offline use
           return fetch(request).then(response => {
-            if (response && response.status === 200) {
+            // Accept opaque responses (status 0) — barcode images are cross-origin
+            // no-cors requests; status is always 0 but the content is valid.
+            if (response && (response.ok || response.type === 'opaque')) {
               const responseClone = response.clone();
               cache.put(request, responseClone);
               console.log('[SW] Cached barcode:', url.pathname);
