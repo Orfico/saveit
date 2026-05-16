@@ -1,4 +1,5 @@
 # core/tests/test_views.py
+import json
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -143,6 +144,131 @@ class RecurringTransactionsViewTest(TestCase):
         
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Other rent')
+
+
+class RecurringTransactionDeleteViewTest(TestCase):
+    """Tests for the recurring transaction delete endpoint"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='deluser', password='pass')
+        self.category = Category.objects.create(
+            name='Rent', type=Category.EXPENSE, user=self.user, scope=Category.PERSONAL
+        )
+        # Master created in the past
+        self.master = Transaction.objects.create(
+            user=self.user, category=self.category,
+            amount=Decimal('-800.00'), date=date.today() - timedelta(days=60),
+            description='Monthly rent', is_recurring=True,
+        )
+        # Past copy (60 days ago) – must NOT be deleted
+        self.past_copy = Transaction.objects.create(
+            user=self.user, category=self.category,
+            amount=Decimal('-800.00'), date=date.today() - timedelta(days=30),
+            description='Monthly rent', is_recurring=False,
+        )
+        # Future copy (30 days from now) – may be deleted
+        self.future_copy = Transaction.objects.create(
+            user=self.user, category=self.category,
+            amount=Decimal('-800.00'), date=date.today() + timedelta(days=30),
+            description='Monthly rent', is_recurring=False,
+        )
+        self.client.login(username='deluser', password='pass')
+        self.url = reverse('core:recurring_transaction_delete', args=[self.master.pk])
+
+    def _delete(self, delete_copies):
+        return self.client.post(
+            self.url,
+            data=json.dumps({'delete_copies': delete_copies}),
+            content_type='application/json',
+        )
+
+    def test_delete_without_copies_preserves_master_as_regular_transaction(self):
+        """Removing a recurring transaction should convert the master to a regular transaction, not delete it."""
+        response = self._delete(False)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(json.loads(response.content)['success'])
+        master = Transaction.objects.get(pk=self.master.pk)
+        self.assertFalse(master.is_recurring)
+
+    def test_delete_without_copies_keeps_past_and_future_copies(self):
+        """Without delete_copies, existing generated copies must be untouched."""
+        self._delete(False)
+        self.assertTrue(Transaction.objects.filter(pk=self.past_copy.pk).exists())
+        self.assertTrue(Transaction.objects.filter(pk=self.future_copy.pk).exists())
+
+    def test_delete_with_copies_removes_only_future_copies(self):
+        """With delete_copies=True, only future copies (date > today) should be removed."""
+        self._delete(True)
+        self.assertTrue(Transaction.objects.filter(pk=self.past_copy.pk).exists())
+        self.assertFalse(Transaction.objects.filter(pk=self.future_copy.pk).exists())
+
+    def test_delete_with_copies_preserves_master_as_regular_transaction(self):
+        """Even with delete_copies=True, the master itself must survive as a regular transaction."""
+        self._delete(True)
+        master = Transaction.objects.get(pk=self.master.pk)
+        self.assertFalse(master.is_recurring)
+
+
+class RecurringTransactionUpdateViewTest(TestCase):
+    """Tests for the recurring transaction update endpoint"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='upduser', password='pass')
+        self.category = Category.objects.create(
+            name='Rent', type=Category.EXPENSE, user=self.user, scope=Category.PERSONAL
+        )
+        self.master = Transaction.objects.create(
+            user=self.user, category=self.category,
+            amount=Decimal('-800.00'), date=date.today() - timedelta(days=60),
+            description='Monthly rent', is_recurring=True,
+        )
+        # Past copy – must NOT be updated
+        self.past_copy = Transaction.objects.create(
+            user=self.user, category=self.category,
+            amount=Decimal('-800.00'), date=date.today() - timedelta(days=30),
+            description='Monthly rent', is_recurring=False,
+        )
+        # Future copy – may be updated
+        self.future_copy = Transaction.objects.create(
+            user=self.user, category=self.category,
+            amount=Decimal('-800.00'), date=date.today() + timedelta(days=30),
+            description='Monthly rent', is_recurring=False,
+        )
+        self.client.login(username='upduser', password='pass')
+        self.url = reverse('core:recurring_transaction_update', args=[self.master.pk])
+
+    def _update(self, update_copies):
+        return self.client.post(
+            self.url,
+            data=json.dumps({
+                'description': 'Monthly rent', 'amount': -900.00,
+                'category_id': self.category.pk, 'notes': '',
+                'update_copies': update_copies,
+            }),
+            content_type='application/json',
+        )
+
+    def test_update_without_copies_does_not_touch_past_or_future_copies(self):
+        """Without update_copies, generated copies must remain unchanged."""
+        self._update(False)
+        self.past_copy.refresh_from_db()
+        self.future_copy.refresh_from_db()
+        self.assertEqual(self.past_copy.amount, Decimal('-800.00'))
+        self.assertEqual(self.future_copy.amount, Decimal('-800.00'))
+
+    def test_update_with_copies_does_not_affect_past_copies(self):
+        """With update_copies=True, past copies (date <= today) must be untouched."""
+        self._update(True)
+        self.past_copy.refresh_from_db()
+        self.assertEqual(self.past_copy.amount, Decimal('-800.00'))
+
+    def test_update_with_copies_updates_future_copies(self):
+        """With update_copies=True, future copies (date > today) must be updated."""
+        self._update(True)
+        self.future_copy.refresh_from_db()
+        self.assertEqual(self.future_copy.amount, Decimal('-900.00'))
 
 
 class CategoryViewTest(TestCase):

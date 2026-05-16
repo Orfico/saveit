@@ -465,20 +465,23 @@ class RecurringTransactionDeleteView(LoginRequiredMixin, View):
             data = json.loads(request.body)
             delete_copies = data.get('delete_copies', False)
             master = Transaction.objects.get(pk=pk, user=request.user, is_recurring=True)
+            today = timezone.now().date()
             deleted_count = 0
             if delete_copies:
                 copies = Transaction.objects.filter(
                     user=request.user, category=master.category,
                     description=master.description, amount=master.amount,
-                    is_recurring=False, date__gte=master.date,
+                    is_recurring=False, date__gt=today,
                 )
                 deleted_count = copies.count()
                 copies.delete()
-            master.delete()
+            # Preserve the master as a regular historical transaction instead of deleting it
+            master.is_recurring = False
+            master.save()
             return JsonResponse({
                 'success': True,
-                'message': f'Recurring transaction deleted. '
-                           f'{"" if not delete_copies else f"{deleted_count} copies also deleted."}',
+                'message': f'Recurring transaction stopped. '
+                           f'{"" if not delete_copies else f"{deleted_count} future copies also deleted."}',
             })
         except Transaction.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Recurring transaction not found'}, status=404)
@@ -511,7 +514,7 @@ class RecurringTransactionUpdateView(LoginRequiredMixin, View):
                 copies = Transaction.objects.filter(
                     user=request.user, category=old_category,
                     description=old_description, amount=old_amount,
-                    is_recurring=False, date__gte=today,
+                    is_recurring=False, date__gt=today,
                 )
                 updated_count = copies.update(
                     amount=master.amount, category=master.category,
