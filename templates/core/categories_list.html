@@ -362,7 +362,7 @@ async function saveCategory(id) {
             alert(data.error);
         }
     } catch (e) {
-        alert('{% trans "An error occurred while saving the category" %}');
+        alert("{% trans "An error occurred while saving the category" %}");
     }
 }
 
@@ -377,7 +377,7 @@ async function deleteCategory(id, name) {
         if (data.success) { alert(data.message); location.reload(); }
         else { alert(data.error); }
     } catch (e) {
-        alert('{% trans "An error occurred while deleting the category" %}');
+        alert("{% trans "An error occurred while deleting the category" %}");
     }
 }
 
