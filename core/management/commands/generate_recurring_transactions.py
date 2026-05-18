@@ -1,11 +1,26 @@
+from datetime import timedelta
+
+from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from dateutil.relativedelta import relativedelta
+
 from core.models import Transaction
-from datetime import datetime
+
+
+def next_occurrence(current_date, interval, recurrence_days=None):
+    """Return the next occurrence date after current_date for the given interval."""
+    if interval == Transaction.WEEKLY:
+        return current_date + timedelta(days=7)
+    elif interval == Transaction.ANNUALLY:
+        return current_date + relativedelta(years=1)
+    elif interval == Transaction.CUSTOM:
+        return current_date + timedelta(days=recurrence_days or 30)
+    else:  # monthly (default)
+        return current_date + relativedelta(months=1)
+
 
 class Command(BaseCommand):
-    help = 'Generate recurring transactions for the current month'
+    help = 'Generate all due recurring transactions up to today'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -17,14 +32,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options['dry_run']
         today = timezone.now().date()
-        current_month = today.month
-        current_year = today.year
-        
-        self.stdout.write(self.style.SUCCESS(f'\n🔄 Generating recurring transactions for {current_month}/{current_year}\n'))
-        
-        # Find all active recurring transactions
-        recurring_transactions = Transaction.objects.filter(is_recurring=True)
-        
+
+        self.stdout.write(self.style.SUCCESS(f'\n🔄 Generating recurring transactions up to {today}\n'))
+
+        recurring_transactions = Transaction.objects.filter(
+            is_recurring=True
+        ).select_related('category', 'user')
+
         if not recurring_transactions.exists():
             self.stdout.write(self.style.WARNING('⚠️  No recurring transactions found.\n'))
             return
@@ -33,59 +47,67 @@ class Command(BaseCommand):
 
         created_count = 0
         skipped_count = 0
-        
-        for original_transaction in recurring_transactions:
-            # Calculate target date for the new transaction
-            try:
-                target_date = original_transaction.date.replace(
-                    year=current_year,
-                    month=current_month
+
+        for master in recurring_transactions:
+            # Start from the most recent copy so we never regenerate old ones
+            last_copy = Transaction.objects.filter(
+                user=master.user,
+                amount=master.amount,
+                category=master.category,
+                description=master.description,
+                is_recurring=False,
+            ).order_by('-date').first()
+
+            current_date = last_copy.date if last_copy else master.date
+
+            while True:
+                target_date = next_occurrence(
+                    current_date,
+                    master.recurrence_interval,
+                    master.recurrence_days,
                 )
-            except ValueError:
-                # Handle end-of-month issues (e.g., Feb 30)
-                target_date = (datetime(current_year, current_month, 1) + relativedelta(months=1, days=-1)).date()
-            
-            # Verify if this transaction already exists for the target month
-            already_exists = Transaction.objects.filter(
-                user=original_transaction.user,
-                amount=original_transaction.amount,
-                category=original_transaction.category,
-                description=original_transaction.description,
-                date=target_date
-            ).exists()
-            
-            if already_exists:
-                self.stdout.write(self.style.WARNING(
-                    f'⏭️  Skipped: {original_transaction.description} - already exists for {target_date}'
-                ))
-                skipped_count += 1
-                continue
-            
-            # Create the new transaction
-            if not dry_run:
-                new_transaction = Transaction.objects.create(
-                    user=original_transaction.user,
-                    amount=original_transaction.amount,
-                    category=original_transaction.category,
-                    description=original_transaction.description,
+
+                if target_date > today:
+                    break
+
+                already_exists = Transaction.objects.filter(
+                    user=master.user,
+                    amount=master.amount,
+                    category=master.category,
+                    description=master.description,
                     date=target_date,
-                    is_recurring=False  # copy is not recurring, only the original is
-                )
-                
-                self.stdout.write(self.style.SUCCESS(
-                    f'✅ Created: {new_transaction.description} - €{new_transaction.amount} on {target_date}'
-                ))
-                created_count += 1
-            else:
-                self.stdout.write(self.style.SUCCESS(
-                    f'🔍 [DRY-RUN] Would create: {original_transaction.description} - €{original_transaction.amount} on {target_date}'
-                ))
-                created_count += 1
-        
-        # Summary
-        self.stdout.write('\n' + '='*60)
+                ).exists()
+
+                if already_exists:
+                    self.stdout.write(self.style.WARNING(
+                        f'⏭️  Skipped: {master.description} - already exists for {target_date}'
+                    ))
+                    skipped_count += 1
+                elif not dry_run:
+                    Transaction.objects.create(
+                        user=master.user,
+                        amount=master.amount,
+                        category=master.category,
+                        description=master.description,
+                        notes=master.notes,
+                        date=target_date,
+                        is_recurring=False,
+                    )
+                    self.stdout.write(self.style.SUCCESS(
+                        f'✅ Created: {master.description} - €{master.amount} on {target_date}'
+                    ))
+                    created_count += 1
+                else:
+                    self.stdout.write(self.style.SUCCESS(
+                        f'🔍 [DRY-RUN] Would create: {master.description} - €{master.amount} on {target_date}'
+                    ))
+                    created_count += 1
+
+                current_date = target_date
+
+        self.stdout.write('\n' + '=' * 60)
         if dry_run:
             self.stdout.write(self.style.WARNING('🔍 DRY-RUN MODE - No transactions created'))
         self.stdout.write(self.style.SUCCESS(f'✅ Created transactions: {created_count}'))
         self.stdout.write(self.style.WARNING(f'⏭️  Skipped transactions: {skipped_count}'))
-        self.stdout.write('='*60 + '\n')
+        self.stdout.write('=' * 60 + '\n')

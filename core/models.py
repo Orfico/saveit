@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from decimal import Decimal
 
 
@@ -67,6 +68,17 @@ class Transaction(models.Model):
         (MEMBER_2, 'Member 2'),
     ]
 
+    WEEKLY = 'weekly'
+    MONTHLY = 'monthly'
+    ANNUALLY = 'annually'
+    CUSTOM = 'custom'
+    RECURRENCE_CHOICES = [
+        (WEEKLY, _('Weekly')),
+        (MONTHLY, _('Monthly')),
+        (ANNUALLY, _('Annually')),
+        (CUSTOM, _('Custom')),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='transactions')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -74,8 +86,19 @@ class Transaction(models.Model):
     description = models.TextField(max_length=500, blank=True)
     is_recurring = models.BooleanField(
         default=False,
-        verbose_name='Monthly Recurring',
-        help_text='If active, this transaction will repeat every month.',
+        verbose_name=_('Recurring'),
+        help_text='If active, this transaction will repeat at the configured interval.',
+    )
+    recurrence_interval = models.CharField(
+        max_length=10,
+        choices=RECURRENCE_CHOICES,
+        default=MONTHLY,
+        help_text='How often this transaction repeats (only relevant when is_recurring=True).',
+    )
+    recurrence_days = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text='Days between occurrences (only for custom recurrence interval).',
     )
     notes = models.TextField(blank=True)
     paid_by = models.CharField(

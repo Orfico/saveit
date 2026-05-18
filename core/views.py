@@ -507,6 +507,10 @@ class RecurringTransactionUpdateView(LoginRequiredMixin, View):
                 master.description = data['description']
             if 'notes' in data:
                 master.notes = data['notes']
+            if 'recurrence_interval' in data:
+                master.recurrence_interval = data['recurrence_interval']
+            if 'recurrence_days' in data:
+                master.recurrence_days = data.get('recurrence_days') or None
             master.save()
             updated_count = 0
             if update_copies:

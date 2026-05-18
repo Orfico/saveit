@@ -128,7 +128,8 @@ class TransactionForm(forms.ModelForm):
 
     class Meta:
         model = Transaction
-        fields = ['date', 'description', 'category', 'notes', 'is_recurring', 'paid_by']
+        fields = ['date', 'description', 'category', 'notes', 'is_recurring',
+                  'recurrence_interval', 'recurrence_days', 'paid_by']
         widgets = {
             'date': forms.DateInput(attrs={
                 'type': 'date',
@@ -150,10 +151,23 @@ class TransactionForm(forms.ModelForm):
             'is_recurring': forms.CheckboxInput(attrs={
                 'class': 'sr-only peer'
             }),
+            'recurrence_interval': forms.Select(attrs={
+                'class': 'border border-gray-300 px-3 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500 text-sm',
+                'id': 'id_recurrence_interval',
+            }),
+            'recurrence_days': forms.NumberInput(attrs={
+                'class': 'border border-gray-300 px-3 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500 text-sm',
+                'min': '1',
+                'placeholder': '30',
+                'id': 'id_recurrence_days',
+            }),
             'paid_by': forms.Select(attrs={
                 'class': 'border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500',
             }),
         }
+
+    def clean_recurrence_interval(self):
+        return self.cleaned_data.get('recurrence_interval') or 'monthly'
 
     def __init__(self, *args, user=None, **kwargs):
         instance = kwargs.get('instance')
@@ -165,6 +179,7 @@ class TransactionForm(forms.ModelForm):
             kwargs['initial'] = initial
 
         super().__init__(*args, **kwargs)
+        self.fields['recurrence_interval'].required = False
 
         # Filter categories by user and global
         if user:
@@ -185,6 +200,8 @@ class TransactionForm(forms.ModelForm):
                 self.fields['type'].initial = 'expense'
                 self.fields['is_recurring'].widget = forms.HiddenInput()
                 self.fields['is_recurring'].initial = False
+                self.fields['recurrence_interval'].widget = forms.HiddenInput()
+                self.fields['recurrence_days'].widget = forms.HiddenInput()
                 # paid_by is required with actual member names
                 self.fields['paid_by'].required = True
                 self.fields['paid_by'].choices = [

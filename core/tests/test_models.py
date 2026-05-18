@@ -171,27 +171,62 @@ class TransactionModelTest(TestCase):
     
     def test_recurring_transaction_flag(self):
         """Test is_recurring flag is saved and retrieved correctly"""
-        # Recurring transaction
         recurring = Transaction.objects.create(
-            user=self.user,
-            category=self.category,
-            amount=Decimal('-850.00'),
-            description='Rent',
-            date=date.today(),
-            is_recurring=True
+            user=self.user, category=self.category,
+            amount=Decimal('-850.00'), description='Rent',
+            date=date.today(), is_recurring=True,
         )
         self.assertTrue(recurring.is_recurring)
-        
-        # Non-recurring transaction
+
         normal = Transaction.objects.create(
-            user=self.user,
-            category=self.category,
-            amount=Decimal('-20.00'),
-            description='One-time expense',
-            date=date.today(),
-            is_recurring=False
+            user=self.user, category=self.category,
+            amount=Decimal('-20.00'), description='One-time expense',
+            date=date.today(), is_recurring=False,
         )
         self.assertFalse(normal.is_recurring)
+
+    def test_recurrence_interval_default_is_monthly(self):
+        """New recurring transactions default to monthly interval"""
+        t = Transaction.objects.create(
+            user=self.user, category=self.category,
+            amount=Decimal('-100.00'), description='Test',
+            date=date.today(), is_recurring=True,
+        )
+        self.assertEqual(t.recurrence_interval, Transaction.MONTHLY)
+
+    def test_recurrence_interval_choices(self):
+        """All four interval values can be stored and retrieved"""
+        for interval in (Transaction.WEEKLY, Transaction.MONTHLY,
+                         Transaction.ANNUALLY, Transaction.CUSTOM):
+            t = Transaction.objects.create(
+                user=self.user, category=self.category,
+                amount=Decimal('-10.00'), description=f'Test {interval}',
+                date=date.today(), is_recurring=True,
+                recurrence_interval=interval,
+            )
+            t.refresh_from_db()
+            self.assertEqual(t.recurrence_interval, interval)
+
+    def test_recurrence_days_stored_for_custom(self):
+        """recurrence_days is stored and retrieved for custom interval"""
+        t = Transaction.objects.create(
+            user=self.user, category=self.category,
+            amount=Decimal('-50.00'), description='Custom',
+            date=date.today(), is_recurring=True,
+            recurrence_interval=Transaction.CUSTOM, recurrence_days=14,
+        )
+        t.refresh_from_db()
+        self.assertEqual(t.recurrence_days, 14)
+
+    def test_recurrence_days_nullable_for_non_custom(self):
+        """recurrence_days can be null for non-custom intervals"""
+        t = Transaction.objects.create(
+            user=self.user, category=self.category,
+            amount=Decimal('-50.00'), description='Weekly test',
+            date=date.today(), is_recurring=True,
+            recurrence_interval=Transaction.WEEKLY,
+        )
+        self.assertIsNone(t.recurrence_days)
     
     def test_transaction_str_representation(self):
         """Test Transaction model string representation"""

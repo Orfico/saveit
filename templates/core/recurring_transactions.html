@@ -8,7 +8,7 @@
     <!-- Header -->
     <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-lg p-6 mb-6">
         <h1 class="text-2xl font-bold mb-2">{% trans "Recurring Transactions" %}</h1>
-        <p class="text-purple-100 text-sm">{% trans "Manage your monthly recurring transaction templates" %}</p>
+        <p class="text-purple-100 text-sm">{% trans "Manage your recurring transaction templates" %}</p>
     </div>
 
     <!-- Info Box -->
@@ -18,7 +18,7 @@
             <div class="text-sm text-blue-900">
                 <p class="font-semibold mb-1">{% trans "How it works" %}</p>
                 <ul class="list-disc list-inside space-y-1 text-blue-800">
-                    <li>{% trans "These are master templates - copies are generated monthly" %}</li>
+                    <li>{% trans "These are master templates - copies are generated at the configured interval" %}</li>
                     <li>{% trans "Updating a template can update all future copies" %}</li>
                     <li>{% trans "Deleting a template can delete all future copies" %}</li>
                 </ul>
@@ -55,7 +55,15 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <i data-lucide="calendar" class="w-4 h-4"></i>
-                            {% trans "Day" %} {{ transaction.date.day }} {% trans "of month" %}
+                            {% if transaction.recurrence_interval == 'weekly' %}
+                                {% trans "Every week" %}
+                            {% elif transaction.recurrence_interval == 'annually' %}
+                                {% trans "Every year" %}
+                            {% elif transaction.recurrence_interval == 'custom' %}
+                                {% blocktrans with days=transaction.recurrence_days %}Every {{ days }} days{% endblocktrans %}
+                            {% else %}
+                                {% trans "Day" %} {{ transaction.date.day }} {% trans "of month" %}
+                            {% endif %}
                         </div>
                     </div>
                     
@@ -66,8 +74,8 @@
 
                 <!-- Actions -->
                 <div class="flex gap-2">
-                    <button 
-                        onclick="editTransaction({{ transaction.id }}, '{{ transaction.description|escapejs }}', {{ transaction.amount }}, {{ transaction.category.id }}, '{{ transaction.notes|escapejs }}')"
+                    <button
+                        onclick="editTransaction({{ transaction.id }}, '{{ transaction.description|escapejs }}', {{ transaction.amount }}, {{ transaction.category.id }}, '{{ transaction.notes|escapejs }}', '{{ transaction.recurrence_interval }}', {{ transaction.recurrence_days|default:'null' }})"
                         class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
                     >
                         <i data-lucide="edit" class="w-4 h-4"></i>
@@ -157,13 +165,30 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Notes" %}</label>
-                <textarea 
+                <textarea
                     id="editNotes"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                     rows="3"
                 ></textarea>
             </div>
-            
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Recurrence interval" %}</label>
+                <select id="editInterval"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                    <option value="weekly">{% trans "Weekly" %}</option>
+                    <option value="monthly">{% trans "Monthly" %}</option>
+                    <option value="annually">{% trans "Annually" %}</option>
+                    <option value="custom">{% trans "Custom" %}</option>
+                </select>
+            </div>
+
+            <div id="editCustomDaysWrapper" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Days between occurrences" %}</label>
+                <input type="number" id="editCustomDays" min="1" placeholder="30"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+            </div>
+
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                 <label class="flex items-start gap-2 cursor-pointer">
                     <input type="checkbox" id="updateCopies" class="mt-1">
@@ -197,15 +222,24 @@
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
                   document.querySelector('meta[name="csrf-token"]')?.content;
 
-function editTransaction(id, description, amount, categoryId, notes) {
+function editTransaction(id, description, amount, categoryId, notes, interval, customDays) {
     document.getElementById('editId').value = id;
     document.getElementById('editDescription').value = description;
     document.getElementById('editAmount').value = amount;
     document.getElementById('editCategory').value = categoryId;
     document.getElementById('editNotes').value = notes || '';
+    document.getElementById('editInterval').value = interval || 'monthly';
+    var customDaysWrapper = document.getElementById('editCustomDaysWrapper');
+    var customDaysInput = document.getElementById('editCustomDays');
+    customDaysInput.value = customDays || '';
+    customDaysWrapper.classList.toggle('hidden', interval !== 'custom');
     document.getElementById('updateCopies').checked = false;
     document.getElementById('editModal').classList.remove('hidden');
 }
+
+document.getElementById('editInterval').addEventListener('change', function() {
+    document.getElementById('editCustomDaysWrapper').classList.toggle('hidden', this.value !== 'custom');
+});
 
 function closeEditModal() {
     document.getElementById('editModal').classList.add('hidden');
@@ -229,6 +263,10 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
                 amount: parseFloat(document.getElementById('editAmount').value),
                 category_id: parseInt(document.getElementById('editCategory').value),
                 notes: document.getElementById('editNotes').value,
+                recurrence_interval: document.getElementById('editInterval').value,
+                recurrence_days: document.getElementById('editInterval').value === 'custom'
+                    ? parseInt(document.getElementById('editCustomDays').value) || null
+                    : null,
                 update_copies: updateCopies
             })
         });

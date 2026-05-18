@@ -129,13 +129,38 @@
 
       {% else %}
       <!-- Recurring (standard only) -->
-      <div class="mb-4 flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-        <input type="checkbox" name="is_recurring" id="is_recurring"
-               {% if form.is_recurring.value %}checked{% endif %}
-               class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-        <label for="is_recurring" class="text-sm font-medium text-gray-700 cursor-pointer">
-          {% trans "Monthly recurring transaction" %}
-        </label>
+      <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+        <div class="flex items-center gap-3">
+          <input type="checkbox" name="is_recurring" id="is_recurring"
+                 {% if form.is_recurring.value %}checked{% endif %}
+                 class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+          <label for="is_recurring" class="text-sm font-medium text-gray-700 cursor-pointer">
+            {% trans "Recurring transaction" %}
+          </label>
+        </div>
+
+        <div id="recurrence-options" class="{% if not form.is_recurring.value %}hidden{% endif %} mt-3 space-y-2">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">{% trans "Recurrence interval" %}</label>
+            <select name="recurrence_interval" id="id_recurrence_interval"
+                    class="border border-gray-300 px-3 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500 text-sm">
+              {% for val, label in form.fields.recurrence_interval.choices %}
+              <option value="{{ val }}"
+                      {% if form.recurrence_interval.value == val %}selected{% endif %}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div id="custom-days-wrapper"
+               class="{% if form.recurrence_interval.value != 'custom' %}hidden{% endif %}">
+            <label class="block text-xs font-medium text-gray-600 mb-1">{% trans "Days between occurrences" %}</label>
+            <input type="number" name="recurrence_days" id="id_recurrence_days"
+                   min="1" placeholder="30"
+                   value="{{ form.recurrence_days.value|default:'' }}"
+                   class="border border-gray-300 px-3 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-500 text-sm">
+          </div>
+        </div>
       </div>
       {% endif %}
 
@@ -218,6 +243,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
   radios.forEach(function(r) { r.addEventListener('change', updateToggle); });
   updateToggle();
+
+  // Recurring toggle
+  var recurringCheckbox = document.getElementById('is_recurring');
+  var recurrenceOptions = document.getElementById('recurrence-options');
+  var intervalSelect = document.getElementById('id_recurrence_interval');
+  var customDaysWrapper = document.getElementById('custom-days-wrapper');
+
+  if (recurringCheckbox) {
+    recurringCheckbox.addEventListener('change', function() {
+      recurrenceOptions.classList.toggle('hidden', !this.checked);
+    });
+  }
+  if (intervalSelect) {
+    intervalSelect.addEventListener('change', function() {
+      customDaysWrapper.classList.toggle('hidden', this.value !== 'custom');
+    });
+  }
 });
 </script>
 {% endif %}

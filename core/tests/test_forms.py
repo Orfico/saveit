@@ -218,3 +218,48 @@ class TransactionFormTest(TestCase):
         
         # The available categories should be filtered by the current user
         self.assertNotIn(other_category, form.fields['category'].queryset)
+
+    def test_form_saves_recurrence_interval_weekly(self):
+        """recurrence_interval=weekly is saved correctly"""
+        form_data = {
+            'type': 'expense', 'amount': '50.00', 'date': date.today(),
+            'description': 'Weekly gym', 'category': self.expense_category.id,
+            'notes': '', 'is_recurring': True,
+            'recurrence_interval': 'weekly',
+        }
+        form = TransactionForm(data=form_data, user=self.user)
+        self.assertTrue(form.is_valid(), form.errors)
+        t = form.save(commit=False)
+        t.user = self.user
+        t.save()
+        self.assertEqual(t.recurrence_interval, 'weekly')
+
+    def test_form_saves_recurrence_days_for_custom(self):
+        """recurrence_interval=custom with recurrence_days is saved correctly"""
+        form_data = {
+            'type': 'expense', 'amount': '30.00', 'date': date.today(),
+            'description': 'Custom interval', 'category': self.expense_category.id,
+            'notes': '', 'is_recurring': True,
+            'recurrence_interval': 'custom', 'recurrence_days': '14',
+        }
+        form = TransactionForm(data=form_data, user=self.user)
+        self.assertTrue(form.is_valid(), form.errors)
+        t = form.save(commit=False)
+        t.user = self.user
+        t.save()
+        self.assertEqual(t.recurrence_interval, 'custom')
+        self.assertEqual(t.recurrence_days, 14)
+
+    def test_form_default_recurrence_interval_is_monthly(self):
+        """When no interval is given, it defaults to monthly"""
+        form_data = {
+            'type': 'expense', 'amount': '100.00', 'date': date.today(),
+            'description': 'Default interval', 'category': self.expense_category.id,
+            'notes': '', 'is_recurring': True,
+        }
+        form = TransactionForm(data=form_data, user=self.user)
+        self.assertTrue(form.is_valid(), form.errors)
+        t = form.save(commit=False)
+        t.user = self.user
+        t.save()
+        self.assertEqual(t.recurrence_interval, 'monthly')

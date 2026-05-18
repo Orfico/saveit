@@ -572,11 +572,17 @@ msgstr "Transactions récurrentes"
 msgid "Manage your monthly recurring transaction templates"
 msgstr "Gérez vos modèles de transactions récurrentes mensuelles"
 
+msgid "Manage your recurring transaction templates"
+msgstr "Gérez vos modèles de transactions récurrentes"
+
 msgid "How it works"
 msgstr "Comment ça fonctionne"
 
 msgid "These are master templates - copies are generated monthly"
 msgstr "Ce sont des modèles maîtres - des copies sont générées chaque mois"
+
+msgid "These are master templates - copies are generated at the configured interval"
+msgstr "Ce sont des modèles maîtres - des copies sont générées à l'intervalle configuré"
 
 msgid "Updating a template can update all future copies"
 msgstr ""
@@ -602,6 +608,36 @@ msgstr "Créer la première transaction"
 
 msgid "Edit Recurring Transaction"
 msgstr "Modifier la transaction récurrente"
+
+msgid "Recurring transaction"
+msgstr "Transaction récurrente"
+
+msgid "Recurrence interval"
+msgstr "Intervalle de récurrence"
+
+msgid "Weekly"
+msgstr "Hebdomadaire"
+
+msgid "Monthly"
+msgstr "Mensuel"
+
+msgid "Annually"
+msgstr "Annuel"
+
+msgid "Custom"
+msgstr "Personnalisé"
+
+msgid "Days between occurrences"
+msgstr "Jours entre les occurrences"
+
+msgid "Every week"
+msgstr "Toutes les semaines"
+
+msgid "Every year"
+msgstr "Tous les ans"
+
+msgid "Every %(days)s days"
+msgstr "Tous les %(days)s jours"
 
 msgid "Update all future copies"
 msgstr "Mettre à jour toutes les copies futures"

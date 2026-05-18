@@ -239,14 +239,17 @@ class RecurringTransactionUpdateViewTest(TestCase):
         self.client.login(username='upduser', password='pass')
         self.url = reverse('core:recurring_transaction_update', args=[self.master.pk])
 
-    def _update(self, update_copies):
+    def _update(self, update_copies, extra=None):
+        payload = {
+            'description': 'Monthly rent', 'amount': -900.00,
+            'category_id': self.category.pk, 'notes': '',
+            'update_copies': update_copies,
+        }
+        if extra:
+            payload.update(extra)
         return self.client.post(
             self.url,
-            data=json.dumps({
-                'description': 'Monthly rent', 'amount': -900.00,
-                'category_id': self.category.pk, 'notes': '',
-                'update_copies': update_copies,
-            }),
+            data=json.dumps(payload),
             content_type='application/json',
         )
 
@@ -269,6 +272,28 @@ class RecurringTransactionUpdateViewTest(TestCase):
         self._update(True)
         self.future_copy.refresh_from_db()
         self.assertEqual(self.future_copy.amount, Decimal('-900.00'))
+
+    def test_update_saves_recurrence_interval(self):
+        """recurrence_interval is persisted when sent in the payload."""
+        self._update(False, extra={'recurrence_interval': 'weekly'})
+        self.master.refresh_from_db()
+        self.assertEqual(self.master.recurrence_interval, 'weekly')
+
+    def test_update_saves_recurrence_days_for_custom(self):
+        """recurrence_days is persisted when interval is custom."""
+        self._update(False, extra={'recurrence_interval': 'custom', 'recurrence_days': 14})
+        self.master.refresh_from_db()
+        self.assertEqual(self.master.recurrence_interval, 'custom')
+        self.assertEqual(self.master.recurrence_days, 14)
+
+    def test_update_clears_recurrence_days_for_non_custom(self):
+        """recurrence_days is cleared when interval changes away from custom."""
+        self.master.recurrence_interval = 'custom'
+        self.master.recurrence_days = 14
+        self.master.save()
+        self._update(False, extra={'recurrence_interval': 'monthly', 'recurrence_days': None})
+        self.master.refresh_from_db()
+        self.assertIsNone(self.master.recurrence_days)
 
 
 class CategoryViewTest(TestCase):
