@@ -455,7 +455,9 @@ class RecurringTransactionsView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.filter(user=self.request.user)
+        context['categories'] = Category.objects.filter(
+            Q(user=self.request.user) | Q(scope=Category.GLOBAL)
+        ).order_by('type', 'name')
         return context
 
 
