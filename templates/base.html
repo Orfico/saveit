@@ -80,6 +80,12 @@
                         <span>{% trans "Analytics" %}</span>
                     </a>
 
+                    <a href="{% url 'core:settings' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'settings' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        <span>{% trans "Settings" %}</span>
+                    </a>
+
                     <form method="POST" action="{% url 'core:logout' %}" class="inline">
                         {% csrf_token %}
                         <button type="submit"
@@ -135,6 +141,12 @@
                         <span>{% trans "Analytics" %}</span>
                     </a>
 
+                    <a href="{% url 'core:settings' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors {% if request.resolver_match.url_name == 'settings' %}bg-blue-50 text-blue-600{% else %}text-gray-700{% endif %}">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        <span>{% trans "Settings" %}</span>
+                    </a>
+
                     <form method="POST" action="{% url 'core:logout' %}">
                         {% csrf_token %}
                         <button type="submit"
@@ -148,7 +160,27 @@
         </div>
     </nav>
     {% endif %}
-    
+
+    <!-- Switch-back banner -->
+    {% if switch_from_user %}
+    <div class="bg-amber-50 border-b border-amber-300">
+        <div class="container mx-auto px-4 py-2 flex items-center justify-between gap-4">
+            <span class="text-sm text-amber-800 flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4"></i>
+                {% blocktrans with current=user.username original=switch_from_user.username %}Viewing as <strong>{{ current }}</strong> — originally signed in as <strong>{{ original }}</strong>{% endblocktrans %}
+            </span>
+            <form method="POST" action="{% url 'core:account_switch_back' %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="text-sm font-medium text-amber-900 bg-amber-200 hover:bg-amber-300 px-3 py-1 rounded-lg transition-colors flex items-center gap-1">
+                    <i data-lucide="arrow-left-right" class="w-3 h-3"></i>
+                    {% trans "Switch back" %}
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Messages -->
     {% if messages %}
     <div class="container mx-auto px-4 mt-4">

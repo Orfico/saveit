@@ -17,6 +17,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.db import models
 from django.db.models import Count, Q, Sum
@@ -34,7 +35,7 @@ from django.views.generic import (
 
 # Local imports
 from .forms import CustomAuthenticationForm, CustomUserCreationForm, TransactionForm
-from .models import Category, FamilyProfile, LoyaltyCard, Transaction
+from .models import Category, FamilyMember, FamilyProfile, LoyaltyCard, Transaction
 from .utils.barcode_generator import BarcodeGenerator
 
 logger = logging.getLogger(__name__)
@@ -1023,3 +1024,128 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             'income_by_category': json.dumps(income_by_category),
         })
         return ctx
+
+
+# ===========================================================================
+# SETTINGS & ACCOUNT SWITCHING
+# ===========================================================================
+
+class SettingsView(LoginRequiredMixin, TemplateView):
+    template_name = 'core/settings.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        family = is_family(user)
+        ctx['is_family'] = family
+        if family:
+            fp = user.family_profile
+            ctx['family_profile'] = fp
+            ctx['linked_members'] = fp.linked_members.select_related('user').all()
+        ctx['family_memberships'] = user.family_memberships.select_related('family_profile__user').all()
+        return ctx
+
+
+class AddFamilyMemberView(LoginRequiredMixin, View):
+    def post(self, request):
+        if not is_family(request.user):
+            messages.error(request, _('Only family accounts can add members.'))
+            return redirect('core:settings')
+
+        username = request.POST.get('username', '').strip()
+        if not username:
+            messages.error(request, _('Please enter a username.'))
+            return redirect('core:settings')
+
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            messages.error(request, _('No user found with that username.'))
+            return redirect('core:settings')
+
+        if target_user == request.user:
+            messages.error(request, _('You cannot add yourself as a member.'))
+            return redirect('core:settings')
+
+        if is_family(target_user):
+            messages.error(request, _('Only individual accounts can be added as members.'))
+            return redirect('core:settings')
+
+        fp = request.user.family_profile
+        fm, created = FamilyMember.objects.get_or_create(family_profile=fp, user=target_user)
+        if created:
+            messages.success(request, _('%(username)s has been added as a member.') % {'username': username})
+        else:
+            messages.info(request, _('%(username)s is already a member of this family account.') % {'username': username})
+        return redirect('core:settings')
+
+
+class RemoveFamilyMemberView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        if not is_family(request.user):
+            messages.error(request, _('Only family accounts can remove members.'))
+            return redirect('core:settings')
+
+        fm = get_object_or_404(FamilyMember, pk=pk, family_profile=request.user.family_profile)
+        username = fm.user.username
+        fm.delete()
+        messages.success(request, _('%(username)s has been removed from your family account.') % {'username': username})
+        return redirect('core:settings')
+
+
+class SwitchAccountView(LoginRequiredMixin, View):
+    def post(self, request, user_pk):
+        try:
+            target_user = User.objects.get(pk=user_pk)
+        except User.DoesNotExist:
+            messages.error(request, _('Account not found.'))
+            return redirect('core:settings')
+
+        current_user = request.user
+        can_switch = False
+
+        if is_family(current_user):
+            # Family user switching to one of their linked individual members
+            can_switch = current_user.family_profile.linked_members.filter(user=target_user).exists()
+        elif is_family(target_user):
+            # Individual member switching to a family account they belong to
+            can_switch = current_user.family_memberships.filter(family_profile__user=target_user).exists()
+
+        if not can_switch:
+            messages.error(request, _('You are not authorized to switch to this account.'))
+            return redirect('core:settings')
+
+        # Capture before login() potentially flushes the session when switching users.
+        # Don't overwrite if already in a switched state (e.g. switching again from
+        # a member account to a different member).
+        already_switched = '_switch_from' in request.session
+        original_pk = request.session.get('_switch_from', current_user.pk)
+
+        # login() calls session.flush() when the user changes, clearing all data.
+        login(request, target_user, backend='django.contrib.auth.backends.ModelBackend')
+
+        # Re-set after login() so it survives the session flush.
+        if not already_switched:
+            request.session['_switch_from'] = original_pk
+        messages.success(request, _('Switched to %(username)s\'s account.') % {'username': target_user.username})
+        return redirect('core:dashboard')
+
+
+class SwitchBackView(LoginRequiredMixin, View):
+    def post(self, request):
+        original_pk = request.session.get('_switch_from')
+        if not original_pk:
+            messages.error(request, _('No account to switch back to.'))
+            return redirect('core:dashboard')
+
+        try:
+            original_user = User.objects.get(pk=original_pk)
+        except User.DoesNotExist:
+            del request.session['_switch_from']
+            messages.error(request, _('The original account no longer exists.'))
+            return redirect('core:dashboard')
+
+        del request.session['_switch_from']
+        login(request, original_user, backend='django.contrib.auth.backends.ModelBackend')
+        messages.success(request, _('Switched back to %(username)s\'s account.') % {'username': original_user.username})
+        return redirect('core:dashboard')

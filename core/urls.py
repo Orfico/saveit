@@ -70,4 +70,11 @@ urlpatterns = [
 
     # ── Analytics ────────────────────────────────────────────────────────────
     path('analytics/', views.AnalyticsView.as_view(), name='analytics'),
+
+    # ── Settings & Account Switching ─────────────────────────────────────────
+    path('settings/', views.SettingsView.as_view(), name='settings'),
+    path('settings/members/add/', views.AddFamilyMemberView.as_view(), name='settings_add_member'),
+    path('settings/members/<int:pk>/remove/', views.RemoveFamilyMemberView.as_view(), name='settings_remove_member'),
+    path('settings/switch/<int:user_pk>/', views.SwitchAccountView.as_view(), name='account_switch'),
+    path('settings/switch-back/', views.SwitchBackView.as_view(), name='account_switch_back'),
 ]

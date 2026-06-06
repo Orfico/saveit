@@ -60,6 +60,23 @@ class FamilyProfile(models.Model):
         return self.member_1 if key == 'member_1' else self.member_2
 
 
+class FamilyMember(models.Model):
+    """Links a family account to individual (non-family) user accounts."""
+    family_profile = models.ForeignKey(
+        FamilyProfile, on_delete=models.CASCADE, related_name='linked_members'
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='family_memberships'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('family_profile', 'user')
+
+    def __str__(self):
+        return f'{self.user.username} → {self.family_profile}'
+
+
 class Transaction(models.Model):
     MEMBER_1 = 'member_1'
     MEMBER_2 = 'member_2'

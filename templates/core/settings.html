@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Settings" %} — SaveIt{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">{% trans "Settings" %}</h1>
+
+    {% if is_family %}
+    <!-- ── Family Members ──────────────────────────────────────────── -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
+                {% trans "Family Members" %}
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">
+                {% trans "Add individual users to your family account so they can switch between their personal and family views." %}
+            </p>
+        </div>
+
+        <div class="px-6 py-4">
+            <!-- Add member form -->
+            <form method="POST" action="{% url 'core:settings_add_member' %}" class="flex gap-3 mb-6">
+                {% csrf_token %}
+                <input type="text" name="username" required
+                       placeholder="{% trans "Username" %}"
+                       class="flex-1 border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    {% trans "Add Member" %}
+                </button>
+            </form>
+
+            <!-- Current members -->
+            {% if linked_members %}
+            <ul class="divide-y divide-gray-100">
+                {% for fm in linked_members %}
+                <li class="py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="user" class="w-4 h-4 text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ fm.user.username }}</p>
+                            {% if fm.user.get_full_name %}
+                            <p class="text-xs text-gray-500">{{ fm.user.get_full_name }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <!-- Switch to this member's account -->
+                        <form method="POST" action="{% url 'core:account_switch' fm.user.pk %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-lg transition-colors flex items-center gap-1">
+                                <i data-lucide="arrow-left-right" class="w-3 h-3"></i>
+                                {% trans "Switch" %}
+                            </button>
+                        </form>
+                        <!-- Remove member -->
+                        <form method="POST" action="{% url 'core:settings_remove_member' fm.pk %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="text-sm text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-lg transition-colors flex items-center gap-1"
+                                    onclick="return confirm('{% trans "Remove this member?" %}')">
+                                <i data-lucide="user-minus" class="w-3 h-3"></i>
+                                {% trans "Remove" %}
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-sm text-gray-500 text-center py-4">{% trans "No members added yet." %}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Linked Family Accounts (for individual users) ──────────── -->
+    {% if family_memberships %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <i data-lucide="home" class="w-5 h-5 text-green-600"></i>
+                {% trans "Family Accounts" %}
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">
+                {% trans "Family accounts you are a member of." %}
+            </p>
+        </div>
+        <div class="px-6 py-4">
+            <ul class="divide-y divide-gray-100">
+                {% for fm in family_memberships %}
+                <li class="py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="users" class="w-4 h-4 text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ fm.family_profile }}</p>
+                            <p class="text-xs text-gray-500">{{ fm.family_profile.user.username }}</p>
+                        </div>
+                    </div>
+                    <form method="POST" action="{% url 'core:account_switch' fm.family_profile.user.pk %}">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="text-sm text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1 rounded-lg transition-colors flex items-center gap-1">
+                            <i data-lucide="arrow-left-right" class="w-3 h-3"></i>
+                            {% trans "Switch" %}
+                        </button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Account Info ───────────────────────────────────────────── -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <i data-lucide="user-circle" class="w-5 h-5 text-gray-600"></i>
+                {% trans "Account" %}
+            </h2>
+        </div>
+        <div class="px-6 py-4 space-y-3">
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-500">{% trans "Username" %}</span>
+                <span class="font-medium text-gray-900">{{ user.username }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-500">{% trans "Email" %}</span>
+                <span class="font-medium text-gray-900">{{ user.email|default:"—" }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-500">{% trans "Account type" %}</span>
+                <span class="font-medium text-gray-900">
+                    {% if is_family %}
+                        {% trans "Family" %} — {{ family_profile }}
+                    {% else %}
+                        {% trans "Individual" %}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

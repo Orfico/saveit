@@ -817,3 +817,96 @@ msgstr "Ora puoi accedere con la tua nuova password."
 
 msgid "Go to Login"
 msgstr "Vai al login"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "Family Members"
+msgstr "Membri della famiglia"
+
+msgid "Add individual users to your family account so they can switch between their personal and family views."
+msgstr "Aggiungi utenti individuali al tuo account familiare per permettere loro di passare tra la vista personale e quella familiare."
+
+msgid "Add Member"
+msgstr "Aggiungi membro"
+
+msgid "No members added yet."
+msgstr "Nessun membro aggiunto."
+
+msgid "Remove this member?"
+msgstr "Rimuovere questo membro?"
+
+msgid "Switch"
+msgstr "Cambia"
+
+msgid "Remove"
+msgstr "Rimuovi"
+
+msgid "Family Accounts"
+msgstr "Account familiari"
+
+msgid "Family accounts you are a member of."
+msgstr "Account familiari di cui sei membro."
+
+msgid "Account"
+msgstr "Account"
+
+msgid "Account type"
+msgstr "Tipo di account"
+
+msgid "Family"
+msgstr "Familiare"
+
+msgid "Individual"
+msgstr "Individuale"
+
+msgid "Viewing as <strong>%(current)s</strong> — originally signed in as <strong>%(original)s</strong>"
+msgstr "Stai visualizzando come <strong>%(current)s</strong> — accesso originale come <strong>%(original)s</strong>"
+
+msgid "Switch back"
+msgstr "Torna all'account"
+
+msgid "Only family accounts can add members."
+msgstr "Solo gli account familiari possono aggiungere membri."
+
+msgid "Please enter a username."
+msgstr "Inserisci un nome utente."
+
+msgid "No user found with that username."
+msgstr "Nessun utente trovato con questo username."
+
+msgid "You cannot add yourself as a member."
+msgstr "Non puoi aggiungere te stesso come membro."
+
+msgid "Only individual accounts can be added as members."
+msgstr "Solo gli account individuali possono essere aggiunti come membri."
+
+msgid "%(username)s has been added as a member."
+msgstr "%(username)s è stato aggiunto come membro."
+
+msgid "%(username)s is already a member of this family account."
+msgstr "%(username)s è già membro di questo account familiare."
+
+msgid "Only family accounts can remove members."
+msgstr "Solo gli account familiari possono rimuovere membri."
+
+msgid "%(username)s has been removed from your family account."
+msgstr "%(username)s è stato rimosso dal tuo account familiare."
+
+msgid "Account not found."
+msgstr "Account non trovato."
+
+msgid "You are not authorized to switch to this account."
+msgstr "Non sei autorizzato a passare a questo account."
+
+msgid "Switched to %(username)s's account."
+msgstr "Passato all'account di %(username)s."
+
+msgid "No account to switch back to."
+msgstr "Nessun account a cui tornare."
+
+msgid "The original account no longer exists."
+msgstr "L'account originale non esiste più."
+
+msgid "Switched back to %(username)s's account."
+msgstr "Tornato all'account di %(username)s."
