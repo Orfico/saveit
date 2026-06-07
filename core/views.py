@@ -1102,14 +1102,14 @@ class SwitchAccountView(LoginRequiredMixin, View):
             return redirect('core:settings')
 
         current_user = request.user
-        can_switch = False
 
-        if is_family(current_user):
-            # Family user switching to one of their linked individual members
-            can_switch = current_user.family_profile.linked_members.filter(user=target_user).exists()
-        elif is_family(target_user):
-            # Individual member switching to a family account they belong to
-            can_switch = current_user.family_memberships.filter(family_profile__user=target_user).exists()
+        # Only individual → family switching is permitted.
+        # Family accounts must not access individual members' private data.
+        can_switch = (
+            not is_family(current_user)
+            and is_family(target_user)
+            and current_user.family_memberships.filter(family_profile__user=target_user).exists()
+        )
 
         if not can_switch:
             messages.error(request, _('You are not authorized to switch to this account.'))

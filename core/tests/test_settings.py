@@ -124,12 +124,14 @@ class SwitchAccountViewTest(TestCase):
             family_profile=self.family.family_profile, user=self.individual
         )
 
-    def test_family_can_switch_to_linked_member(self):
+    def test_family_cannot_switch_to_linked_member(self):
+        """Family accounts must not access individual members' private accounts."""
         self.client.login(username='family', password='pass')
         url = reverse('core:account_switch', args=[self.individual.pk])
         response = self.client.post(url, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(int(self.client.session['_auth_user_id']), self.individual.pk)
+        # Must still be logged in as the family user, not the individual
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.family.pk)
 
     def test_member_can_switch_to_linked_family_account(self):
         self.client.login(username='member', password='pass')
@@ -139,10 +141,10 @@ class SwitchAccountViewTest(TestCase):
         self.assertEqual(int(self.client.session['_auth_user_id']), self.family.pk)
 
     def test_switch_stores_original_user_in_session(self):
-        self.client.login(username='family', password='pass')
-        url = reverse('core:account_switch', args=[self.individual.pk])
+        self.client.login(username='member', password='pass')
+        url = reverse('core:account_switch', args=[self.family.pk])
         self.client.post(url)
-        self.assertEqual(self.client.session['_switch_from'], self.family.pk)
+        self.assertEqual(self.client.session['_switch_from'], self.individual.pk)
 
     def test_unrelated_user_cannot_switch(self):
         unrelated = make_user('unrelated')
