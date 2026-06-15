@@ -36,6 +36,7 @@ from django.views.generic import (
 # Local imports
 from .forms import CustomAuthenticationForm, CustomUserCreationForm, TransactionForm
 from .models import Category, FamilyMember, FamilyProfile, LoyaltyCard, Transaction
+from .utils.transaction_import import is_duplicate_transaction, resolve_category
 from .utils.barcode_generator import BarcodeGenerator
 
 logger = logging.getLogger(__name__)
@@ -618,30 +619,9 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                     amount_val = float(row['amount'].strip())
                     if paid_by_map:
                         amount_val = -abs(amount_val)
-                    primary_type = Category.EXPENSE if amount_val < 0 else Category.INCOME
-                    fallback_type = Category.INCOME if amount_val < 0 else Category.EXPENSE
 
-                    category = Category.objects.filter(
-                        Q(user=request.user) | Q(scope=Category.GLOBAL),
-                        name=row['category'].strip(), type=primary_type,
-                    ).order_by('scope').first()
-                    if not category:
-                        category = Category.objects.filter(
-                            Q(user=request.user) | Q(scope=Category.GLOBAL),
-                            name=row['category'].strip(), type=fallback_type,
-                        ).order_by('scope').first()
-                    if not category:
-                        cat_name = row['category'].strip()
-                        category = Category.objects.get_or_create(
-                            name=cat_name,
-                            user=request.user,
-                            type=primary_type,
-                            defaults={'scope': Category.PERSONAL, 'color': '#3B82F6'},
-                        )[0]
-                        logger.info(
-                            f'CSV import row {row_num}: categoria "{cat_name}" '
-                            f'creata automaticamente.'
-                        )
+                    cat_name = row['category'].strip()
+                    category = resolve_category(cat_name, amount_val, request.user)
 
                     parsed_date = parse_date(row['date'])
                     row_id = row.get('id', '').strip()
@@ -669,10 +649,7 @@ class ImportTransactionsView(LoginRequiredMixin, View):
                         continue
 
                     # INSERT — duplicate check solo per nuovi record
-                    if Transaction.objects.filter(
-                        user=request.user, date=parsed_date,
-                        amount=amount_val, category=category,
-                    ).exists():
+                    if is_duplicate_transaction(request.user, parsed_date, amount_val, category):
                         logger.info(
                             f'CSV import row {row_num}: duplicato ignorato — '
                             f'{row["date"]} {amount_val} {category.name}'
