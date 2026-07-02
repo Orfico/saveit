@@ -909,18 +909,6 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
                 income_by_month[item['date__month'] - 1] = float(item['t'])
         balance_by_month = [round(income_by_month[i] - expense_by_month[i], 2) for i in range(12)]
 
-        # Top 5 categorie per volume di spesa
-        top_keywords = (
-            qs.filter(amount__lt=0)
-            .values('category__name', 'category__color')
-            .annotate(total=Sum('amount'))
-            .order_by('total')[:5]
-        )
-        top_keywords = [
-            (item['category__name'], abs(float(item['total'])), item['category__color'] or '#3B82F6')
-            for item in top_keywords
-        ]
-
         # Spese per giorno della settimana
         weekday_totals = [0.0] * 7
         for t_date, t_amount in qs.filter(amount__lt=0).values_list('date', 'amount'):
@@ -1024,7 +1012,7 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             'expense_data': json.dumps(expense_by_month),
             'income_data': json.dumps(income_by_month),
             'balance_data': json.dumps(balance_by_month),
-            'top_keywords': top_keywords,
+
             'weekday_data': json.dumps(weekday_totals),
             'weekday_labels': json.dumps(weekday_labels),
             'month_labels': json.dumps(month_labels),

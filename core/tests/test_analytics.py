@@ -88,11 +88,12 @@ class AnalyticsContextTest(TestCase):
         self.assertEqual(response.context['savings_rate'], 75.0)
 
     def test_top_categories_by_expense(self):
+        import json
         response = self.client.get(reverse('core:analytics'), follow=True)
-        categories = [name for name, _, _color in response.context['top_keywords']]
-        amounts = {name: amt for name, amt, _color in response.context['top_keywords']}
-        # Food category should appear (transactions of -200 and -50)
-        self.assertIn('Food', categories)
+        data = json.loads(response.context['expense_by_category'])
+        names = [c['name'] for c in data]
+        amounts = {c['name']: c['total'] for c in data}
+        self.assertIn('Food', names)
         self.assertAlmostEqual(amounts['Food'], 250.0)
 
     def test_user_isolation(self):
