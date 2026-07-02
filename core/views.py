@@ -10,7 +10,7 @@ import math
 import os
 from datetime import date as date_type
 from datetime import timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 # Django core imports
 from django.conf import settings
@@ -58,6 +58,26 @@ ANALYTICS_STOPWORDS = {
 
 def is_family(user):
     return hasattr(user, 'family_profile')
+
+
+def _resolve_category_home_fallback(cat_name, amount_val, user):
+    """Like resolve_category but falls back to a 'home' category instead of auto-creating one."""
+    primary_type = Category.EXPENSE if amount_val < 0 else Category.INCOME
+    fallback_type = Category.INCOME if primary_type == Category.EXPENSE else Category.EXPENSE
+    base_qs = Category.objects.filter(Q(user=user) | Q(scope=Category.GLOBAL))
+    category = base_qs.filter(name=cat_name, type=primary_type).order_by('scope').first()
+    if not category:
+        category = base_qs.filter(name=cat_name, type=fallback_type).order_by('scope').first()
+    if not category:
+        category = base_qs.filter(name__iexact='home').order_by('scope').first()
+        if not category:
+            category, _ = Category.objects.get_or_create(
+                name='home',
+                user=user,
+                type=Category.EXPENSE,
+                defaults={'scope': Category.PERSONAL, 'color': '#3B82F6'},
+            )
+    return category
 
 
 # ===========================================================================
@@ -263,6 +283,12 @@ class TransactionListView(LoginRequiredMixin, ListView):
         context['filtered_count'] = self.get_queryset().count()
         if context['is_family']:
             context['family_profile'] = self.request.user.family_profile
+        else:
+            context['family_memberships'] = (
+                self.request.user.family_memberships
+                .select_related('family_profile__user')
+                .all()
+            )
         return context
 
 
@@ -1106,6 +1132,77 @@ class SwitchAccountView(LoginRequiredMixin, View):
             request.session['_switch_from'] = original_pk
         messages.success(request, _('Switched to %(username)s\'s account.') % {'username': target_user.username})
         return redirect('core:dashboard')
+
+
+class SyncFamilyTransactionsView(LoginRequiredMixin, View):
+    def post(self, request):
+        if is_family(request.user):
+            messages.error(request, _('This feature is only available to individual accounts.'))
+            return redirect('core:transaction_list')
+
+        memberships = request.user.family_memberships.select_related('family_profile__user').all()
+        if not memberships.exists():
+            messages.error(request, _('You are not a member of any family account.'))
+            return redirect('core:transaction_list')
+
+        family_pk = request.POST.get('family_pk', '').strip()
+        try:
+            fm = memberships.get(family_profile__user_id=int(family_pk))
+            family_user = fm.family_profile.user
+        except (FamilyMember.DoesNotExist, ValueError, TypeError):
+            messages.error(request, _('Invalid family account.'))
+            return redirect('core:transaction_list')
+
+        date_from_raw = request.POST.get('date_from', '').strip()
+        date_to_raw = request.POST.get('date_to', '').strip()
+        if not date_from_raw or not date_to_raw:
+            messages.error(request, _('Please specify both a start and end date.'))
+            return redirect('core:transaction_list')
+
+        try:
+            date_from_obj = date_type.fromisoformat(date_from_raw)
+            date_to_obj = date_type.fromisoformat(date_to_raw)
+        except ValueError:
+            messages.error(request, _('Invalid date format.'))
+            return redirect('core:transaction_list')
+
+        if date_from_obj > date_to_obj:
+            messages.error(request, _('The start date must not be after the end date.'))
+            return redirect('core:transaction_list')
+
+        family_txns = Transaction.objects.filter(
+            user=family_user,
+            date__gte=date_from_obj,
+            date__lte=date_to_obj,
+        ).select_related('category').order_by('date')
+
+        total = family_txns.count()
+        created = 0
+
+        for txn in family_txns:
+            halved = (Decimal(str(txn.amount)) / 2).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            category = _resolve_category_home_fallback(txn.category.name, float(halved), request.user)
+            if not is_duplicate_transaction(request.user, txn.date, halved, category):
+                Transaction.objects.create(
+                    user=request.user,
+                    date=txn.date,
+                    description=txn.description,
+                    amount=halved,
+                    category=category,
+                    notes=txn.notes,
+                    is_recurring=False,
+                    paid_by=None,
+                )
+                created += 1
+
+        messages.success(
+            request,
+            _('%(created)s of %(total)s transactions imported from the family account.') % {
+                'created': created,
+                'total': total,
+            },
+        )
+        return redirect('core:transaction_list')
 
 
 class SwitchBackView(LoginRequiredMixin, View):

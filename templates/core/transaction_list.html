@@ -34,6 +34,15 @@
       </button>
     </form>
 
+    <!-- Sync Family Transactions (individual users only) -->
+    {% if family_memberships %}
+    <button type="button" onclick="openSyncModal()"
+            class="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-blue-300 text-blue-600 hover:bg-blue-50 transition-colors">
+      <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+      <span class="hidden sm:inline">{% trans "Sync" %}</span>
+    </button>
+    {% endif %}
+
     <!-- Bulk Delete -->
     <form method="post" action="{% url 'core:transactions_bulk_delete' %}"
           id="bulk-delete-form">
@@ -307,6 +316,66 @@
   {% endif %}
 </div>
 
+{% if family_memberships %}
+<!-- ── Sync Family Modal ─────────────────────────────────────────────────── -->
+<div id="sync-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+        <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-600"></i>
+        {% trans "Sync Family Transactions" %}
+      </h2>
+      <button onclick="closeSyncModal()" class="text-gray-400 hover:text-gray-600">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <form method="POST" action="{% url 'core:transactions_sync_family' %}" class="px-6 py-5 space-y-4">
+      {% csrf_token %}
+
+      {% if family_memberships|length > 1 %}
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Family account" %}</label>
+        <select name="family_pk" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          {% for fm in family_memberships %}
+          <option value="{{ fm.family_profile.user.pk }}">{{ fm.family_profile }} ({{ fm.family_profile.user.username }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% else %}
+      <input type="hidden" name="family_pk" value="{{ family_memberships.0.family_profile.user.pk }}">
+      {% endif %}
+
+      <p class="text-sm text-gray-500">{% trans "Transactions will be imported with amounts halved. Already imported transactions are skipped." %}</p>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "From" %}</label>
+          <input type="date" name="date_from" required
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "To" %}</label>
+          <input type="date" name="date_to" required
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" onclick="closeSyncModal()"
+                class="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          {% trans "Cancel" %}
+        </button>
+        <button type="submit"
+                class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium flex items-center gap-2 transition-colors">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          {% trans "Sync" %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
 <script>
   // WCAG-correct text colour for arbitrary background colours.
   // Picks whichever of white or near-black gives the higher contrast ratio.
@@ -325,6 +394,16 @@
     document.querySelectorAll('.category-chip').forEach(chip => {
       chip.style.color = categoryChipTextColor(chip.dataset.color);
     });
+  });
+
+  function openSyncModal() {
+    document.getElementById('sync-modal').classList.remove('hidden');
+  }
+  function closeSyncModal() {
+    document.getElementById('sync-modal').classList.add('hidden');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeSyncModal();
   });
 
   function confirmBulkDelete() {
