@@ -5,20 +5,13 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-6 sm:py-8">
-  <!-- Header: title + primary CTA -->
-  <div class="flex items-center justify-between mb-3">
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3">
-      <i data-lucide="list" class="w-6 h-6 sm:w-8 sm:h-8"></i>
-      {% trans "Transactions" %}
-    </h1>
-    <a href="{% url 'core:transaction_create' %}"
-       class="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-4 py-2 rounded-lg hover:from-emerald-700 hover:to-green-700 font-semibold shadow-md transition flex items-center gap-2 text-sm sm:text-base">
-      <i data-lucide="plus" class="w-4 h-4 sm:w-5 sm:h-5"></i>
-      <span>{% trans "New Transaction" %}</span>
-    </a>
-  </div>
+  <!-- Header -->
+  <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-3 mb-4">
+    <i data-lucide="list" class="w-6 h-6 sm:w-8 sm:h-8"></i>
+    {% trans "Transactions" %}
+  </h1>
 
-  <!-- Secondary toolbar: data actions -->
+  <!-- Toolbar -->
   <div class="flex items-center gap-2 mb-6">
 
     <!-- Export CSV -->
@@ -40,7 +33,7 @@
       </button>
     </form>
 
-    <!-- Sync Family Transactions (individual users only) -->
+    <!-- Sync family (individual accounts only) -->
     {% if family_memberships %}
     <button type="button" onclick="openSyncModal()"
             class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors">
@@ -49,21 +42,29 @@
     </button>
     {% endif %}
 
-    <!-- Bulk Delete (pushed to the right) -->
-    <form method="post" action="{% url 'core:transactions_bulk_delete' %}"
-          id="bulk-delete-form" class="ml-auto">
-      {% csrf_token %}
-      <input type="hidden" name="date_from"  value="{{ date_from }}">
-      <input type="hidden" name="date_to"    value="{{ date_to }}">
-      <input type="hidden" name="category"   value="{{ category_id }}">
-      <input type="hidden" name="search"     value="{{ search }}">
-      <button type="button" onclick="confirmBulkDelete()"
-              class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
-        <i data-lucide="trash-2" class="w-4 h-4"></i>
-        <span class="hidden sm:inline">{% trans "Delete" %}</span>
-      </button>
-    </form>
+    <!-- Right side: delete + new transaction -->
+    <div class="ml-auto flex items-center gap-2">
 
+      <form method="post" action="{% url 'core:transactions_bulk_delete' %}" id="bulk-delete-form">
+        {% csrf_token %}
+        <input type="hidden" name="date_from" value="{{ date_from }}">
+        <input type="hidden" name="date_to"   value="{{ date_to }}">
+        <input type="hidden" name="category"  value="{{ category_id }}">
+        <input type="hidden" name="search"    value="{{ search }}">
+        <button type="button" onclick="confirmBulkDelete()"
+                class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">{% trans "Delete" %}</span>
+        </button>
+      </form>
+
+      <a href="{% url 'core:transaction_create' %}"
+         class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        <span>{% trans "New" %}</span>
+      </a>
+
+    </div>
   </div>
 
 <!-- Search & Filters Section -->
