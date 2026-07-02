@@ -986,6 +986,7 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             }
 
         income_by_category = []
+        expense_by_category = []
         if not family:
             cat_qs = (
                 qs.filter(amount__gt=0)
@@ -996,6 +997,16 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             income_by_category = [
                 {'name': c['category__name'], 'total': float(c['total']), 'color': c['category__color'] or '#3B82F6'}
                 for c in cat_qs
+            ]
+            exp_qs = (
+                qs.filter(amount__lt=0)
+                .values('category__name', 'category__color')
+                .annotate(total=Sum('amount'))
+                .order_by('total')
+            )
+            expense_by_category = [
+                {'name': c['category__name'], 'total': float(abs(c['total'])), 'color': c['category__color'] or '#EF4444'}
+                for c in exp_qs
             ]
 
         month_labels = [
@@ -1025,6 +1036,7 @@ class AnalyticsView(LoginRequiredMixin, TemplateView):
             'avg_monthly_expense': avg_monthly_expense,
             'member_breakdown': member_breakdown,
             'income_by_category': json.dumps(income_by_category),
+            'expense_by_category': json.dumps(expense_by_category),
         })
         return ctx
 

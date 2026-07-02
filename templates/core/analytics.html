@@ -77,6 +77,23 @@
   </div>
   {% endif %}
 
+  <!-- ── Spese per categoria (standard only) ──────────────────────────────── -->
+  {% if not is_family %}
+  <div id="expenseCategorySection" style="display:none">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+      {% trans "Expenses by category" %} · {{ selected_year }}
+    </p>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+        <div class="relative h-52">
+          <canvas id="chartExpenseCategory"></canvas>
+        </div>
+        <div id="expenseCategoryLegend" class="flex flex-col gap-2"></div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- ── Entrate per categoria (standard only, solo se ci sono dati) ───────── -->
   {% if not is_family %}
   <div id="incomeCategorySection" style="display:none">
@@ -248,7 +265,8 @@
   "weekday":       {{ weekday_data|default:"[]"|safe }},
   "wdLabels":      {{ weekday_labels|safe }},
   "monthLabels":   {{ month_labels|safe }},
-  "incomeByCategory": {{ income_by_category|default:"[]"|safe }}
+  "incomeByCategory": {{ income_by_category|default:"[]"|safe }},
+  "expenseByCategory": {{ expense_by_category|default:"[]"|safe }}
   {% if is_family and member_breakdown %}
   ,"m1":     {{ member_breakdown.member_1_data|safe }},
   "m2":      {{ member_breakdown.member_2_data|safe }},
@@ -362,6 +380,59 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       }
     } catch(e) { console.error('Chart error (chartMembers):', e); }
+  }
+
+  // Expense by category donut (standard accounts only)
+  if (d.expenseByCategory && d.expenseByCategory.length > 0) {
+    try {
+      var expSection = document.getElementById('expenseCategorySection');
+      if (expSection) expSection.style.display = '';
+
+      var ecEl = document.getElementById('chartExpenseCategory');
+      if (ecEl) {
+        new Chart(ecEl.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: d.expenseByCategory.map(function(c) { return c.name; }),
+            datasets: [{
+              data: d.expenseByCategory.map(function(c) { return c.total; }),
+              backgroundColor: d.expenseByCategory.map(function(c) { return c.color; }),
+              borderWidth: 0,
+              hoverOffset: 8,
+            }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#1f2937', titleColor: '#f9fafb', bodyColor: '#d1d5db',
+                callbacks: { label: function(c) { return euroFull(c.parsed); } },
+              },
+            },
+          },
+        });
+
+        var expLegend = document.getElementById('expenseCategoryLegend');
+        var totExp = d.expenseByCategory.reduce(function(s, c) { return s + c.total; }, 0);
+        d.expenseByCategory.forEach(function(c) {
+          var pct = totExp > 0 ? (c.total / totExp * 100).toFixed(1) : '0.0';
+          var item = document.createElement('div');
+          item.className = 'flex items-center justify-between gap-3';
+          item.innerHTML =
+            '<div class="flex items-center gap-2 min-w-0">' +
+              '<span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:' + c.color + '"></span>' +
+              '<span class="text-sm text-gray-700 truncate">' + c.name + '</span>' +
+            '</div>' +
+            '<div class="text-right flex-shrink-0">' +
+              '<span class="text-sm font-semibold text-gray-900">€' + c.total.toFixed(0) + '</span>' +
+              '<span class="text-xs text-gray-400 ml-1">' + pct + '%</span>' +
+            '</div>';
+          expLegend.appendChild(item);
+        });
+      }
+    } catch(e) { console.error('Chart error (chartExpenseCategory):', e); }
   }
 
   // Income by category donut (standard accounts only)
