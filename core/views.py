@@ -147,15 +147,17 @@ class DashboardView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = Transaction.objects.filter(user=self.request.user).select_related('category')
-        self.start_date = self.request.GET.get('start_date')
-        self.end_date = self.request.GET.get('end_date')
-        if not self.start_date:
-            today = timezone.now().date()
+        today = timezone.now().date()
+        raw_start = self.request.GET.get('start_date', '').strip()
+        raw_end   = self.request.GET.get('end_date', '').strip()
+        try:
+            self.start_date = date_type.fromisoformat(raw_start) if raw_start else today.replace(day=1)
+        except ValueError:
             self.start_date = today.replace(day=1)
-        if not self.end_date:
-            today = timezone.now().date()
-            last_day = calendar.monthrange(today.year, today.month)[1]
-            self.end_date = today.replace(day=last_day)
+        try:
+            self.end_date = date_type.fromisoformat(raw_end) if raw_end else today.replace(day=calendar.monthrange(today.year, today.month)[1])
+        except ValueError:
+            self.end_date = today.replace(day=calendar.monthrange(today.year, today.month)[1])
         return queryset.filter(date__range=[self.start_date, self.end_date])
 
     def get_context_data(self, **kwargs):
