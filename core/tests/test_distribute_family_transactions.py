@@ -4,9 +4,11 @@ from io import StringIO
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.db.models.signals import post_save
 from django.test import TestCase
 
 from core.models import Category, FamilyMember, FamilyProfile, Transaction
+from core.signals import propagate_family_transaction
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -56,12 +58,19 @@ TODAY_STR = '2026-06-15'
 class DistributeFamilyTransactionsTest(TestCase):
 
     def setUp(self):
+        # Disconnect the post_save signal so manual make_transaction() calls
+        # don't auto-propagate and interfere with command-under-test assertions.
+        post_save.disconnect(propagate_family_transaction, sender=Transaction)
+
         self.family = make_family_user('family')
         self.member_a = make_user('member_a')
         self.member_b = make_user('member_b')
         FamilyMember.objects.create(family_profile=self.family.family_profile, user=self.member_a)
         FamilyMember.objects.create(family_profile=self.family.family_profile, user=self.member_b)
         self.cat_family = make_category(self.family, 'Food')
+
+    def tearDown(self):
+        post_save.connect(propagate_family_transaction, sender=Transaction)
 
     # ── basic distribution ────────────────────────────────────────────────
 

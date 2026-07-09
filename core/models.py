@@ -125,6 +125,13 @@ class Transaction(models.Model):
         blank=True,
         help_text='Family accounts only: which member paid.',
     )
+    source_transaction = models.ForeignKey(
+        'self',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='derived_transactions',
+        help_text='Set on copies derived from a family account transaction.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

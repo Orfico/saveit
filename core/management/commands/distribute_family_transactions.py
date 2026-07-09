@@ -95,6 +95,7 @@ class Command(BaseCommand):
                             notes=txn.notes,
                             is_recurring=False,
                             paid_by=None,
+                            source_transaction=txn,
                         )
 
                     self.stdout.write(self.style.SUCCESS(

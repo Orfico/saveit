@@ -1,4 +1,4 @@
-"""Shared helpers for importing transactions (CSV import view + management commands)."""
+"""Shared helpers for importing transactions (CSV import view, signals, management commands)."""
 from django.db.models import Q
 
 from core.models import Category, Transaction
@@ -35,3 +35,23 @@ def is_duplicate_transaction(user, date, amount, category):
     return Transaction.objects.filter(
         user=user, date=date, amount=amount, category=category,
     ).exists()
+
+
+def resolve_category_home_fallback(cat_name, amount_val, user):
+    """Like resolve_category but falls back to a 'home' category instead of auto-creating one."""
+    primary_type = Category.EXPENSE if amount_val < 0 else Category.INCOME
+    fallback_type = Category.INCOME if primary_type == Category.EXPENSE else Category.EXPENSE
+    base_qs = Category.objects.filter(Q(user=user) | Q(scope=Category.GLOBAL))
+    category = base_qs.filter(name=cat_name, type=primary_type).order_by('scope').first()
+    if not category:
+        category = base_qs.filter(name=cat_name, type=fallback_type).order_by('scope').first()
+    if not category:
+        category = base_qs.filter(name__iexact='home').order_by('scope').first()
+        if not category:
+            category, _ = Category.objects.get_or_create(
+                name='home',
+                user=user,
+                type=Category.EXPENSE,
+                defaults={'scope': Category.PERSONAL, 'color': '#3B82F6'},
+            )
+    return category

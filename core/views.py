@@ -36,7 +36,9 @@ from django.views.generic import (
 # Local imports
 from .forms import CustomAuthenticationForm, CustomUserCreationForm, TransactionForm
 from .models import Category, FamilyMember, FamilyProfile, LoyaltyCard, Transaction
-from .utils.transaction_import import is_duplicate_transaction, resolve_category
+from .utils.transaction_import import (
+    is_duplicate_transaction, resolve_category, resolve_category_home_fallback,
+)
 from .utils.barcode_generator import BarcodeGenerator
 
 logger = logging.getLogger(__name__)
@@ -60,24 +62,7 @@ def is_family(user):
     return hasattr(user, 'family_profile')
 
 
-def _resolve_category_home_fallback(cat_name, amount_val, user):
-    """Like resolve_category but falls back to a 'home' category instead of auto-creating one."""
-    primary_type = Category.EXPENSE if amount_val < 0 else Category.INCOME
-    fallback_type = Category.INCOME if primary_type == Category.EXPENSE else Category.EXPENSE
-    base_qs = Category.objects.filter(Q(user=user) | Q(scope=Category.GLOBAL))
-    category = base_qs.filter(name=cat_name, type=primary_type).order_by('scope').first()
-    if not category:
-        category = base_qs.filter(name=cat_name, type=fallback_type).order_by('scope').first()
-    if not category:
-        category = base_qs.filter(name__iexact='home').order_by('scope').first()
-        if not category:
-            category, _ = Category.objects.get_or_create(
-                name='home',
-                user=user,
-                type=Category.EXPENSE,
-                defaults={'scope': Category.PERSONAL, 'color': '#3B82F6'},
-            )
-    return category
+
 
 
 # ===========================================================================
@@ -1183,7 +1168,7 @@ class SyncFamilyTransactionsView(LoginRequiredMixin, View):
 
         for txn in family_txns:
             halved = (Decimal(str(txn.amount)) / 2).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-            category = _resolve_category_home_fallback(txn.category.name, float(halved), request.user)
+            category = resolve_category_home_fallback(txn.category.name, float(halved), request.user)
             if not is_duplicate_transaction(request.user, txn.date, halved, category):
                 Transaction.objects.create(
                     user=request.user,
@@ -1194,6 +1179,7 @@ class SyncFamilyTransactionsView(LoginRequiredMixin, View):
                     notes=txn.notes,
                     is_recurring=False,
                     paid_by=None,
+                    source_transaction=txn,
                 )
                 created += 1
 
