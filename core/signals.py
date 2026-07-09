@@ -1,3 +1,4 @@
+import logging
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.db.models.signals import post_save
@@ -5,6 +6,8 @@ from django.dispatch import receiver
 
 from core.models import Transaction
 from core.utils.transaction_import import resolve_category_home_fallback
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=Transaction)
@@ -28,30 +31,34 @@ def propagate_family_transaction(sender, instance, created, **kwargs):
 
     for fm in memberships:
         member_user = fm.user
-        category = resolve_category_home_fallback(
-            instance.category.name, float(halved), member_user
-        )
-
-        existing = Transaction.objects.filter(
-            source_transaction=instance, user=member_user
-        ).first()
-
-        if existing:
-            existing.date = instance.date
-            existing.description = instance.description
-            existing.amount = halved
-            existing.category = category
-            existing.notes = instance.notes
-            existing.save()
-        else:
-            Transaction.objects.create(
-                user=member_user,
-                date=instance.date,
-                description=instance.description,
-                amount=halved,
-                category=category,
-                notes=instance.notes,
-                is_recurring=False,
-                paid_by=None,
-                source_transaction=instance,
+        try:
+            category = resolve_category_home_fallback(
+                instance.category.name, float(halved), member_user
+            )
+            existing = Transaction.objects.filter(
+                source_transaction=instance, user=member_user
+            ).first()
+            if existing:
+                existing.date = instance.date
+                existing.description = instance.description
+                existing.amount = halved
+                existing.category = category
+                existing.notes = instance.notes
+                existing.save()
+            else:
+                Transaction.objects.create(
+                    user=member_user,
+                    date=instance.date,
+                    description=instance.description,
+                    amount=halved,
+                    category=category,
+                    notes=instance.notes,
+                    is_recurring=False,
+                    paid_by=None,
+                    source_transaction=instance,
+                )
+        except Exception:
+            logger.exception(
+                'propagate_family_transaction: failed for user %s (txn pk=%s)',
+                member_user.pk, instance.pk,
             )

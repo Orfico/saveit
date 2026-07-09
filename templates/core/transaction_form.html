@@ -176,8 +176,8 @@
 
       <!-- Actions -->
       <div class="flex gap-3">
-        <button type="submit"
-                class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition shadow-sm">
+        <button type="submit" id="submit-btn"
+                class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition shadow-sm flex items-center justify-center gap-2">
           {% if object %}{% trans "Save changes" %}{% else %}{% trans "Add transaction" %}{% endif %}
         </button>
         <a href="{% if object %}{% url 'core:transaction_list' %}{% else %}{% url 'core:dashboard' %}{% endif %}"
@@ -204,6 +204,21 @@
 
   </div>
 </div>
+
+{% if is_family %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var form = document.querySelector('form[method="post"]');
+  var btn  = document.getElementById('submit-btn');
+  if (!form || !btn) return;
+  var spinner = '<svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>';
+  form.addEventListener('submit', function () {
+    btn.disabled = true;
+    btn.innerHTML = spinner + '{% trans "Propagating..." %}';
+  });
+});
+</script>
+{% endif %}
 
 {% if not is_family %}
 <script>

@@ -62,6 +62,26 @@ def is_family(user):
     return hasattr(user, 'family_profile')
 
 
+def _add_propagation_messages(request, transaction):
+    """Add per-member success/error messages after a family transaction is saved."""
+    if not is_family(request.user):
+        return
+    try:
+        fp = request.user.family_profile
+    except Exception:
+        return
+    members = list(fp.linked_members.select_related('user').all())
+    if not members:
+        return
+    propagated_ids = set(transaction.derived_transactions.values_list('user_id', flat=True))
+    success = [fm.user.username for fm in members if fm.user_id in propagated_ids]
+    failed  = [fm.user.username for fm in members if fm.user_id not in propagated_ids]
+    if success:
+        messages.success(request, _('Propagated to: %(users)s') % {'users': ', '.join(success)})
+    if failed:
+        messages.error(request, _('Propagation failed for: %(users)s') % {'users': ', '.join(failed)})
+
+
 
 
 
@@ -301,7 +321,9 @@ class TransactionCreateView(LoginRequiredMixin, CreateView):
             )[0]
             form.instance.category = category
         form.instance.user = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        _add_propagation_messages(self.request, self.object)
+        return response
 
     def form_invalid(self, form):
         logger.warning(f"Transaction form invalid: {form.errors}")
@@ -339,8 +361,12 @@ class TransactionUpdateView(LoginRequiredMixin, UpdateView):
                 defaults={'scope': Category.PERSONAL, 'color': form.cleaned_data.get('category_color', '#3B82F6')},
             )[0]
             form.instance.category = category
-        messages.success(self.request, _('Transaction updated.'))
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        if is_family(self.request.user):
+            _add_propagation_messages(self.request, self.object)
+        else:
+            messages.success(self.request, _('Transaction updated.'))
+        return response
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
