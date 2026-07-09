@@ -112,6 +112,45 @@
     </div>
     {% endif %}
 
+    {% if not is_family and not family_memberships %}
+    <!-- ── Enable Family Mode ────────────────────────────────────── -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
+                {% trans "Activate Family Mode" %}
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">
+                {% trans "Convert this account into a family account to share expenses with your household members." %}
+            </p>
+        </div>
+        <div class="px-6 py-5">
+            <form method="POST" action="{% url 'core:settings_enable_family' %}" class="space-y-4">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Member 1 name" %}</label>
+                        <input type="text" name="member_1" required
+                               placeholder="{% trans "e.g. Mario" %}"
+                               class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Member 2 name" %}</label>
+                        <input type="text" name="member_2" required
+                               placeholder="{% trans "e.g. Lucia" %}"
+                               class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                </div>
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    {% trans "Activate Family Mode" %}
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- ── Account Info ───────────────────────────────────────────── -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-100">

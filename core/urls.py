@@ -74,6 +74,7 @@ urlpatterns = [
 
     # ── Settings & Account Switching ─────────────────────────────────────────
     path('settings/', views.SettingsView.as_view(), name='settings'),
+    path('settings/enable-family/', views.EnableFamilyModeView.as_view(), name='settings_enable_family'),
     path('settings/members/add/', views.AddFamilyMemberView.as_view(), name='settings_add_member'),
     path('settings/members/<int:pk>/remove/', views.RemoveFamilyMemberView.as_view(), name='settings_remove_member'),
     path('settings/switch/<int:user_pk>/', views.SwitchAccountView.as_view(), name='account_switch'),

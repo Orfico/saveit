@@ -1036,6 +1036,23 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+class EnableFamilyModeView(LoginRequiredMixin, View):
+    def post(self, request):
+        if is_family(request.user):
+            messages.info(request, _('This account is already a family account.'))
+            return redirect('core:settings')
+
+        member_1 = request.POST.get('member_1', '').strip()
+        member_2 = request.POST.get('member_2', '').strip()
+        if not member_1 or not member_2:
+            messages.error(request, _('Enter both member names to activate family mode.'))
+            return redirect('core:settings')
+
+        FamilyProfile.objects.create(user=request.user, member_1=member_1, member_2=member_2)
+        messages.success(request, _('Family mode activated. You can now add individual members.'))
+        return redirect('core:settings')
+
+
 class AddFamilyMemberView(LoginRequiredMixin, View):
     def post(self, request):
         if not is_family(request.user):
