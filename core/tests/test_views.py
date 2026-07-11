@@ -411,3 +411,23 @@ class CategoryViewTest(TestCase):
             {'name': 'Hacked', 'color': '#000000'},
         )
         self.assertEqual(response.status_code, 404)
+
+
+class DarkModeUITest(TestCase):
+    """The base template must include the dark-mode toggle infrastructure."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='dmuser', password='pass')
+        self.client.login(username='dmuser', password='pass')
+
+    def test_theme_toggle_js_present(self):
+        response = self.client.get(reverse('core:dashboard'))
+        self.assertContains(response, 'toggleTheme')
+
+    def test_anti_fouc_script_present(self):
+        response = self.client.get(reverse('core:dashboard'))
+        self.assertContains(response, 'saveit-theme')
+
+    def test_dark_class_css_present(self):
+        response = self.client.get(reverse('core:dashboard'))
+        self.assertContains(response, 'html.dark')
