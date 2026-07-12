@@ -255,7 +255,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   Chart.defaults.font.family = 'ui-sans-serif, system-ui, sans-serif';
   Chart.defaults.font.size   = 11;
-  Chart.defaults.color       = '#6b7280';
+  var _isDark = document.documentElement.classList.contains('dark');
+  Chart.defaults.color = _isDark ? '#d1d5db' : '#6b7280';
+  var _gridColor = _isDark ? '#374151' : '#f3f4f6';
 
   function euro(v)     { return '\u20ac' + Number(v).toFixed(0); }
   function euroFull(v) { return ' \u20ac' + Number(v).toFixed(2); }
@@ -280,8 +282,8 @@ document.addEventListener('DOMContentLoaded', function () {
             tooltip: { backgroundColor: '#1f2937', titleColor: '#f9fafb', bodyColor: '#d1d5db',
               callbacks: { label: function(c) { return euroFull(c.parsed.y); } } } },
           scales: {
-            x: { grid: { color: '#f3f4f6' }, ticks: { maxRotation: 0 } },
-            y: { grid: { color: '#f3f4f6' }, ticks: { callback: euro } },
+            x: { grid: { color: _gridColor }, ticks: { maxRotation: 0 } },
+            y: { grid: { color: _gridColor }, ticks: { callback: euro } },
           },
         },
       });
@@ -312,7 +314,7 @@ document.addEventListener('DOMContentLoaded', function () {
               callbacks: { label: function(c) { return euroFull(c.parsed.y); } } } },
           scales: {
             x: { grid: { display: false } },
-            y: { grid: { color: '#f3f4f6' }, ticks: { callback: euro } },
+            y: { grid: { color: _gridColor }, ticks: { callback: euro } },
           },
         },
       });
@@ -338,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 callbacks: { label: function(c) { return ' ' + c.dataset.label + ': ' + euroFull(c.parsed.y); } } } },
             scales: {
               x: { grid: { display: false }, ticks: { maxRotation: 0 } },
-              y: { grid: { color: '#f3f4f6' }, ticks: { callback: euro } },
+              y: { grid: { color: _gridColor }, ticks: { callback: euro } },
             },
           },
         });

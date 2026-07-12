@@ -23,7 +23,9 @@ function initDashboardChart(pieDataJson) {
     
     // Responsive font size
     const isMobile = window.innerWidth < 640;
-    
+    const isDark = document.documentElement.classList.contains('dark');
+    const legendColor = isDark ? '#e5e7eb' : '#374151';
+
     new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -49,7 +51,7 @@ function initDashboardChart(pieDataJson) {
                             size: isMobile ? 11 : 13, 
                             family: 'system-ui' 
                         },
-                        color: '#374151',
+                        color: legendColor,
                         boxWidth: isMobile ? 8 : 12
                     }
                 },
