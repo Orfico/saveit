@@ -3,6 +3,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from .models import Transaction, Category, FamilyProfile
 
 
@@ -22,14 +23,14 @@ class CustomUserCreationForm(UserCreationForm):
         })
     )
     password1 = forms.CharField(
-        label='Password',
+        label=_('Password'),
         widget=forms.PasswordInput(attrs={
             'class': 'border border-gray-300 px-4 py-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
             'placeholder': '••••••••'
         })
     )
     password2 = forms.CharField(
-        label='Conferma Password',
+        label=_('Confirm Password'),
         widget=forms.PasswordInput(attrs={
             'class': 'border border-gray-300 px-4 py-3 rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
             'placeholder': '••••••••'
@@ -78,7 +79,7 @@ class TransactionForm(forms.ModelForm):
         widget=forms.RadioSelect(attrs={
             'class': 'w-4 h-4 text-blue-600 focus:ring-blue-500'
         }),
-        label='Type',
+        label=_('Type'),
     )
 
     # Amount field always positive
@@ -91,7 +92,7 @@ class TransactionForm(forms.ModelForm):
             'step': '0.01',
             'placeholder': '0.00'
         }),
-        label='Amount (always positive)',
+        label=_('Amount (always positive)'),
     )
 
     # Fields for new category creation
@@ -225,7 +226,7 @@ class TransactionForm(forms.ModelForm):
 
         if not category and not new_category_name:
             raise forms.ValidationError(
-                'You must select an existing category or enter a new category name.'
+                _('You must select an existing category or enter a new category name.')
             )
 
         # Ensure type defaults to expense if missing (family hidden field fallback)

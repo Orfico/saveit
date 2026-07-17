@@ -910,3 +910,147 @@ msgstr "L'account originale non esiste più."
 
 msgid "Switched back to %(username)s's account."
 msgstr "Tornato all'account di %(username)s."
+
+msgid "Export"
+msgstr "Esporta"
+
+msgid "Import"
+msgstr "Importa"
+
+msgid "Sync"
+msgstr "Sincronizza"
+
+msgid "Syncing..."
+msgstr "Sincronizzazione..."
+
+msgid "Search Transactions"
+msgstr "Cerca transazioni"
+
+msgid "Search description, notes, or category..."
+msgstr "Cerca descrizione, note o categoria..."
+
+msgid "Search"
+msgstr "Cerca"
+
+msgid "Advanced Filters"
+msgstr "Filtri avanzati"
+
+msgid "All Categories"
+msgstr "Tutte le categorie"
+
+msgid "From Date"
+msgstr "Data inizio"
+
+msgid "To Date"
+msgstr "Data fine"
+
+msgid "Apply Filters"
+msgstr "Applica filtri"
+
+msgid "Clear All"
+msgstr "Cancella tutto"
+
+msgid "Actions"
+msgstr "Azioni"
+
+msgid "Tap to edit"
+msgstr "Tocca per modificare"
+
+msgid "No Transactions Found"
+msgstr "Nessuna transazione trovata"
+
+msgid "Start by creating your first transaction!"
+msgstr "Inizia creando la tua prima transazione!"
+
+msgid "Create Transaction"
+msgstr "Crea transazione"
+
+msgid "Sync Family Transactions"
+msgstr "Sincronizza transazioni familiari"
+
+msgid "Transactions will be imported with amounts halved. Already imported transactions are skipped."
+msgstr "Le transazioni verranno importate con gli importi dimezzati. Le transazioni già importate vengono ignorate."
+
+msgid "From"
+msgstr "Da"
+
+msgid "To"
+msgstr "A"
+
+msgid "Activate Family Mode"
+msgstr "Attiva modalità famiglia"
+
+msgid "Convert this account into a family account to share expenses with your household members."
+msgstr "Converti questo account in un account familiare per condividere le spese con i membri della tua famiglia."
+
+msgid "Member 1 name"
+msgstr "Nome membro 1"
+
+msgid "Member 2 name"
+msgstr "Nome membro 2"
+
+msgid "Username"
+msgstr "Nome utente"
+
+msgid "Toggle dark / light mode"
+msgstr "Attiva/disattiva modalità scura/chiara"
+
+msgid "Light mode"
+msgstr "Modalità chiara"
+
+msgid "Dark mode"
+msgstr "Modalità scura"
+
+msgid "Propagating..."
+msgstr "Propagazione..."
+
+msgid "Propagated to: %(users)s"
+msgstr "Propagato a: %(users)s"
+
+msgid "Propagation failed for: %(users)s"
+msgstr "Propagazione fallita per: %(users)s"
+
+msgid "%(count)d duplicate(s) skipped"
+msgstr "%(count)d duplicato/i ignorato/i"
+
+msgid "%(count)d row(s) skipped due to errors"
+msgstr "%(count)d riga/e ignorata/e per errori"
+
+msgid "This account is already a family account."
+msgstr "Questo account è già un account familiare."
+
+msgid "Enter both member names to activate family mode."
+msgstr "Inserisci i nomi di entrambi i membri per attivare la modalità famiglia."
+
+msgid "Family mode activated. You can now add individual members."
+msgstr "Modalità famiglia attivata. Ora puoi aggiungere i membri individuali."
+
+msgid "This feature is only available to individual accounts."
+msgstr "Questa funzionalità è disponibile solo per gli account individuali."
+
+msgid "You are not a member of any family account."
+msgstr "Non sei membro di nessun account familiare."
+
+msgid "Invalid family account."
+msgstr "Account familiare non valido."
+
+msgid "Please specify both a start and end date."
+msgstr "Specifica sia la data di inizio che quella di fine."
+
+msgid "Invalid date format."
+msgstr "Formato data non valido."
+
+msgid "The start date must not be after the end date."
+msgstr "La data di inizio non può essere successiva alla data di fine."
+
+msgid "%(created)s of %(total)s transactions imported from the family account."
+msgstr "%(created)s di %(total)s transazioni importate dall'account familiare."
+
+msgid "Amount (always positive)"
+msgstr "Importo (sempre positivo)"
+
+msgid "You must select an existing category or enter a new category name."
+msgstr "Devi selezionare una categoria esistente o inserire un nuovo nome di categoria."
+
+msgid "Password"
+msgstr "Password"
