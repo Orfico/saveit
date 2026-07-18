@@ -7,6 +7,14 @@ from django.utils.translation import gettext_lazy as _
 from .models import Transaction, Category, FamilyProfile
 
 
+class CommaSafeDecimalField(forms.DecimalField):
+    """Accepts both '.' and ',' as decimal separator."""
+    def to_python(self, value):
+        if isinstance(value, str):
+            value = value.replace(',', '.')
+        return super().to_python(value)
+
+
 class CustomUserCreationForm(UserCreationForm):
     """Customized registration form"""
     email = forms.EmailField(
@@ -83,7 +91,7 @@ class TransactionForm(forms.ModelForm):
     )
 
     # Amount field always positive
-    amount = forms.DecimalField(
+    amount = CommaSafeDecimalField(
         max_digits=10,
         decimal_places=2,
         min_value=0.01,
