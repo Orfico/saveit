@@ -158,24 +158,28 @@
 
   {% if has_active_search %}
   <!-- Search result summary -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-5 py-4 mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-    <span class="text-gray-500 flex items-center gap-1.5">
-      <i data-lucide="search" class="w-4 h-4"></i>
-      <strong class="text-gray-800">{{ filtered_count }}</strong>&nbsp;{% trans "transactions" %}
-    </span>
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden text-sm">
+    <div class="px-5 py-2.5 border-b border-gray-100 flex items-center gap-2 text-gray-500">
+      <i data-lucide="filter" class="w-3.5 h-3.5 flex-shrink-0"></i>
+      <span><strong class="text-gray-800">{{ filtered_count }}</strong> {% trans "transactions" %}</span>
+    </div>
     {% if filtered_count %}
-    <span class="text-emerald-600 flex items-center gap-1">
-      <i data-lucide="arrow-down-circle" class="w-4 h-4"></i>
-      {% trans "Income" %}: <strong class="ml-1">€{{ search_income|floatformat:2 }}</strong>
-    </span>
-    <span class="text-red-500 flex items-center gap-1">
-      <i data-lucide="arrow-up-circle" class="w-4 h-4"></i>
-      {% trans "Expenses" %}: <strong class="ml-1">€{{ search_expense|floatformat:2 }}</strong>
-    </span>
-    <span class="ml-auto font-semibold {% if search_net >= 0 %}text-emerald-600{% else %}text-red-500{% endif %} flex items-center gap-1">
-      {% trans "Balance" %}:&nbsp;
-      {% if search_net >= 0 %}+{% endif %}€{{ search_net|floatformat:2 }}
-    </span>
+    <div class="grid grid-cols-3 divide-x divide-gray-100">
+      <div class="px-4 py-3 text-center">
+        <p class="text-xs text-gray-400 mb-1">{% trans "Income" %}</p>
+        <p class="font-semibold text-emerald-600">€{{ search_income|floatformat:2 }}</p>
+      </div>
+      <div class="px-4 py-3 text-center">
+        <p class="text-xs text-gray-400 mb-1">{% trans "Expenses" %}</p>
+        <p class="font-semibold text-red-500">€{{ search_expense|floatformat:2 }}</p>
+      </div>
+      <div class="px-4 py-3 text-center">
+        <p class="text-xs text-gray-400 mb-1">{% trans "Balance" %}</p>
+        <p class="font-semibold {% if search_net >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
+          {% if search_net >= 0 %}+{% endif %}€{{ search_net|floatformat:2 }}
+        </p>
+      </div>
+    </div>
     {% endif %}
   </div>
   {% endif %}
