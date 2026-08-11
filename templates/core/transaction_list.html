@@ -156,6 +156,30 @@
     </form>
 </div>
 
+  {% if has_active_search %}
+  <!-- Search result summary -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-5 py-4 mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+    <span class="text-gray-500 flex items-center gap-1.5">
+      <i data-lucide="search" class="w-4 h-4"></i>
+      <strong class="text-gray-800">{{ filtered_count }}</strong>&nbsp;{% trans "transactions" %}
+    </span>
+    {% if filtered_count %}
+    <span class="text-emerald-600 flex items-center gap-1">
+      <i data-lucide="arrow-down-circle" class="w-4 h-4"></i>
+      {% trans "Income" %}: <strong class="ml-1">€{{ search_income|floatformat:2 }}</strong>
+    </span>
+    <span class="text-red-500 flex items-center gap-1">
+      <i data-lucide="arrow-up-circle" class="w-4 h-4"></i>
+      {% trans "Expenses" %}: <strong class="ml-1">€{{ search_expense|floatformat:2 }}</strong>
+    </span>
+    <span class="ml-auto font-semibold {% if search_net >= 0 %}text-emerald-600{% else %}text-red-500{% endif %} flex items-center gap-1">
+      {% trans "Balance" %}:&nbsp;
+      {% if search_net >= 0 %}+{% endif %}€{{ search_net|floatformat:2 }}
+    </span>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <!-- Lista Transazioni -->
   {% if transactions %}
     <!-- Desktop View (tabella) -->

@@ -287,7 +287,23 @@ class TransactionListView(LoginRequiredMixin, ListView):
         context['category_id'] = self.request.GET.get('category', '')
         context['search'] = self.request.GET.get('search', '')
         context['is_family'] = is_family(self.request.user)
-        context['filtered_count'] = self.get_queryset().count()
+        qs = self.get_queryset()
+        context['filtered_count'] = qs.count()
+        has_search = any([
+            context['search_query'],
+            context['date_from'],
+            context['date_to'],
+            context['category_id'],
+        ])
+        context['has_active_search'] = has_search
+        if has_search:
+            agg = qs.aggregate(
+                total_income=Sum('amount', filter=Q(amount__gt=0)),
+                total_expense=Sum('amount', filter=Q(amount__lt=0)),
+            )
+            context['search_income']  = agg['total_income']  or 0
+            context['search_expense'] = abs(agg['total_expense'] or 0)
+            context['search_net']     = (agg['total_income'] or 0) + (agg['total_expense'] or 0)
         if context['is_family']:
             context['family_profile'] = self.request.user.family_profile
         else:

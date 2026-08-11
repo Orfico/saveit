@@ -1054,3 +1054,6 @@ msgstr "Devi selezionare una categoria esistente o inserire un nuovo nome di cat
 
 msgid "Password"
 msgstr "Password"
+
+msgid "Expenses"
+msgstr "Uscite"

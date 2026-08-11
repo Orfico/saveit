@@ -1059,3 +1059,6 @@ msgstr "Vous devez sélectionner une catégorie existante ou saisir un nouveau n
 
 msgid "Password"
 msgstr "Mot de passe"
+
+msgid "Expenses"
+msgstr "Dépenses"
