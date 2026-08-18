@@ -26,12 +26,32 @@
         </button>
     </div>
     
+    <!-- Search bar -->
+    {% if cards %}
+    <div class="relative mb-6">
+      <div class="relative">
+        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
+        <input type="text" id="card-search" autocomplete="off"
+               placeholder="{% trans "Search cards..." %}"
+               class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+        <button id="card-search-clear"
+                class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <ul id="card-autocomplete"
+          class="hidden absolute z-20 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden divide-y divide-gray-50">
+      </ul>
+    </div>
+    {% endif %}
+
     <!-- Cards List -->
     {% if cards %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="cards-grid">
     {% for card in cards %}
     <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow cursor-pointer card-item"
-         data-card-id="{{ card.id }}">
+         data-card-id="{{ card.id }}"
+         data-store-name="{{ card.store_name }}">
             <div class="p-6">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
@@ -72,6 +92,13 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- No search results -->
+    <div id="no-search-results" class="hidden text-center py-12">
+      <i data-lucide="search-x" class="w-14 h-14 mx-auto text-gray-300 mb-3"></i>
+      <p class="text-gray-500 text-sm">{% trans "No cards match your search." %}</p>
+    </div>
+
     {% else %}
     <!-- Empty State -->
     <div class="text-center py-16 bg-white rounded-lg shadow">

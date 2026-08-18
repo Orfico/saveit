@@ -1057,3 +1057,9 @@ msgstr "Password"
 
 msgid "Expenses"
 msgstr "Uscite"
+
+msgid "Search cards..."
+msgstr "Cerca carte..."
+
+msgid "No cards match your search."
+msgstr "Nessuna carta corrisponde alla ricerca."

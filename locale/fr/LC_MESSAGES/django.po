@@ -1062,3 +1062,9 @@ msgstr "Mot de passe"
 
 msgid "Expenses"
 msgstr "Dépenses"
+
+msgid "Search cards..."
+msgstr "Rechercher des cartes..."
+
+msgid "No cards match your search."
+msgstr "Aucune carte ne correspond à votre recherche."
