@@ -185,6 +185,7 @@ class LoyaltyCard(models.Model):
     )
     barcode_image = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
+    shared_with_family = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -785,8 +785,32 @@ class LoyaltyCardListView(LoginRequiredMixin, ListView):
     template_name = 'core/loyalty_cards_list.html'
     context_object_name = 'cards'
 
+    def _family_user_ids(self):
+        user = self.request.user
+        ids = set()
+        if is_family(user):
+            for fm in user.family_profile.linked_members.all():
+                ids.add(fm.user_id)
+        for membership in user.family_memberships.select_related('family_profile').all():
+            ids.add(membership.family_profile.user_id)
+            for fm in membership.family_profile.linked_members.exclude(user=user):
+                ids.add(fm.user_id)
+        return ids
+
     def get_queryset(self):
-        return LoyaltyCard.objects.filter(user=self.request.user)
+        user = self.request.user
+        own = Q(user=user)
+        family_ids = self._family_user_ids()
+        if family_ids:
+            shared = Q(user_id__in=family_ids, shared_with_family=True)
+            return LoyaltyCard.objects.filter(own | shared).select_related('user')
+        return LoyaltyCard.objects.filter(own)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['is_family'] = is_family(self.request.user)
+        ctx['has_family'] = ctx['is_family'] or self.request.user.family_memberships.exists()
+        return ctx
 
 
 class LoyaltyCardDetailView(LoginRequiredMixin, DetailView):
@@ -794,8 +818,30 @@ class LoyaltyCardDetailView(LoginRequiredMixin, DetailView):
     template_name = 'core/loyalty_card_detail.html'
     context_object_name = 'card'
 
+    def _allowed_user_ids(self):
+        user = self.request.user
+        ids = {user.id}
+        if is_family(user):
+            for fm in user.family_profile.linked_members.all():
+                ids.add(fm.user_id)
+        for membership in user.family_memberships.select_related('family_profile').all():
+            ids.add(membership.family_profile.user_id)
+            for fm in membership.family_profile.linked_members.exclude(user=user):
+                ids.add(fm.user_id)
+        return ids
+
     def get_queryset(self):
-        return LoyaltyCard.objects.filter(user=self.request.user)
+        user = self.request.user
+        allowed_ids = self._allowed_user_ids()
+        own = Q(user=user)
+        shared = Q(user_id__in=allowed_ids, shared_with_family=True)
+        return LoyaltyCard.objects.filter(own | shared).select_related('user')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['is_owner'] = self.object.user_id == self.request.user.id
+        ctx['has_family'] = is_family(self.request.user) or self.request.user.family_memberships.exists()
+        return ctx
 
 
 class LoyaltyCardCreateView(LoginRequiredMixin, View):
@@ -884,6 +930,17 @@ class LoyaltyCardDeleteView(LoginRequiredMixin, View):
         except Exception as e:
             logger.error(f"Error deleting card: {str(e)}", exc_info=True)
             return JsonResponse({'success': False, 'error': 'Error deleting card'}, status=500)
+
+
+class LoyaltyCardToggleSharingView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        try:
+            card = LoyaltyCard.objects.get(pk=pk, user=request.user)
+            card.shared_with_family = not card.shared_with_family
+            card.save(update_fields=['shared_with_family'])
+            return JsonResponse({'success': True, 'shared': card.shared_with_family})
+        except LoyaltyCard.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Card not found'}, status=404)
 
 
 @require_POST

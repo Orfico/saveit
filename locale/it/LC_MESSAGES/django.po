@@ -723,6 +723,18 @@ msgstr "Condividi"
 msgid "Back to Cards"
 msgstr "Torna alle carte"
 
+msgid "Shared"
+msgstr "Condivisa"
+
+msgid "Shared by"
+msgstr "Condivisa da"
+
+msgid "Family Sharing"
+msgstr "Condivisione familiare"
+
+msgid "Allow family members to view this card"
+msgstr "Permetti ai membri della famiglia di vedere questa carta"
+
 msgid "Password Reset"
 msgstr "Reimposta password"
 

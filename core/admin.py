@@ -25,14 +25,14 @@ class TransactionAdmin(admin.ModelAdmin):
 
 @admin.register(LoyaltyCard)
 class LoyaltyCardAdmin(admin.ModelAdmin):
-    list_display = ['store_name', 'user', 'card_number', 'barcode_type', 'created_at']
+    list_display = ['store_name', 'user', 'card_number', 'barcode_type', 'shared_with_family', 'created_at']
     list_filter = ['barcode_type', 'created_at', 'user']
     search_fields = ['store_name', 'card_number', 'user__username']
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
         ('Card Information', {
-            'fields': ('user', 'store_name', 'card_number', 'barcode_type')
+            'fields': ('user', 'store_name', 'card_number', 'barcode_type', 'shared_with_family')
         }),
         ('Barcode', {
             'fields': ('barcode_image',)
