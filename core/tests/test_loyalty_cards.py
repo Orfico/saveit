@@ -5,7 +5,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from unittest.mock import patch, MagicMock
 from django.core.files.base import ContentFile
-from core.models import LoyaltyCard
+from core.models import LoyaltyCard, FamilyProfile, FamilyMember
 from core.utils.barcode_generator import BarcodeGenerator
 
 
@@ -179,3 +179,153 @@ class LoyaltyCardViewTest(TestCase):
         )
         response = self.client.post(f'/loyalty-cards/{card.id}/delete/')
         self.assertIn(response.status_code, [301, 302])
+
+
+class LoyaltyCardFamilySharingTest(TestCase):
+
+    def setUp(self):
+        self.family_user = User.objects.create_user(
+            username='familyuser', password='pass'
+        )
+        self.fp = FamilyProfile.objects.create(
+            user=self.family_user, member_1='Mario', member_2='Lucia'
+        )
+        self.member_user = User.objects.create_user(
+            username='memberuser', password='pass'
+        )
+        FamilyMember.objects.create(
+            family_profile=self.fp, user=self.member_user
+        )
+        self.unrelated_user = User.objects.create_user(
+            username='stranger', password='pass'
+        )
+
+    def _make_card(self, user, store='Store', shared=False):
+        return LoyaltyCard.objects.create(
+            user=user, store_name=store, card_number='123',
+            shared_with_family=shared,
+        )
+
+    # ── Model field ──────────────────────────────────────────────────
+
+    def test_shared_with_family_defaults_to_false(self):
+        card = LoyaltyCard.objects.create(
+            user=self.family_user, store_name='S', card_number='1'
+        )
+        self.assertFalse(card.shared_with_family)
+
+    # ── Toggle sharing endpoint ──────────────────────────────────────
+
+    def test_toggle_sharing_on(self):
+        card = self._make_card(self.family_user, shared=False)
+        self.client.login(username='familyuser', password='pass')
+        resp = self.client.post(f'/loyalty-cards/{card.id}/toggle-sharing/')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        self.assertTrue(data['shared'])
+        card.refresh_from_db()
+        self.assertTrue(card.shared_with_family)
+
+    def test_toggle_sharing_off(self):
+        card = self._make_card(self.family_user, shared=True)
+        self.client.login(username='familyuser', password='pass')
+        resp = self.client.post(f'/loyalty-cards/{card.id}/toggle-sharing/')
+        data = resp.json()
+        self.assertTrue(data['success'])
+        self.assertFalse(data['shared'])
+        card.refresh_from_db()
+        self.assertFalse(card.shared_with_family)
+
+    def test_toggle_sharing_non_owner_returns_404(self):
+        card = self._make_card(self.family_user, shared=False)
+        self.client.login(username='memberuser', password='pass')
+        resp = self.client.post(f'/loyalty-cards/{card.id}/toggle-sharing/')
+        self.assertEqual(resp.status_code, 404)
+        card.refresh_from_db()
+        self.assertFalse(card.shared_with_family)
+
+    def test_toggle_sharing_requires_login(self):
+        card = self._make_card(self.family_user)
+        resp = self.client.post(f'/loyalty-cards/{card.id}/toggle-sharing/')
+        self.assertIn(resp.status_code, [301, 302])
+
+    # ── List view – family member sees shared cards ──────────────────
+
+    def test_member_sees_shared_family_card_in_list(self):
+        self._make_card(self.family_user, store='Shared Store', shared=True)
+        self.client.login(username='memberuser', password='pass')
+        resp = self.client.get('/loyalty-cards/', follow=True)
+        cards = list(resp.context['cards'])
+        self.assertEqual(len(cards), 1)
+        self.assertEqual(cards[0].store_name, 'Shared Store')
+
+    def test_member_does_not_see_unshared_family_card(self):
+        self._make_card(self.family_user, store='Private', shared=False)
+        self.client.login(username='memberuser', password='pass')
+        resp = self.client.get('/loyalty-cards/', follow=True)
+        self.assertEqual(list(resp.context['cards']), [])
+
+    def test_family_user_sees_shared_member_card(self):
+        self._make_card(self.member_user, store='Member Card', shared=True)
+        self.client.login(username='familyuser', password='pass')
+        resp = self.client.get('/loyalty-cards/', follow=True)
+        cards = list(resp.context['cards'])
+        self.assertEqual(len(cards), 1)
+        self.assertEqual(cards[0].store_name, 'Member Card')
+
+    def test_unrelated_user_does_not_see_shared_card(self):
+        self._make_card(self.family_user, store='Shared', shared=True)
+        self.client.login(username='stranger', password='pass')
+        resp = self.client.get('/loyalty-cards/', follow=True)
+        self.assertEqual(list(resp.context['cards']), [])
+
+    def test_own_cards_always_visible(self):
+        self._make_card(self.family_user, store='Own', shared=False)
+        self.client.login(username='familyuser', password='pass')
+        resp = self.client.get('/loyalty-cards/', follow=True)
+        cards = list(resp.context['cards'])
+        self.assertEqual(len(cards), 1)
+
+    def test_list_no_duplicate_when_own_card_shared(self):
+        self._make_card(self.family_user, store='Mine', shared=True)
+        self.client.login(username='familyuser', password='pass')
+        resp = self.client.get('/loyalty-cards/', follow=True)
+        cards = list(resp.context['cards'])
+        self.assertEqual(len(cards), 1)
+
+    # ── Detail view – family member can view shared card ─────────────
+
+    def test_member_can_view_shared_card_detail(self):
+        card = self._make_card(self.family_user, store='Shared', shared=True)
+        self.client.login(username='memberuser', password='pass')
+        resp = self.client.get(f'/loyalty-cards/{card.id}/', follow=True)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.context['is_owner'])
+
+    def test_member_cannot_view_unshared_card_detail(self):
+        card = self._make_card(self.family_user, store='Private', shared=False)
+        self.client.login(username='memberuser', password='pass')
+        resp = self.client.get(f'/loyalty-cards/{card.id}/', follow=True)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_unrelated_user_cannot_view_shared_card_detail(self):
+        card = self._make_card(self.family_user, store='Shared', shared=True)
+        self.client.login(username='stranger', password='pass')
+        resp = self.client.get(f'/loyalty-cards/{card.id}/', follow=True)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_detail_context_is_owner_true_for_owner(self):
+        card = self._make_card(self.family_user, store='Mine', shared=True)
+        self.client.login(username='familyuser', password='pass')
+        resp = self.client.get(f'/loyalty-cards/{card.id}/', follow=True)
+        self.assertTrue(resp.context['is_owner'])
+
+    # ── Delete – only owner can delete ───────────────────────────────
+
+    def test_member_cannot_delete_shared_card(self):
+        card = self._make_card(self.family_user, store='Shared', shared=True)
+        self.client.login(username='memberuser', password='pass')
+        resp = self.client.post(f'/loyalty-cards/{card.id}/delete/')
+        self.assertEqual(resp.status_code, 404)
+        self.assertTrue(LoyaltyCard.objects.filter(pk=card.pk).exists())
